@@ -91,6 +91,9 @@ All tables are managed in **Supabase PostgreSQL** with **RLS** enforced for data
   - `subscription_plan` (text: 'basic' or 'pro')
   - `stripe_customer_id` (text)
   - `stripe_subscription_id` (text)
+  - `stripe_api_key` (text, nullable): Encrypted Stripe API key
+  - `created_at` (timestamp, default `now()`)
+  - `updated_at` (timestamp, default `now()`)
 - **`Menus`**:
   - `id` (uuid, primary key)
   - `food_truck_id` (uuid, foreign key to `FoodTrucks.id`)
@@ -98,6 +101,8 @@ All tables are managed in **Supabase PostgreSQL** with **RLS** enforced for data
   - `description` (text)
   - `price` (numeric)
   - `category` (text)
+  - `created_at` (timestamp, default `now()`)
+  - `updated_at` (timestamp, default `now()`)
 - **`Orders`**:
   - `id` (uuid, primary key)
   - `food_truck_id` (uuid, foreign key to `FoodTrucks.id`)
@@ -106,20 +111,25 @@ All tables are managed in **Supabase PostgreSQL** with **RLS** enforced for data
   - `items` (jsonb): Array of ordered items
   - `total_amount` (numeric)
   - `status` (text: 'pending', 'preparing', 'ready', 'completed')
-  - `created_at` (timestamp)
-- **`Analytics`**:
+  - `created_at` (timestamp, default `now()`)
+  - `updated_at` (timestamp, default `now()`)
+  - **`Analytics`**:
   - `id` (uuid, primary key)
   - `food_truck_id` (uuid, foreign key to `FoodTrucks.id`)
   - `date` (date)
   - `page_views` (integer)
   - `orders_placed` (integer)
   - `revenue` (numeric)
+  - `created_at` (timestamp, default `now()`)
+  - `updated_at` (timestamp, default `now()`)
 - **`Testimonials`**:
   - `id` (uuid, primary key)
   - `food_truck_id` (uuid, foreign key to `FoodTrucks.id`, nullable for global testimonials)
   - `content` (text)
   - `author` (text)
   - `approved` (boolean)
+  - `created_at` (timestamp, default `now()`)
+  - `updated_at` (timestamp, default `now()`)
 
 #### RLS Policies
 - **`FoodTrucks`**:
