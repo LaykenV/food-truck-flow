@@ -102,3 +102,57 @@ Please file feedback and issues over on the [Supabase GitHub org](https://github
 - [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
 - [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
 - [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+
+## OAuth Setup
+
+This project supports OAuth authentication with Google and Facebook. To set up OAuth, follow these steps:
+
+### Google OAuth Setup
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to "APIs & Services" > "Credentials"
+4. Click "Create Credentials" > "OAuth client ID"
+5. Select "Web application" as the application type
+6. Add your application name
+7. Add authorized JavaScript origins:
+   - For development: `http://localhost:3000`
+   - For production: Your production URL
+8. Add authorized redirect URIs:
+   - For development: `http://localhost:3000/auth/callback`
+   - For production: `https://your-production-url.com/auth/callback`
+9. Click "Create"
+10. Copy the Client ID and Client Secret
+11. Add them to your `.env.local` file:
+    ```
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-client-id
+    GOOGLE_CLIENT_SECRET=your-client-secret
+    ```
+
+### Facebook OAuth Setup
+
+1. Go to the [Facebook Developers](https://developers.facebook.com/)
+2. Create a new app or select an existing one
+3. Navigate to "Settings" > "Basic"
+4. Copy the App ID and App Secret
+5. Navigate to "Facebook Login" > "Settings"
+6. Add the following OAuth Redirect URIs:
+   - For development: `http://localhost:3000/auth/callback`
+   - For production: `https://your-production-url.com/auth/callback`
+7. Save changes
+8. Add the App ID and App Secret to your `.env.local` file:
+    ```
+    NEXT_PUBLIC_FACEBOOK_CLIENT_ID=your-app-id
+    FACEBOOK_CLIENT_SECRET=your-app-secret
+    ```
+
+### Supabase OAuth Configuration
+
+1. Go to your Supabase project dashboard
+2. Navigate to "Authentication" > "Providers"
+3. Enable Google and Facebook providers
+4. For each provider, add the Client ID and Client Secret
+5. Set the Redirect URL to:
+   - For development: `http://localhost:3000/auth/callback`
+   - For production: `https://your-production-url.com/auth/callback`
+6. Save changes
