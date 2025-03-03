@@ -12,26 +12,45 @@ export default async function ForgotPassword(props: {
   const searchParams = await props.searchParams;
   return (
     <>
-      <form className="flex-1 flex flex-col w-full gap-2 text-foreground [&>input]:mb-6 min-w-64 max-w-64 mx-auto">
+      <h1 className="text-2xl font-bold mb-6 text-center">Reset Your Password</h1>
+      
+      <form className="space-y-4">
         <div>
-          <h1 className="text-2xl font-medium">Reset Password</h1>
-          <p className="text-sm text-secondary-foreground">
-            Already have an account?{" "}
-            <Link className="text-primary underline" href="/sign-in">
-              Sign in
-            </Link>
-          </p>
+          <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            placeholder="you@example.com"
+          />
         </div>
-        <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
-          <Label htmlFor="email">Email</Label>
-          <Input name="email" placeholder="you@example.com" required />
-          <SubmitButton formAction={forgotPasswordAction}>
-            Reset Password
+        
+        <div>
+          <SubmitButton 
+            formAction={forgotPasswordAction}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Send Reset Link
           </SubmitButton>
-          <FormMessage message={searchParams} />
         </div>
+        
+        <FormMessage message={searchParams} />
       </form>
-      <SmtpMessage />
+      
+      <div className="mt-6 text-center text-sm">
+        <p>
+          Remember your password?{' '}
+          <Link href="/sign-in" className="font-medium text-blue-600 hover:text-blue-500">
+            Sign in
+          </Link>
+        </p>
+      </div>
+      
+      <div className="mt-4">
+        <SmtpMessage />
+      </div>
     </>
   );
 }

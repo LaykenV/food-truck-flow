@@ -21,34 +21,61 @@ export default async function Signup(props: {
 
   return (
     <>
-      <form className="flex flex-col min-w-64 max-w-64 mx-auto">
-        <h1 className="text-2xl font-medium">Sign up</h1>
-        <p className="text-sm text text-foreground">
-          Already have an account?{" "}
-          <Link className="text-primary font-medium underline" href="/sign-in">
-            Sign in
-          </Link>
-        </p>
-        <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
-          <Label htmlFor="email">Email</Label>
-          <Input name="email" placeholder="you@example.com" required />
-          <Label htmlFor="password">Password</Label>
+      <h1 className="text-2xl font-bold mb-6 text-center">Create an Account</h1>
+      
+      <form className="space-y-4">
+        <div>
+          <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</Label>
           <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            placeholder="you@example.com"
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</Label>
+          <Input
+            id="password"
             type="password"
             name="password"
             placeholder="Your password"
             minLength={6}
             required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
           />
-          <SubmitButton formAction={signUpAction} pendingText="Signing up...">
+        </div>
+        
+        <div>
+          <SubmitButton 
+            formAction={signUpAction} 
+            pendingText="Signing up..."
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+          >
             Sign up
           </SubmitButton>
-          <FormMessage message={searchParams} />
-          
-          <OAuthButtons mode="sign-up" />
         </div>
+        
+        <FormMessage message={searchParams} />
       </form>
-      <SmtpMessage />
+      
+      <OAuthButtons mode="sign-up" />
+      
+      <div className="mt-6 text-center text-sm">
+        <p>
+          Already have an account?{' '}
+          <Link href="/sign-in" className="font-medium text-blue-600 hover:text-blue-500">
+            Sign in
+          </Link>
+        </p>
+      </div>
+      
+      <div className="mt-4">
+        <SmtpMessage />
+      </div>
     </>
   );
 }
