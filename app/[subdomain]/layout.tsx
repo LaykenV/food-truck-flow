@@ -1,8 +1,27 @@
-export default function FoodTruckLayout({
+import { getFoodTruckData } from '@/lib/fetch-food-truck';
+import Link from 'next/link';
+
+export default async function FoodTruckLayout({
   children,
+  params
 }: {
-  children: React.ReactNode
+  children: React.ReactNode,
+  params: { subdomain: string }
 }) {
+  // Get the subdomain from the params
+  const { subdomain } = await params;
+  
+  // Fetch the food truck data using the cached function
+  const foodTruck = await getFoodTruckData(subdomain);
+  
+  // If no food truck is found, use default values
+  const config = foodTruck?.configuration || {};
+  const { name, logo, primaryColor } = config;
+  
+  // Set default values if configuration properties are missing
+  const truckName = name || 'Food Truck';
+  const primaryColorHex = primaryColor || '#4F46E5'; // Default to indigo if not set
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
@@ -10,27 +29,31 @@ export default function FoodTruckLayout({
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-bold">Food Truck Name</span>
+                {logo ? (
+                  <img src={logo} alt={truckName} className="h-8 w-auto" />
+                ) : (
+                  <span className="text-xl font-bold">{truckName}</span>
+                )}
               </div>
               <nav className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <a href="#" className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <Link href={`/${subdomain}`} className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Home
-                </a>
-                <a href="#" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                </Link>
+                <Link href={`/${subdomain}/menu`} className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Menu
-                </a>
-                <a href="#" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                </Link>
+                <Link href={`/${subdomain}/about`} className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   About
-                </a>
-                <a href="#" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                </Link>
+                <Link href={`/${subdomain}/contact`} className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Contact
-                </a>
+                </Link>
               </nav>
             </div>
             <div className="flex items-center">
-              <button className="bg-indigo-600 p-2 rounded-md text-white font-medium hover:bg-indigo-700">
+              <Link href={`/${subdomain}/order`} className="bg-indigo-600 p-2 rounded-md text-white font-medium hover:bg-indigo-700" style={{ backgroundColor: primaryColorHex }}>
                 Order Now
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -44,24 +67,24 @@ export default function FoodTruckLayout({
         <div className="max-w-7xl mx-auto py-12 px-4 overflow-hidden sm:px-6 lg:px-8">
           <nav className="flex flex-wrap justify-center">
             <div className="px-5 py-2">
-              <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+              <Link href={`/${subdomain}`} className="text-base text-gray-500 hover:text-gray-900">
                 Home
-              </a>
+              </Link>
             </div>
             <div className="px-5 py-2">
-              <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+              <Link href={`/${subdomain}/menu`} className="text-base text-gray-500 hover:text-gray-900">
                 Menu
-              </a>
+              </Link>
             </div>
             <div className="px-5 py-2">
-              <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+              <Link href={`/${subdomain}/about`} className="text-base text-gray-500 hover:text-gray-900">
                 About
-              </a>
+              </Link>
             </div>
             <div className="px-5 py-2">
-              <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+              <Link href={`/${subdomain}/contact`} className="text-base text-gray-500 hover:text-gray-900">
                 Contact
-              </a>
+              </Link>
             </div>
           </nav>
           <div className="mt-8 flex justify-center space-x-6">
@@ -85,7 +108,7 @@ export default function FoodTruckLayout({
             </a>
           </div>
           <p className="mt-8 text-center text-base text-gray-400">
-            &copy; 2023 Food Truck Name. All rights reserved.
+            &copy; {new Date().getFullYear()} {truckName}. All rights reserved.
           </p>
         </div>
       </footer>

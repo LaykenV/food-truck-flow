@@ -2,6 +2,27 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // For localhost development, handle subdomain-like paths
+        {
+          source: '/:subdomain/:path*',
+          destination: '/[subdomain]/:path*',
+          has: [
+            {
+              type: 'host',
+              value: 'localhost:3000',
+            },
+          ],
+        },
+      ],
+    };
+  },
+  // Enable hostname detection for development
+  experimental: {
+    // Add any valid experimental options here if needed
+  },
 };
 
 export default nextConfig;

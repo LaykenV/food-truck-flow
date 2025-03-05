@@ -1,19 +1,49 @@
-export default function FoodTruckHomePage() {
+import { getFoodTruckData } from '@/lib/fetch-food-truck';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+
+export default async function FoodTruckHomePage({
+  params
+}: {
+  params: { subdomain: string }
+}) {
+  // Get the subdomain from the params
+  const { subdomain } = await params;
+  
+  // Fetch the food truck data using the cached function
+  const foodTruck = await getFoodTruckData(subdomain);
+  
+  // If no food truck is found, return 404
+  if (!foodTruck) {
+    notFound();
+  }
+  
+  // Extract configuration data
+  const config = foodTruck.configuration;
+  const { hero, name, tagline, primaryColor, secondaryColor } = config;
+  
+  // Set default values if configuration properties are missing
+  const truckName = name || 'Food Truck';
+  const truckTagline = tagline || 'Delicious food on wheels';
+  const heroTitle = hero?.title || truckName;
+  const heroSubtitle = hero?.subtitle || truckTagline;
+  const primaryColorHex = primaryColor || '#4F46E5'; // Default to indigo if not set
+  
   return (
     <div>
       {/* Hero Section */}
-      <div className="bg-indigo-600">
+      <div style={{ backgroundColor: primaryColorHex }}>
         <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Food Truck Name
+            {heroTitle}
           </h1>
-          <p className="mt-6 text-xl text-indigo-100 max-w-3xl mx-auto">
-            Delicious food on wheels. We bring the flavor to you!
+          <p className="mt-6 text-xl text-white opacity-90 max-w-3xl mx-auto">
+            {heroSubtitle}
           </p>
           <div className="mt-10 flex justify-center">
-            <button className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 md:py-4 md:text-lg md:px-10">
+            <Link href={`/${foodTruck.subdomain}/menu`} className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 md:py-4 md:text-lg md:px-10">
               View Menu
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -50,9 +80,9 @@ export default function FoodTruckHomePage() {
           </div>
         </div>
         <div className="mt-10 text-center">
-          <a href="#" className="text-base font-medium text-indigo-600 hover:text-indigo-500">
+          <Link href={`/${foodTruck.subdomain}/menu`} className="text-base font-medium text-indigo-600 hover:text-indigo-500">
             View Full Menu <span aria-hidden="true">&rarr;</span>
-          </a>
+          </Link>
         </div>
       </div>
       
