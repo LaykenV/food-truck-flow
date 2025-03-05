@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { AuthModals } from '@/components/auth-modals';
+import { Button } from '@/components/ui/button';
 
 export function HeroSection() {
   return (
-    <section className="relative h-screen flex items-center">
+    <section className="relative h-screen flex items-center pt-16">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <div className="relative w-full h-full">
@@ -41,12 +43,22 @@ export function HeroSection() {
               The ultimate platform for food truck owners to create stunning websites, manage online orders, and grow their business.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
-              <Link href="/sign-in" className="px-8 py-4 bg-yellow-500 text-gray-900 rounded-md font-medium shadow-lg hover:bg-yellow-400 transition-colors text-center">
-                Login
-              </Link>
-              <Link href="/sign-up" className="px-8 py-4 bg-transparent text-white border-2 border-white rounded-md font-medium shadow-lg hover:bg-white hover:bg-opacity-10 transition-colors text-center">
-                Sign Up Free
-              </Link>
+              <AuthModals 
+                initialView="sign-in" 
+                trigger={
+                  <Button className="px-8 py-4 bg-yellow-500 text-gray-900 rounded-md font-medium shadow-lg hover:bg-yellow-400 transition-colors text-center">
+                    Login
+                  </Button>
+                }
+              />
+              <AuthModals 
+                initialView="sign-up" 
+                trigger={
+                  <Button className="px-8 py-4 bg-transparent text-white border-2 border-white rounded-md font-medium shadow-lg hover:bg-white hover:bg-opacity-10 transition-colors text-center">
+                    Sign Up Free
+                  </Button>
+                }
+              />
             </div>
           </div>
         </div>

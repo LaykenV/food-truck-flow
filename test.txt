@@ -1,0 +1,113 @@
+# Auth Flow and Food Truck Initialization Strategy
+
+Based on your requirements, here's a comprehensive strategy for improving your user onboarding flow:
+
+## Current Setup Analysis
+
+You currently have:
+- Separate sign-in and sign-up pages
+- A landing page with a live preview configuration tool
+- A need to create a food truck for new users or users without one
+- A desire to use the configuration from the landing page to initialize the food truck
+
+## Recommended Approach
+
+### 1. Auth Flow Restructuring
+
+**Modal-based Authentication:**
+- Convert your sign-in and sign-up forms to modals on the landing page
+- This allows users to configure their food truck first, then sign up/in without losing their configuration
+
+**State Management:**
+- Use localStorage or sessionStorage to persist the configuration temporarily
+- When a user signs up or signs in, retrieve this configuration to create their food truck
+
+### 2. Food Truck Creation Process
+
+**For New Sign-ups:**
+1. When a user signs up successfully in `signUpAction`, check if they have a configuration in storage
+2. Create a new food truck with either:
+   - The stored configuration from the preview
+   - A default configuration if none exists
+
+**For Existing Users:**
+1. After sign-in, check if the user has any food trucks
+2. If none, create a new one using the same logic as for new users
+
+### 3. Configuration Data Flow
+
+**From Landing Page to Auth:**
+1. Modify `ConfigProvider` to save configuration to localStorage when it changes:
+```typescript
+// In ConfigProvider's setConfig function
+const setConfigWithStorage = (newConfig: Config) => {
+  setConfig(newConfig);
+  localStorage.setItem('foodTruckConfig', JSON.stringify(newConfig));
+};
+```
+
+2. In your auth actions, retrieve and use this configuration:
+```typescript
+// In signUpAction or after successful sign-in
+const storedConfig = localStorage.getItem('foodTruckConfig');
+const config = storedConfig ? JSON.parse(storedConfig) : defaultConfig;
+```
+
+### 4. Supabase File Storage Implementation
+
+For handling image uploads:
+
+1. **Create Storage Buckets:**
+   - Create a `logos` bucket and a `hero-images` bucket in Supabase
+
+2. **Upload Process:**
+   - When a user uploads an image in the ConfigForm, upload it to Supabase storage
+   - Replace the data URL with the Supabase URL in the configuration
+
+3. **Implementation in ConfigForm:**
+   - Add a function to upload files to Supabase and get public URLs
+   - Update the configuration with these URLs instead of base64 data
+
+```typescript
+// Pseudocode for file upload
+const uploadToSupabase = async (file: File, bucket: string) => {
+  const fileName = `${uuidv4()}-${file.name}`;
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(fileName, file);
+  
+  if (error) throw error;
+  
+  // Get public URL
+  const { publicURL } = supabase.storage.from(bucket).getPublicUrl(fileName);
+  return publicURL;
+};
+```
+
+### 5. Auth Flow Sequence
+
+1. User visits landing page and configures their food truck
+2. User clicks "Sign Up" or "Sign In" which opens a modal
+3. After successful authentication:
+   - Check if user has food trucks
+   - If not, create one with their configuration
+   - Redirect to admin dashboard
+
+## Implementation Considerations
+
+1. **State Persistence:**
+   - Consider using React Context or a state management library to share state between the configuration tool and auth modals
+
+2. **Security:**
+   - Validate all configuration data server-side before creating food trucks
+   - Implement proper file type and size validation for uploads
+
+3. **User Experience:**
+   - Add a "Save my configuration" checkbox in the auth modals
+   - Provide feedback during the food truck creation process
+
+4. **Performance:**
+   - Optimize image uploads by compressing images client-side before upload
+   - Consider implementing a loading state during the food truck creation process
+
+This approach creates a seamless onboarding experience where users can visualize their food truck website before signing up, and have it automatically created upon registration.

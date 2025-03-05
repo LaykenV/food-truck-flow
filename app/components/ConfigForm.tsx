@@ -2,6 +2,13 @@
 
 import { useConfig } from './ConfigProvider';
 import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ImageIcon, Palette, Layout, Type } from 'lucide-react';
 
 export function ConfigForm() {
   const { config, setConfig } = useConfig();
@@ -60,214 +67,231 @@ export function ConfigForm() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-      <div className="px-6 py-8 sm:p-10">
-        <h3 className="text-xl font-medium text-gray-900 mb-6">Food Truck Configuration</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Basic Information */}
-          <div className="col-span-2">
-            <h4 className="text-lg font-medium text-gray-700 mb-4">Basic Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Name
-                </label>
-                <input
-                  type="text"
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Customize Your Food Truck Website</CardTitle>
+        <CardDescription>
+          Configure your website's appearance and content
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="branding" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="branding" className="flex flex-col items-center gap-1 py-2 sm:flex-row sm:gap-2">
+              <Type className="h-4 w-4" />
+              <span className="text-xs sm:text-sm">Branding</span>
+            </TabsTrigger>
+            <TabsTrigger value="colors" className="flex flex-col items-center gap-1 py-2 sm:flex-row sm:gap-2">
+              <Palette className="h-4 w-4" />
+              <span className="text-xs sm:text-sm">Colors</span>
+            </TabsTrigger>
+            <TabsTrigger value="hero" className="flex flex-col items-center gap-1 py-2 sm:flex-row sm:gap-2">
+              <Layout className="h-4 w-4" />
+              <span className="text-xs sm:text-sm">Hero</span>
+            </TabsTrigger>
+            <TabsTrigger value="images" className="flex flex-col items-center gap-1 py-2 sm:flex-row sm:gap-2">
+              <ImageIcon className="h-4 w-4" />
+              <span className="text-xs sm:text-sm">Images</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="branding" className="space-y-4">
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Business Name</Label>
+                <Input
                   id="name"
                   name="name"
                   value={formValues.name}
                   onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter your food truck name"
                 />
               </div>
               
-              <div>
-                <label htmlFor="tagline" className="block text-sm font-medium text-gray-700 mb-1">
-                  Tagline
-                </label>
-                <input
-                  type="text"
+              <div className="grid gap-2">
+                <Label htmlFor="tagline">Tagline</Label>
+                <Input
                   id="tagline"
                   name="tagline"
                   value={formValues.tagline}
                   onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter a catchy tagline"
                 />
               </div>
-              
-              <div className="md:col-span-2">
-                <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-1">
-                  Logo
-                </label>
-                <div className="flex flex-col space-y-2">
-                  {formValues.logo && (
-                    <div className="mb-2">
-                      <img 
-                        src={formValues.logo} 
-                        alt="Logo preview" 
-                        className="h-16 object-contain border border-gray-200 rounded p-1"
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="file"
-                      id="logoUpload"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'logo')}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('logoUpload')?.click()}
-                      className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      Upload Logo
-                    </button>
-                    <input
-                      type="text"
-                      name="logo"
-                      value={formValues.logo}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="colors" className="space-y-4">
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="primaryColor">Primary Color</Label>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <Input
+                      type="color"
+                      id="primaryColor"
+                      name="primaryColor"
+                      value={formValues.primaryColor}
                       onChange={handleInputChange}
-                      placeholder="Or enter image URL"
-                      className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="h-10 w-10 p-1 cursor-pointer"
                     />
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Colors */}
-          <div className="col-span-2">
-            <h4 className="text-lg font-medium text-gray-700 mb-4">Brand Colors</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="primaryColor" className="block text-sm font-medium text-gray-700 mb-1">
-                  Primary Color
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="color"
-                    id="primaryColor"
-                    name="primaryColor"
-                    value={formValues.primaryColor}
-                    onChange={handleInputChange}
-                    className="h-10 w-10 border border-gray-300 rounded"
-                  />
-                  <input
+                  <Input
                     type="text"
                     name="primaryColor"
                     value={formValues.primaryColor}
                     onChange={handleInputChange}
-                    className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1"
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used for buttons, links, and accents
+                </p>
               </div>
               
-              <div>
-                <label htmlFor="secondaryColor" className="block text-sm font-medium text-gray-700 mb-1">
-                  Secondary Color
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="color"
-                    id="secondaryColor"
-                    name="secondaryColor"
-                    value={formValues.secondaryColor}
-                    onChange={handleInputChange}
-                    className="h-10 w-10 border border-gray-300 rounded"
-                  />
-                  <input
+              <div className="grid gap-2">
+                <Label htmlFor="secondaryColor">Secondary Color</Label>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <Input
+                      type="color"
+                      id="secondaryColor"
+                      name="secondaryColor"
+                      value={formValues.secondaryColor}
+                      onChange={handleInputChange}
+                      className="h-10 w-10 p-1 cursor-pointer"
+                    />
+                  </div>
+                  <Input
                     type="text"
                     name="secondaryColor"
                     value={formValues.secondaryColor}
                     onChange={handleInputChange}
-                    className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1"
                   />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used for gradients and secondary elements
+                </p>
+              </div>
+              
+              <div className="mt-4">
+                <div className="p-4 rounded-md" style={{ background: `linear-gradient(to right, ${formValues.primaryColor}, ${formValues.secondaryColor})` }}>
+                  <p className="text-white text-center font-medium">Color Preview</p>
                 </div>
               </div>
             </div>
-          </div>
+          </TabsContent>
           
-          {/* Hero Section */}
-          <div className="col-span-2">
-            <h4 className="text-lg font-medium text-gray-700 mb-4">Hero Section</h4>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label htmlFor="heroImage" className="block text-sm font-medium text-gray-700 mb-1">
-                  Hero Image
-                </label>
-                <div className="flex flex-col space-y-2">
-                  {formValues.heroImage && (
-                    <div className="mb-2">
-                      <img 
-                        src={formValues.heroImage} 
-                        alt="Hero image preview" 
-                        className="h-32 w-full object-cover border border-gray-200 rounded"
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="file"
-                      id="heroImageUpload"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'heroImage')}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('heroImageUpload')?.click()}
-                      className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      Upload Hero Image
-                    </button>
-                    <input
-                      type="text"
-                      name="heroImage"
-                      value={formValues.heroImage}
-                      onChange={handleInputChange}
-                      placeholder="Or enter image URL"
-                      className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="heroTitle" className="block text-sm font-medium text-gray-700 mb-1">
-                  Hero Title
-                </label>
-                <input
-                  type="text"
+          <TabsContent value="hero" className="space-y-4">
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="heroTitle">Hero Title</Label>
+                <Input
                   id="heroTitle"
                   name="heroTitle"
                   value={formValues.heroTitle}
                   onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter a compelling headline"
                 />
               </div>
               
-              <div>
-                <label htmlFor="heroSubtitle" className="block text-sm font-medium text-gray-700 mb-1">
-                  Hero Subtitle
-                </label>
-                <input
-                  type="text"
+              <div className="grid gap-2">
+                <Label htmlFor="heroSubtitle">Hero Subtitle</Label>
+                <Input
                   id="heroSubtitle"
                   name="heroSubtitle"
                   value={formValues.heroSubtitle}
                   onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter a supporting subtitle"
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          </TabsContent>
+          
+          <TabsContent value="images" className="space-y-4">
+            <div className="space-y-6">
+              <div className="grid gap-2">
+                <Label htmlFor="logo">Logo</Label>
+                {formValues.logo && (
+                  <div className="mb-2 p-2 border rounded-md bg-muted/20">
+                    <img 
+                      src={formValues.logo} 
+                      alt="Logo preview" 
+                      className="h-16 object-contain mx-auto"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="file"
+                    id="logoUpload"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'logo')}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('logoUpload')?.click()}
+                    className="w-full sm:w-auto"
+                  >
+                    Upload Logo
+                  </Button>
+                  <Input
+                    type="text"
+                    name="logo"
+                    value={formValues.logo}
+                    onChange={handleInputChange}
+                    placeholder="Or enter image URL"
+                    className="flex-1 mt-2 sm:mt-0"
+                  />
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="grid gap-2">
+                <Label htmlFor="heroImage">Hero Background</Label>
+                {formValues.heroImage && (
+                  <div className="mb-2 p-2 border rounded-md bg-muted/20">
+                    <img 
+                      src={formValues.heroImage} 
+                      alt="Hero image preview" 
+                      className="h-32 w-full object-cover rounded-md"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="file"
+                    id="heroImageUpload"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'heroImage')}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('heroImageUpload')?.click()}
+                    className="w-full sm:w-auto"
+                  >
+                    Upload Hero Image
+                  </Button>
+                  <Input
+                    type="text"
+                    name="heroImage"
+                    value={formValues.heroImage}
+                    onChange={handleInputChange}
+                    placeholder="Or enter image URL"
+                    className="flex-1 mt-2 sm:mt-0"
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 } 

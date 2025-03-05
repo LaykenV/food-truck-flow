@@ -6,14 +6,14 @@ import { createContext, useState, useContext, ReactNode } from 'react';
 const defaultConfig = {
   hero: {
     image: "/images/placeholder-hero.jpg",
-    title: "Mike's Pizza",
-    subtitle: "Best pizza in town"
+    title: "Delicious Food Truck",
+    subtitle: "Serving the best street food in town"
   },
   logo: "/images/placeholder-logo.jpg",
-  name: "Mike's Pizza",
-  tagline: "Authentic Italian Pizza",
-  primaryColor: "#FF0000",
-  secondaryColor: "#00FF00"
+  name: "Food Truck Name",
+  tagline: "Tasty meals on wheels",
+  primaryColor: "#FF6B35", // Vibrant orange
+  secondaryColor: "#4CB944" // Fresh green
 };
 
 // Define the type for our config
@@ -41,7 +41,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to use the config context
+// Hook to use the config context
 export function useConfig() {
   const context = useContext(ConfigContext);
   if (context === undefined) {

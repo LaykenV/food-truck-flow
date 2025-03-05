@@ -2,15 +2,21 @@ import Link from 'next/link';
 import { ClientWrapper } from './components/ClientWrapper';
 import { HeroSection } from './components/HeroSection';
 import { TestimonialsSection } from './components/TestimonialsSection';
+import { AuthModals } from '@/components/auth-modals';
+import { Button } from '@/components/ui/button';
+import { Header } from './components/Header';
 
 export default function Home() {
   return (
     <div className="min-h-screen">
+      {/* Header */}
+      <Header />
+      
       {/* Hero Section with Background Image */}
       <HeroSection />
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900">Powerful Features for Food Truck Owners</h2>
@@ -60,7 +66,7 @@ export default function Home() {
       </section>
 
       {/* Live Preview Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section id="demo" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900">See It In Action</h2>
@@ -75,7 +81,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900">Simple, Transparent Pricing</h2>
@@ -116,9 +122,14 @@ export default function Home() {
                   </li>
                 </ul>
                 <div className="mt-8">
-                  <Link href="/sign-up" className="w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-400 transition-colors">
-                    Get Started
-                  </Link>
+                  <AuthModals 
+                    initialView="sign-up" 
+                    trigger={
+                      <Button className="w-full px-5 py-3 text-base font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-400 transition-colors">
+                        Get Started
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -163,9 +174,14 @@ export default function Home() {
                   </li>
                 </ul>
                 <div className="mt-8">
-                  <Link href="/sign-up" className="w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-400 transition-colors">
-                    Get Started
-                  </Link>
+                  <AuthModals 
+                    initialView="sign-up" 
+                    trigger={
+                      <Button className="w-full px-5 py-3 text-base font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-400 transition-colors">
+                        Get Started
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -174,7 +190,9 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <TestimonialsSection />
+      <section id="testimonials">
+        <TestimonialsSection />
+      </section>
 
       {/* CTA Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gray-900 overflow-hidden">
@@ -198,10 +216,15 @@ export default function Home() {
             Join thousands of food truck owners who are already using FoodTruckFlow to boost their online presence and increase sales.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/sign-up" className="px-8 py-4 bg-yellow-500 text-gray-900 rounded-md font-medium shadow-lg hover:bg-yellow-400 transition-colors">
-              Get Started for Free
-            </Link>
-            <Link href="#" className="px-8 py-4 bg-transparent text-white border-2 border-white rounded-md font-medium shadow-lg hover:bg-white hover:bg-opacity-10 transition-colors">
+            <AuthModals 
+              initialView="sign-up" 
+              trigger={
+                <Button className="px-8 py-4 bg-yellow-500 text-gray-900 rounded-md font-medium shadow-lg hover:bg-yellow-400 transition-colors">
+                  Get Started for Free
+                </Button>
+              }
+            />
+            <Link href="#" className="px-8 py-4 bg-transparent text-white border-2 border-white rounded-md font-medium shadow-lg hover:bg-white hover:bg-opacity-10 transition-colors inline-flex items-center justify-center">
               Schedule a Demo
             </Link>
           </div>
@@ -220,9 +243,9 @@ export default function Home() {
           <div>
             <h4 className="text-white text-sm font-semibold mb-4">PRODUCT</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="#" className="hover:text-white transition-colors">Features</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Pricing</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Demo</Link></li>
+              <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
+              <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+              <li><Link href="#demo" className="hover:text-white transition-colors">Demo</Link></li>
             </ul>
           </div>
           <div>
