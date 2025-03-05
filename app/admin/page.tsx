@@ -1,4 +1,9 @@
-export default function AdminDashboard() {
+import { createClient } from "@/utils/supabase/server";
+
+export default async function AdminDashboard() {
+  const supabase = await createClient();
+  const user = await supabase.auth.getUser();
+  console.log("user", user);
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Dashboard</h1>

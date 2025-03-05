@@ -1,0 +1,5 @@
+research supabase db
+set up tables and RLS
+add mock food truck data
+getFoodTruckByHostName
+render food truck data
