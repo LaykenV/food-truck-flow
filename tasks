@@ -1,5 +1,4 @@
-research supabase db
-set up tables and RLS
-add mock food truck data
-getFoodTruckByHostName
-render food truck data
+set up stripe subscriptions
+sign up flow?
+
+add admin configs from dashboard with onboarding tour
