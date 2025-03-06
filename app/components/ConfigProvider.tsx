@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useContext, ReactNode } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 // Default configuration for the live preview
 const defaultConfig = {
@@ -31,8 +31,50 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 // Provider component
 export function ConfigProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<Config>(defaultConfig);
+  const [config, setConfigState] = useState<Config>(() => {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined') {
+      // Try to get config from localStorage
+      const savedConfig = localStorage.getItem('foodTruckConfig');
+      if (savedConfig) {
+        try {
+          // Parse the saved config
+          const parsedConfig = JSON.parse(savedConfig);
+          return parsedConfig;
+        } catch (error) {
+          console.error('Failed to parse saved config:', error);
+        }
+      }
+    }
+    // Fall back to default config if no valid saved config exists
+    return defaultConfig;
+  });
   const [jsonError, setJsonError] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load config from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedConfig = localStorage.getItem('foodTruckConfig');
+      if (savedConfig) {
+        setConfigState(JSON.parse(savedConfig));
+      }
+    } catch (error) {
+      console.error('Error loading config from localStorage:', error);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save config to localStorage whenever it changes
+  const setConfig = (newConfig: Config) => {
+    setConfigState(newConfig);
+    try {
+      // Save to localStorage whenever config changes
+      localStorage.setItem('foodTruckConfig', JSON.stringify(newConfig));
+    } catch (error) {
+      console.error('Failed to save config to localStorage:', error);
+    }
+  };
 
   return (
     <ConfigContext.Provider value={{ config, setConfig, jsonError, setJsonError }}>

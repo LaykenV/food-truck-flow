@@ -23,8 +23,22 @@ export function ConfigForm() {
     heroSubtitle: config.hero.subtitle
   });
 
-  // Update the config when form values change
+  // Initialize form values from config only once on mount
   useEffect(() => {
+    setFormValues({
+      name: config.name,
+      tagline: config.tagline,
+      logo: config.logo,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      heroImage: config.hero.image,
+      heroTitle: config.hero.title,
+      heroSubtitle: config.hero.subtitle
+    });
+  }, []);
+
+  // Handle form submission to update config
+  const handleSubmitChanges = () => {
     const newConfig = {
       ...config,
       name: formValues.name,
@@ -39,7 +53,7 @@ export function ConfigForm() {
       }
     };
     setConfig(newConfig);
-  }, [formValues, setConfig]);
+  };
 
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,6 +305,15 @@ export function ConfigForm() {
             </div>
           </TabsContent>
         </Tabs>
+        
+        <div className="mt-6 flex justify-end">
+          <Button 
+            onClick={handleSubmitChanges}
+            className="bg-primary text-white"
+          >
+            Apply Changes
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

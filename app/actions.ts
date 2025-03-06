@@ -9,6 +9,8 @@ export const signInWithOAuthAction = async (provider: "google" | "facebook") => 
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
+  // Note: Food truck creation happens in the auth callback route
+  // after the OAuth flow completes and the user is redirected back to our app
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
@@ -27,6 +29,7 @@ export const signInWithOAuthAction = async (provider: "google" | "facebook") => 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
+  const configString = formData.get("config")?.toString();
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
@@ -38,7 +41,7 @@ export const signUpAction = async (formData: FormData) => {
     );
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -49,27 +52,42 @@ export const signUpAction = async (formData: FormData) => {
   if (error) {
     console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
-  } else {
-    return encodedRedirect(
-      "success",
-      "/sign-up",
-      "Thanks for signing up! Please check your email for a verification link.",
-    );
+  } 
+  
+  // If sign-up is successful and we have a user, create a food truck for them
+  if (data && data.user) {
+    // Parse the config if it exists
+    const config = configString ? JSON.parse(configString) : null;
+    await createFoodTruckForUser(data.user.id, config);
   }
+  
+  return encodedRedirect(
+    "success",
+    "/sign-up",
+    "Thanks for signing up! Please check your email for a verification link.",
+  );
 };
 
 export const signInAction = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const configString = formData.get("config")?.toString();
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) {
     return encodedRedirect("error", "/sign-in", error.message);
+  }
+
+  // If sign-in is successful, check if the user has a food truck and create one if not
+  if (data && data.user) {
+    // Parse the config if it exists
+    const config = configString ? JSON.parse(configString) : null;
+    await createFoodTruckForUser(data.user.id, config);
   }
 
   return redirect("/admin");
@@ -150,4 +168,106 @@ export const signOutAction = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();
   return redirect("/");
+};
+
+// Handle OAuth callback and create a food truck if needed
+export const handleAuthCallback = async () => {
+  const supabase = await createClient();
+  
+  // Get the current session
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError || !session) {
+    console.error('Error getting session:', sessionError);
+    return;
+  }
+  
+  // Create a food truck for the user if they don't have one
+  if (session.user) {
+    // For OAuth, we don't have access to the config from the landing page
+    // So we'll use the default config
+    await createFoodTruckForUser(session.user.id);
+  }
+};
+
+// Function to create a food truck for a user
+export const createFoodTruckForUser = async (userId: string, userConfig?: any) => {
+  const supabase = await createClient();
+  
+  // Check if user already has a food truck
+  const { data: existingFoodTrucks, error: fetchError } = await supabase
+    .from('FoodTrucks')
+    .select('id')
+    .eq('user_id', userId);
+    
+  if (fetchError) {
+    console.error('Error checking for existing food trucks:', fetchError);
+    return { error: fetchError };
+  }
+  
+  // If user already has food trucks, don't create a new one
+  if (existingFoodTrucks && existingFoodTrucks.length > 0) {
+    return { data: existingFoodTrucks[0], created: false };
+  }
+  
+  // Default configuration from ConfigProvider.tsx
+  const defaultConfig = {
+    hero: {
+      image: "",
+      title: "Delicious Food Truck",
+      subtitle: "Serving the best street food in town"
+    },
+    logo: "",
+    name: "Food Truck Name",
+    tagline: "Tasty meals on wheels",
+    primaryColor: "#FF6B35", // Vibrant orange
+    secondaryColor: "#4CB944", // Fresh green
+    about: {
+      image: "",
+      title: "Our Story",
+      content: "Share your food truck's journey here..."
+    },
+    contact: {
+      email: "",
+      phone: "",
+      address: ""
+    },
+    socials: {
+      twitter: "",
+      instagram: ""
+    }
+  };
+  
+  // Use the user's config if provided, otherwise use the default config
+  const configuration = userConfig || defaultConfig;
+  
+  // Generate a unique subdomain based on a timestamp
+  const timestamp = Date.now().toString(36);
+  const subdomain = `foodtruck-${timestamp}`;
+  
+  // Create a new food truck
+  const { data, error } = await supabase
+    .from('FoodTrucks')
+    .insert([
+      {
+        user_id: userId,
+        subdomain: subdomain,
+        custom_domain: null,
+        configuration: configuration,
+        subscription_plan: null,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        stripe_api_key: null,
+        published: false
+      }
+    ])
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating food truck:', error);
+    return { error };
+  }
+  
+  return { data, created: true };
 };

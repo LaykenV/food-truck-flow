@@ -1,7 +1,6 @@
 set up stripe subscriptions
 sign up flow?
 
-add is_published to food trucks
 when new user signs up, create food truck for them, carry over default config from landing page
 
 set up stripe in admin dashboard
