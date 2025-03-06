@@ -9,9 +9,10 @@ set up stripe in admin dashboard
 add admin configs from dashboard with onboarding tour
 
 //fix landing page quirks
-set up menu and order page
+//set up menu and order page
 get settings tab back and redo each tab
 
 add crud for admin panel
+preview header index, only change color in mobile, landing page x scroll
 add order functionality mock
 analytics

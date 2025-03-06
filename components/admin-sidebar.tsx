@@ -47,6 +47,11 @@ export function AdminSidebar({ foodTruckName = "Food Truck" }: AdminSidebarProps
       href: '/admin/subscribe',
       label: 'Subscription',
       icon: LucideCreditCard
+    },
+    {
+      href: '/admin/settings',
+      label: 'Settings',
+      icon: LucideSettings
     }
   ]
 

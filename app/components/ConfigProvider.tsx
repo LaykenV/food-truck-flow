@@ -14,7 +14,22 @@ const defaultConfig: FoodTruckConfig = {
   name: "Food Truck Name",
   tagline: "Tasty meals on wheels",
   primaryColor: "#FF6B35", // Vibrant orange
-  secondaryColor: "#4CB944" // Fresh green
+  secondaryColor: "#4CB944", // Fresh green
+  about: {
+    title: "About Our Food Truck",
+    content: "Tell your story here...",
+    image: "/images/placeholder-about.jpg"
+  },
+  contact: {
+    email: "",
+    phone: "",
+    address: ""
+  },
+  socials: {
+    twitter: "",
+    instagram: "",
+    facebook: ""
+  }
 };
 
 // Define the type for our config
@@ -31,25 +46,46 @@ type ConfigContextType = {
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 // Provider component
-export function ConfigProvider({ children }: { children: ReactNode }) {
-  // Start with default config to avoid hydration mismatch
-  const [config, setConfigState] = useState<Config>(defaultConfig);
+interface ConfigProviderProps {
+  children: ReactNode;
+  initialConfig?: FoodTruckConfig;
+}
+
+export function ConfigProvider({ children, initialConfig }: ConfigProviderProps) {
+  // Start with provided initialConfig or default config to avoid hydration mismatch
+  const [config, setConfigState] = useState<Config>(initialConfig || defaultConfig);
   const [jsonError, setJsonError] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load config from localStorage only on client side after initial render
+  // Update config when initialConfig changes
   useEffect(() => {
-    try {
-      const savedConfig = localStorage.getItem('foodTruckConfig');
-      if (savedConfig) {
-        const parsedConfig = JSON.parse(savedConfig);
-        setConfigState(parsedConfig);
+    if (initialConfig) {
+      setConfigState(prevConfig => {
+        // Only update if the initialConfig is different from the current config
+        if (JSON.stringify(prevConfig) !== JSON.stringify(initialConfig)) {
+          return initialConfig;
+        }
+        return prevConfig;
+      });
+    }
+  }, [initialConfig]);
+
+  // Load config from localStorage only on client side after initial render
+  // Only if initialConfig is not provided
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !initialConfig) {
+      try {
+        const savedConfig = localStorage.getItem('foodTruckConfig');
+        if (savedConfig) {
+          const parsedConfig = JSON.parse(savedConfig);
+          setConfigState(parsedConfig);
+        }
+      } catch (error) {
+        console.error('Error loading config from localStorage:', error);
       }
-    } catch (error) {
-      console.error('Error loading config from localStorage:', error);
     }
     setIsInitialized(true);
-  }, []);
+  }, [initialConfig]);
 
   // Save config to localStorage whenever it changes, but only after initialization
   const setConfig = (newConfig: Config) => {

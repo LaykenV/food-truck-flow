@@ -1,5 +1,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { LucideSettings, LucideGlobe, LucideUser, LucideCreditCard } from "lucide-react";
+import { toast } from "sonner";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -23,7 +31,6 @@ export default async function SettingsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      // Instead of returning an error object, we'll just return
       return;
     }
     
@@ -53,13 +60,10 @@ export default async function SettingsPage() {
           .eq('user_id', user.id);
           
         if (error) {
-          // Instead of returning an error object, we'll just return
           return;
         }
-        // Instead of returning a success object, we'll just return
         return;
       } else {
-        // Instead of returning an error object, we'll just return
         return;
       }
     }
@@ -71,27 +75,64 @@ export default async function SettingsPage() {
       .eq('user_id', user.id);
       
     if (error) {
-      // Instead of returning an error object, we'll just return
       return;
     }
-    // Instead of returning a success object, we'll just return
+    return;
+  }
+  
+  // Add this update Stripe API key function
+  async function updateStripeApiKey(formData: FormData) {
+    'use server'
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return;
+    }
+    
+    const stripeApiKey = formData.get('stripeKey') as string;
+    
+    if (!stripeApiKey) {
+      return;
+    }
+    
+    const { error } = await supabase
+      .from('FoodTrucks')
+      .update({ stripe_api_key: stripeApiKey })
+      .eq('user_id', user.id);
+      
+    if (error) {
+      return;
+    }
+    
     return;
   }
   
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <SidebarTrigger className="md:hidden" />
+      </div>
       
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Website Status</h2>
-        <div className="p-4 bg-gray-100 rounded-md mb-4">
-          <p className="font-medium">
-            Status: <span className={isPublished ? "text-green-600" : "text-yellow-600"}>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="space-y-1">
+            <CardTitle>Website Status</CardTitle>
+            <CardDescription>Manage your website's publication status</CardDescription>
+          </div>
+          <LucideGlobe className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <p className="font-medium">Status:</p>
+            <Badge variant={isPublished ? "default" : "secondary"} className={isPublished ? "bg-green-500" : "bg-yellow-500"}>
               {isPublished ? "Published" : "Not Published"}
-            </span>
-          </p>
+            </Badge>
+          </div>
+          
           {!isPublished && (
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-muted-foreground mb-4">
               {!hasSubscription
                 ? "You need to subscribe to a plan before publishing."
                 : !hasStripeKey 
@@ -99,190 +140,204 @@ export default async function SettingsPage() {
                   : "Your website is ready to be published."}
             </p>
           )}
-        </div>
-        
-        {!hasSubscription ? (
-          <a 
-            href="/admin/subscribe"
-            className="inline-block px-4 py-2 rounded text-white bg-purple-600 hover:bg-purple-700"
-          >
-            Subscribe to a Plan
-          </a>
-        ) : !hasStripeKey ? (
-          <form action={publishWebsite} className="space-y-4">
-            <div>
-              <label htmlFor="stripeApiKey" className="block text-sm font-medium text-gray-700">Stripe API Key</label>
-              <input
-                id="stripeApiKey"
-                name="stripeApiKey"
-                type="password"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                required
+        </CardContent>
+        <CardFooter>
+          {!hasSubscription ? (
+            <Button variant="default" asChild>
+              <a href="/admin/subscribe">Subscribe to a Plan</a>
+            </Button>
+          ) : !hasStripeKey ? (
+            <form action={publishWebsite} className="w-full space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="stripeApiKey">Stripe API Key</Label>
+                <Input
+                  id="stripeApiKey"
+                  name="stripeApiKey"
+                  type="password"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Your Stripe API key is required to process payments for your food truck.
+                </p>
+              </div>
+              <Button type="submit">
+                Save API Key & Publish Website
+              </Button>
+            </form>
+          ) : (
+            <form action={publishWebsite}>
+              <Button 
+                type="submit"
+                variant={isPublished ? "outline" : "default"}
+                disabled={isPublished}
+              >
+                {isPublished ? "Already Published" : "Publish Website"}
+              </Button>
+            </form>
+          )}
+        </CardFooter>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="space-y-1">
+            <CardTitle>Account Settings</CardTitle>
+            <CardDescription>Manage your account information</CardDescription>
+          </div>
+          <LucideUser className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                defaultValue={user?.email || ''}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Your Stripe API key is required to process payments for your food truck.
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">New Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+              />
+            </div>
+            
+            <Button type="submit">
+              Update Account
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="space-y-1">
+            <CardTitle>Subscription</CardTitle>
+            <CardDescription>Manage your subscription plan</CardDescription>
+          </div>
+          <LucideCreditCard className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <p className="font-medium">Current Plan:</p>
+            <Badge variant="secondary">
+              {hasSubscription ? (foodTruck?.subscription_plan || 'Basic') : 'No Subscription'}
+            </Badge>
+          </div>
+          
+          {hasSubscription && (
+            <p className="text-sm text-muted-foreground">
+              {foodTruck?.subscription_plan === 'pro' ? '$49' : '$29'}/month
+            </p>
+          )}
+        </CardContent>
+        <CardFooter>
+          {hasSubscription ? (
+            <Button variant="default">
+              {foodTruck?.subscription_plan === 'pro' ? 'Manage Subscription' : 'Upgrade to Pro'}
+            </Button>
+          ) : (
+            <Button variant="default" asChild>
+              <a href="/admin/subscribe">Subscribe Now</a>
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="space-y-1">
+            <CardTitle>Domain Settings</CardTitle>
+            <CardDescription>Configure your website domain</CardDescription>
+          </div>
+          <LucideSettings className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="subdomain">Subdomain</Label>
+              <div className="flex">
+                <Input
+                  id="subdomain"
+                  name="subdomain"
+                  className="rounded-r-none"
+                  placeholder="your-truck-name"
+                  defaultValue={foodTruck?.subdomain || ''}
+                />
+                <div className="flex items-center justify-center px-3 border border-l-0 rounded-r-md bg-muted text-muted-foreground">
+                  .foodtruckflow.com
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="customDomain">Custom Domain (Pro Plan Only)</Label>
+              <Input
+                id="customDomain"
+                name="customDomain"
+                placeholder="www.yourdomain.com"
+                defaultValue={foodTruck?.custom_domain || ''}
+                disabled={foodTruck?.subscription_plan !== 'pro'}
+              />
+              {foodTruck?.subscription_plan !== 'pro' && (
+                <p className="text-xs text-muted-foreground">
+                  Upgrade to Pro plan to use a custom domain.
+                </p>
+              )}
+            </div>
+            
+            <Button type="submit">
+              Save Domain Settings
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="space-y-1">
+            <CardTitle>Stripe Integration</CardTitle>
+            <CardDescription>Configure your payment processing</CardDescription>
+          </div>
+          <LucideCreditCard className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form action={updateStripeApiKey} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="stripeKey">Stripe API Key</Label>
+              <Input
+                id="stripeKey"
+                name="stripeKey"
+                type="password"
+                placeholder={hasStripeKey ? "••••••••••••••••••••••" : ""}
+              />
+              <p className="text-xs text-muted-foreground">
+                {hasStripeKey 
+                  ? "Your Stripe API key is set. Enter a new value to update it." 
+                  : "Required to process payments for your food truck."}
               </p>
             </div>
-            <button 
-              type="submit"
-              className="px-4 py-2 rounded text-white bg-green-600 hover:bg-green-700"
-            >
-              Save API Key & Publish Website
-            </button>
-          </form>
-        ) : (
-          <form action={publishWebsite}>
-            <button 
-              type="submit"
-              className={`px-4 py-2 rounded text-white ${
-                isPublished 
-                  ? "bg-gray-400 cursor-not-allowed" 
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-              disabled={isPublished}
-            >
-              {isPublished ? "Already Published" : "Publish Website"}
-            </button>
-          </form>
-        )}
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Account Settings</h2>
-        <form className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">New Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
-          
-          <div>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Update Account
-            </button>
-          </div>
-        </form>
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Subscription</h2>
-        <div className="p-4 bg-gray-100 rounded-md mb-4">
-          <p className="font-medium">
-            Current Plan: <span className="text-blue-600">
-              {hasSubscription ? (foodTruck?.subscription_plan || 'Basic') : 'No Subscription'}
-            </span>
-          </p>
-          {hasSubscription && <p className="text-sm text-gray-500">{foodTruck?.subscription_plan === 'pro' ? '$49' : '$29'}/month</p>}
-        </div>
-        {hasSubscription ? (
-          <button className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
-            {foodTruck?.subscription_plan === 'pro' ? 'Manage Subscription' : 'Upgrade to Pro'}
-          </button>
-        ) : (
-          <a href="/admin/subscribe" className="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
-            Subscribe Now
-          </a>
-        )}
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Domain Settings</h2>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="subdomain" className="block text-sm font-medium text-gray-700">Subdomain</label>
-            <div className="mt-1 flex rounded-md shadow-sm">
-              <input
-                type="text"
-                name="subdomain"
-                id="subdomain"
-                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md border border-gray-300"
-                placeholder="your-truck-name"
-                defaultValue={foodTruck?.subdomain || ''}
-              />
-              <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500">
-                .foodtruckflow.com
-              </span>
-            </div>
-          </div>
-          
-          <div>
-            <label htmlFor="customDomain" className="block text-sm font-medium text-gray-700">Custom Domain (Pro Plan Only)</label>
-            <input
-              id="customDomain"
-              name="customDomain"
-              type="text"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              placeholder="www.yourdomain.com"
-              defaultValue={foodTruck?.custom_domain || ''}
-              disabled={foodTruck?.subscription_plan !== 'pro'}
-            />
-          </div>
-          
-          <div>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Save Domain Settings
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Stripe Integration</h2>
-        <form className="space-y-4">
-          <div>
-            <label htmlFor="stripeKey" className="block text-sm font-medium text-gray-700">Stripe API Key</label>
-            <input
-              id="stripeKey"
-              name="stripeKey"
-              type="password"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-              placeholder={hasStripeKey ? "••••••••••••••••••••••" : ""}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {hasStripeKey ? "Your Stripe API key is set. Enter a new value to update it." : "Required to process payments for your food truck."}
-            </p>
-          </div>
-          
-          <div>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
+            
+            <Button type="submit">
               {hasStripeKey ? "Update Stripe Settings" : "Save Stripe Settings"}
-            </button>
-          </div>
-        </form>
-      </div>
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 } 
