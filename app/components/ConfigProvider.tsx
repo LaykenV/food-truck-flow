@@ -1,9 +1,10 @@
 'use client';
 
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { FoodTruckConfig } from '@/components/food-truck-website';
 
 // Default configuration for the live preview
-const defaultConfig = {
+const defaultConfig: FoodTruckConfig = {
   hero: {
     image: "/images/placeholder-hero.jpg",
     title: "Delicious Food Truck",
@@ -17,7 +18,7 @@ const defaultConfig = {
 };
 
 // Define the type for our config
-export type Config = typeof defaultConfig;
+export type Config = FoodTruckConfig;
 
 // Create the context
 type ConfigContextType = {
@@ -31,33 +32,18 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 // Provider component
 export function ConfigProvider({ children }: { children: ReactNode }) {
-  const [config, setConfigState] = useState<Config>(() => {
-    // Check if we're in a browser environment
-    if (typeof window !== 'undefined') {
-      // Try to get config from localStorage
-      const savedConfig = localStorage.getItem('foodTruckConfig');
-      if (savedConfig) {
-        try {
-          // Parse the saved config
-          const parsedConfig = JSON.parse(savedConfig);
-          return parsedConfig;
-        } catch (error) {
-          console.error('Failed to parse saved config:', error);
-        }
-      }
-    }
-    // Fall back to default config if no valid saved config exists
-    return defaultConfig;
-  });
+  // Start with default config to avoid hydration mismatch
+  const [config, setConfigState] = useState<Config>(defaultConfig);
   const [jsonError, setJsonError] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load config from localStorage on initial render
+  // Load config from localStorage only on client side after initial render
   useEffect(() => {
     try {
       const savedConfig = localStorage.getItem('foodTruckConfig');
       if (savedConfig) {
-        setConfigState(JSON.parse(savedConfig));
+        const parsedConfig = JSON.parse(savedConfig);
+        setConfigState(parsedConfig);
       }
     } catch (error) {
       console.error('Error loading config from localStorage:', error);
@@ -65,14 +51,15 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     setIsInitialized(true);
   }, []);
 
-  // Save config to localStorage whenever it changes
+  // Save config to localStorage whenever it changes, but only after initialization
   const setConfig = (newConfig: Config) => {
     setConfigState(newConfig);
-    try {
-      // Save to localStorage whenever config changes
-      localStorage.setItem('foodTruckConfig', JSON.stringify(newConfig));
-    } catch (error) {
-      console.error('Failed to save config to localStorage:', error);
+    if (isInitialized && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('foodTruckConfig', JSON.stringify(newConfig));
+      } catch (error) {
+        console.error('Failed to save config to localStorage:', error);
+      }
     }
   };
 

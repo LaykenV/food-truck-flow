@@ -2,7 +2,7 @@ import { getFoodTruckData } from '@/lib/fetch-food-truck';
 import { notFound } from 'next/navigation';
 import FoodTruckWebsite from '@/components/food-truck-website';
 
-export default async function FoodTruckHomePage({
+export default async function FoodTruckMenuPage({
   params
 }: {
   params: { subdomain: string }
@@ -21,10 +21,12 @@ export default async function FoodTruckHomePage({
   // Extract configuration data
   const config = foodTruck.configuration;
   
+  // For now, we're just showing the same component
+  // In the future, we'll implement proper menu page functionality
   return (
     <FoodTruckWebsite 
       config={config} 
-      displayMode="live" 
+      displayMode="liveSite" 
       subdomain={subdomain} 
     />
   );

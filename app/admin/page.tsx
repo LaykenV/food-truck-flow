@@ -1,61 +1,180 @@
 import { createClient } from "@/utils/supabase/server";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity } from "lucide-react";
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
-  const user = await supabase.auth.getUser();
-  console.log("user", user);
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Fetch food truck data
+  const { data: foodTruck } = await supabase
+    .from('FoodTrucks')
+    .select('*')
+    .eq('user_id', user?.id)
+    .single();
+  
+  const isSubscribed = !!foodTruck?.stripe_subscription_id;
+  
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      
-      {/* Getting Started Checklist */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Getting Started Checklist</h2>
-        <ul className="space-y-2">
-          <li className="flex items-center">
-            <input type="checkbox" id="setup-profile" className="mr-2" />
-            <label htmlFor="setup-profile">Set up your profile</label>
-          </li>
-          <li className="flex items-center">
-            <input type="checkbox" id="customize-website" className="mr-2" />
-            <label htmlFor="customize-website">Customize your website</label>
-          </li>
-          <li className="flex items-center">
-            <input type="checkbox" id="add-menu" className="mr-2" />
-            <label htmlFor="add-menu">Add menu items</label>
-          </li>
-          <li className="flex items-center">
-            <input type="checkbox" id="setup-stripe" className="mr-2" />
-            <label htmlFor="setup-stripe">Set up Stripe for payments</label>
-          </li>
-          <li className="flex items-center">
-            <input type="checkbox" id="preview-site" className="mr-2" />
-            <label htmlFor="preview-site">Preview your website</label>
-          </li>
-        </ul>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <SidebarTrigger className="md:hidden" />
       </div>
       
+      {/* Getting Started Checklist */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Getting Started Checklist</CardTitle>
+          <CardDescription>Complete these tasks to set up your food truck website</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-start space-x-2">
+              <Checkbox id="setup-profile" />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="setup-profile" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Set up your profile
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Add your food truck name, logo, and contact information
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-2">
+              <Checkbox id="customize-website" />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="customize-website" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Customize your website
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose colors, layout, and design elements
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-2">
+              <Checkbox id="add-menu" />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="add-menu" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Add menu items
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Create your menu with prices and descriptions
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-2">
+              <Checkbox id="setup-stripe" />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="setup-stripe" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Set up Stripe for payments
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Connect your Stripe account to accept online payments
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-2">
+              <Checkbox id="preview-site" />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="preview-site" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Preview your website
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Check how your website looks before publishing
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-2">
+              <Checkbox id="subscribe" checked={isSubscribed} disabled />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="subscribe" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Subscribe to a plan
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {isSubscribed 
+                    ? `Current plan: ${foodTruck?.subscription_plan || 'Basic'}`
+                    : 'Choose a subscription plan to publish your website'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-500">Total Orders</h3>
-          <p className="text-3xl font-bold">0</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-500">Revenue</h3>
-          <p className="text-3xl font-bold">$0.00</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-500">Website Visits</h3>
-          <p className="text-3xl font-bold">0</p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <LucideShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">
+              +0% from last month
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <LucideDollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$0.00</div>
+            <p className="text-xs text-muted-foreground">
+              +0% from last month
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Website Visits</CardTitle>
+            <LucideUsers className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">
+              +0% from last month
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
+            <LucideActivity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">
+              +0 since last hour
+            </p>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Recent Activity */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <p className="text-gray-500">No recent activity to display.</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>Your latest website and order activity</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No recent activity to display.</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
