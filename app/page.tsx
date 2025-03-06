@@ -5,7 +5,8 @@ import { TestimonialsSection } from './components/TestimonialsSection';
 import { Button } from '@/components/ui/button';
 import { Header } from './components/Header';
 import { ConfigProvider } from './components/ConfigProvider';
-import { AuthButtons } from './components/AuthButtons';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Check } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -69,7 +70,7 @@ export default function Home() {
         </section>
 
         {/* Live Preview Section */}
-        <section id="preview" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <section id="preview" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Try It Out</h2>
@@ -82,9 +83,93 @@ export default function Home() {
               <ClientWrapper />
             </div>
             
-            {/* Auth Buttons with Config Context */}
-            <div className="mt-12 text-center">
-              <AuthButtons />
+            {/* Removed AuthButtons as requested */}
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Simple, Transparent Pricing</h2>
+              <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
+                Choose the plan that fits your food truck business needs
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              {/* Basic Plan */}
+              <Card className="border-2 border-gray-200 hover:border-primary hover:shadow-md transition-all">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Basic Plan</CardTitle>
+                  <CardDescription>Perfect for getting started</CardDescription>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold">$29</span>
+                    <span className="text-gray-500 ml-2">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Custom website template</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Online ordering system</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Basic analytics</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Subdomain hosting</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Email support</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+              
+              {/* Pro Plan */}
+              <Card className="border-2 border-primary bg-primary/5 hover:shadow-md transition-all">
+                <CardHeader>
+                  <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full w-fit mb-2">RECOMMENDED</div>
+                  <CardTitle className="text-2xl">Pro Plan</CardTitle>
+                  <CardDescription>For growing food truck businesses</CardDescription>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold">$49</span>
+                    <span className="text-gray-500 ml-2">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Everything in Basic</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Custom domain support</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Advanced analytics</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Priority support</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Unlimited menu items</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
@@ -99,13 +184,15 @@ export default function Home() {
             <p className="text-xl mb-8 opacity-90">
               Join thousands of food truck owners who are expanding their reach and increasing their revenue with FoodTruckFlow.
             </p>
-            <AuthButtons />
+            <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
+              <Link href="/signup">Get Started Today</Link>
+            </Button>
           </div>
         </section>
 
-        {/* Footer */}
+        {/* Simplified Footer */}
         <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">FoodTruckFlow</h3>
               <p className="text-gray-400">
@@ -113,30 +200,19 @@ export default function Home() {
               </p>
             </div>
             <div>
-              <h4 className="text-lg font-semibold mb-4">Features</h4>
+              <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="#features" className="hover:text-white transition-colors">Website Builder</Link></li>
-                <li><Link href="#features" className="hover:text-white transition-colors">Online Ordering</Link></li>
-                <li><Link href="#features" className="hover:text-white transition-colors">Analytics</Link></li>
-                <li><Link href="#features" className="hover:text-white transition-colors">Marketing Tools</Link></li>
+                <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="#testimonials" className="hover:text-white transition-colors">Testimonials</Link></li>
+                <li><Link href="#preview" className="hover:text-white transition-colors">Live Demo</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-semibold mb-4">Resources</h4>
+              <h4 className="text-lg font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Guides</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">API Documentation</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Careers</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
           </div>

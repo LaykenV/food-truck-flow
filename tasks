@@ -7,3 +7,11 @@ set up stripe in admin dashboard
 'publish' button to publish food truck - checks for stripe key, if not set up, prompts to set up
 
 add admin configs from dashboard with onboarding tour
+
+//fix landing page quirks
+set up menu and order page
+get settings tab back and redo each tab
+
+add crud for admin panel
+add order functionality mock
+analytics

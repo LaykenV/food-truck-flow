@@ -21,6 +21,8 @@ import {
   Building,
   Link as LinkIcon
 } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 export function ConfigForm() {
   const { config, setConfig } = useConfig();
@@ -105,14 +107,14 @@ export function ConfigForm() {
       };
       
       setConfig(newConfig);
-      setStatusMessage('Changes saved successfully!');
+      setStatusMessage('success');
       
       // Clear status message after 3 seconds
       setTimeout(() => {
         setStatusMessage('');
       }, 3000);
     } catch (error) {
-      setStatusMessage('Error saving changes. Please try again.');
+      setStatusMessage('error');
     } finally {
       setIsSubmitting(false);
     }
@@ -141,7 +143,7 @@ export function ConfigForm() {
     };
     
     setFormValues(defaultValues);
-    setStatusMessage('Form reset to default values. Click Save to apply changes.');
+    setStatusMessage('reset');
     
     // Clear status message after 3 seconds
     setTimeout(() => {
@@ -183,6 +185,27 @@ export function ConfigForm() {
         <CardDescription>
           Configure your food truck website's appearance and content
         </CardDescription>
+        
+        {statusMessage === 'success' && (
+          <Alert className="mt-2 bg-green-50 text-green-800 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription>Changes saved successfully!</AlertDescription>
+          </Alert>
+        )}
+        
+        {statusMessage === 'error' && (
+          <Alert className="mt-2 bg-red-50 text-red-800 border-red-200">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription>Error saving changes. Please try again.</AlertDescription>
+          </Alert>
+        )}
+        
+        {statusMessage === 'reset' && (
+          <Alert className="mt-2 bg-blue-50 text-blue-800 border-blue-200">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription>Form reset to default values. Click Save to apply changes.</AlertDescription>
+          </Alert>
+        )}
       </CardHeader>
       
       <CardContent className="p-0">
@@ -566,12 +589,6 @@ export function ConfigForm() {
       </CardContent>
       
       <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 pt-6 pb-4 px-6 border-t mt-4">
-        {statusMessage && (
-          <div className={`w-full mb-4 p-3 rounded-md text-sm ${statusMessage.includes('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-            {statusMessage}
-          </div>
-        )}
-        
         <div className="flex w-full sm:w-auto gap-2">
           <Button 
             variant="outline" 

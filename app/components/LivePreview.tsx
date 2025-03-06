@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { AuthModalsWithConfig } from '@/components/auth-modals-with-config';
 
 export function LivePreview() {
   const { config } = useConfig();
@@ -79,13 +80,18 @@ export function LivePreview() {
         
         {/* CTA Button */}
         <div className="p-4 flex justify-center">
-          <Button 
-            className="w-full max-w-xs flex items-center justify-center gap-2 text-white"
-            style={{ backgroundColor: config.primaryColor }}
-          >
-            Sign Up With This Configuration
-            <ArrowUpRight className="h-4 w-4" />
-          </Button>
+          <AuthModalsWithConfig 
+            initialView="sign-up" 
+            trigger={
+              <Button 
+                className="w-full max-w-xs flex items-center justify-center gap-2 text-white"
+                style={{ backgroundColor: config.primaryColor }}
+              >
+                Sign Up With This Configuration
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
       </CardContent>
     </Card>

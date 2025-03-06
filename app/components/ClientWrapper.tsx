@@ -45,8 +45,11 @@ function ClientContent() {
       
       {/* Desktop View - Side by side with sticky config form */}
       <div className="hidden md:grid md:grid-cols-12 md:gap-8">
-        <div className="md:col-span-5 lg:col-span-4 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
-          <ConfigForm />
+        <div className="md:col-span-5 lg:col-span-4 relative">
+          {/* Sticky container with proper padding and offset */}
+          <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8">
+            <ConfigForm />
+          </div>
         </div>
         <div className="md:col-span-7 lg:col-span-8">
           <Card className="p-6 bg-gray-50 border-0 shadow-none">
