@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminConfigWrapper } from '@/app/components/AdminConfigWrapper';
+import { AdminConfigWrapper } from '@/app/components/UnifiedConfigWrapper';
 import { FoodTruckConfig } from '@/components/food-truck-website';
-import { ConfigProvider } from '@/app/components/ConfigProvider';
+import { UnifiedConfigProvider } from '@/app/components/UnifiedConfigProvider';
 import { toast } from 'sonner';
 import { saveConfiguration, subscribeToConfigChanges } from '@/utils/config-utils';
 
@@ -100,7 +100,7 @@ export function AdminConfigClient({ initialConfig, userId }: AdminConfigClientPr
   };
 
   return (
-    <ConfigProvider initialConfig={config}>
+    <UnifiedConfigProvider initialConfig={config} mode="admin" onSave={handleSaveConfig}>
       <AdminConfigWrapper 
         initialConfig={config} 
         onSave={handleSaveConfig} 
@@ -108,6 +108,6 @@ export function AdminConfigClient({ initialConfig, userId }: AdminConfigClientPr
         lastSaved={lastSaved}
         userId={userId}
       />
-    </ConfigProvider>
+    </UnifiedConfigProvider>
   );
 } 

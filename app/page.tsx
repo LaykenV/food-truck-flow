@@ -1,18 +1,18 @@
 import Link from 'next/link';
-import { ClientWrapper } from './components/ClientWrapper';
+import { ClientWrapper } from './components/UnifiedConfigWrapper';
 import { HeroSection } from './components/HeroSection';
 import { TestimonialsSection } from './components/TestimonialsSection';
 import { Button } from '@/components/ui/button';
 import { Header } from './components/Header';
-import { ConfigProvider } from './components/ConfigProvider';
+import { UnifiedConfigProvider } from './components/UnifiedConfigProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 
 export default function Home() {
   return (
     <div className="min-h-screen">
-      {/* Wrap the entire page in ConfigProvider to share config state */}
-      <ConfigProvider>
+      {/* Wrap the entire page in UnifiedConfigProvider to share config state */}
+      <UnifiedConfigProvider mode="client">
         {/* Header */}
         <Header />
         
@@ -220,7 +220,7 @@ export default function Home() {
             <p>&copy; {new Date().getFullYear()} FoodTruckFlow. All rights reserved.</p>
           </div>
         </footer>
-      </ConfigProvider>
+      </UnifiedConfigProvider>
     </div>
   );
 }

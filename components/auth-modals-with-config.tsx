@@ -18,7 +18,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import Link from "next/link";
-import { useConfig } from "@/app/components/ConfigProvider";
+import { useConfig } from "@/app/components/UnifiedConfigProvider";
 
 interface AuthModalsWithConfigProps {
   initialView?: "sign-in" | "sign-up";

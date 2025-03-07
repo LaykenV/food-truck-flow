@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter } from 'lucide-react';
+import { DisplayMode } from '@/components/FoodTruckTemplate';
 
 export interface FoodTruckFooterProps {
   config: {
@@ -19,9 +20,14 @@ export interface FoodTruckFooterProps {
     primaryColor?: string;
   };
   subdomain: string;
+  displayMode?: DisplayMode;
 }
 
-export default function FoodTruckFooter({ config, subdomain }: FoodTruckFooterProps) {
+export default function FoodTruckFooter({ 
+  config, 
+  subdomain,
+  displayMode = 'live'
+}: FoodTruckFooterProps) {
   // Extract configuration data with defaults
   const {
     name = 'Food Truck',
@@ -35,6 +41,57 @@ export default function FoodTruckFooter({ config, subdomain }: FoodTruckFooterPr
 
   const currentYear = new Date().getFullYear();
 
+  // Handle link click in preview mode
+  const handleLinkClick = (e: React.MouseEvent) => {
+    if (displayMode === 'preview') {
+      e.preventDefault();
+      // Maybe show a toast: "This link is disabled in preview mode"
+    }
+  };
+
+  // Render link based on display mode
+  const renderLink = (href: string, children: React.ReactNode, className: string) => {
+    if (displayMode === 'live') {
+      return (
+        <Link href={href} className={className}>
+          {children}
+        </Link>
+      );
+    } else {
+      return (
+        <a href="#" onClick={handleLinkClick} className={className}>
+          {children}
+        </a>
+      );
+    }
+  };
+
+  // Render external link based on display mode
+  const renderExternalLink = (href: string, children: React.ReactNode, className: string) => {
+    if (displayMode === 'live') {
+      return (
+        <a 
+          href={href} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={className}
+        >
+          {children}
+        </a>
+      );
+    } else {
+      return (
+        <a 
+          href="#" 
+          onClick={handleLinkClick}
+          className={className}
+        >
+          {children}
+        </a>
+      );
+    }
+  };
+
   return (
     <footer className="bg-gray-900 text-white pt-12 pb-6">
       <div className="container mx-auto px-4">
@@ -47,34 +104,25 @@ export default function FoodTruckFooter({ config, subdomain }: FoodTruckFooterPr
             </p>
             <div className="flex space-x-4">
               {facebook && (
-                <a 
-                  href={facebook} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
+                renderExternalLink(
+                  facebook,
+                  <Facebook className="h-5 w-5" />,
+                  "text-gray-400 hover:text-white transition-colors"
+                )
               )}
               {instagram && (
-                <a 
-                  href={instagram} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
+                renderExternalLink(
+                  instagram,
+                  <Instagram className="h-5 w-5" />,
+                  "text-gray-400 hover:text-white transition-colors"
+                )
               )}
               {twitter && (
-                <a 
-                  href={twitter} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <Twitter className="h-5 w-5" />
-                </a>
+                renderExternalLink(
+                  twitter,
+                  <Twitter className="h-5 w-5" />,
+                  "text-gray-400 hover:text-white transition-colors"
+                )
               )}
             </div>
           </div>
@@ -84,28 +132,25 @@ export default function FoodTruckFooter({ config, subdomain }: FoodTruckFooterPr
             <h3 className="text-xl font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link 
-                  href={`/${subdomain}`}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Home
-                </Link>
+                {renderLink(
+                  `/${subdomain}`,
+                  "Home",
+                  "text-gray-400 hover:text-white transition-colors"
+                )}
               </li>
               <li>
-                <Link 
-                  href={`/${subdomain}/menu`}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Menu
-                </Link>
+                {renderLink(
+                  `/${subdomain}/menu`,
+                  "Menu",
+                  "text-gray-400 hover:text-white transition-colors"
+                )}
               </li>
               <li>
-                <Link 
-                  href={`/${subdomain}/order`}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Order
-                </Link>
+                {renderLink(
+                  `/${subdomain}/order`,
+                  "Order",
+                  "text-gray-400 hover:text-white transition-colors"
+                )}
               </li>
             </ul>
           </div>
@@ -123,23 +168,43 @@ export default function FoodTruckFooter({ config, subdomain }: FoodTruckFooterPr
               {phone && (
                 <li className="flex items-start">
                   <span className="mr-2">📞</span>
-                  <a 
-                    href={`tel:${phone}`}
-                    className="hover:text-white transition-colors"
-                  >
-                    {phone}
-                  </a>
+                  {displayMode === 'live' ? (
+                    <a 
+                      href={`tel:${phone}`}
+                      className="hover:text-white transition-colors"
+                    >
+                      {phone}
+                    </a>
+                  ) : (
+                    <a 
+                      href="#"
+                      onClick={handleLinkClick}
+                      className="hover:text-white transition-colors"
+                    >
+                      {phone}
+                    </a>
+                  )}
                 </li>
               )}
               {email && (
                 <li className="flex items-start">
                   <span className="mr-2">✉️</span>
-                  <a 
-                    href={`mailto:${email}`}
-                    className="hover:text-white transition-colors"
-                  >
-                    {email}
-                  </a>
+                  {displayMode === 'live' ? (
+                    <a 
+                      href={`mailto:${email}`}
+                      className="hover:text-white transition-colors"
+                    >
+                      {email}
+                    </a>
+                  ) : (
+                    <a 
+                      href="#"
+                      onClick={handleLinkClick}
+                      className="hover:text-white transition-colors"
+                    >
+                      {email}
+                    </a>
+                  )}
                 </li>
               )}
             </ul>
@@ -150,13 +215,11 @@ export default function FoodTruckFooter({ config, subdomain }: FoodTruckFooterPr
         <div className="pt-8 mt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
           <p>© {currentYear} {name}. All rights reserved.</p>
           <p className="mt-2">
-            Powered by <a 
-              href="/"
-              className="text-gray-400 hover:text-white transition-colors"
-              style={{ color: primaryColor }}
-            >
-              FoodTruckFlow
-            </a>
+            Powered by {renderLink(
+              "/",
+              "FoodTruckFlow",
+              "text-gray-400 hover:text-white transition-colors"
+            )}
           </p>
         </div>
       </div>

@@ -58,11 +58,11 @@ export default async function FoodTruckLayout({
   return (
     <CartProvider>
       <div className="min-h-screen flex flex-col">
-        <FoodTruckNavbar config={config} subdomain={subdomain} />
+        <FoodTruckNavbar config={config} subdomain={subdomain} displayMode="live" />
         <main className="flex-grow">
           {children}
         </main>
-        <FoodTruckFooter config={config} subdomain={subdomain} />
+        <FoodTruckFooter config={config} subdomain={subdomain} displayMode="live" />
       </div>
       <Toaster />
     </CartProvider>

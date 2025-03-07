@@ -1,42 +1,60 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminConfigForm } from './AdminConfigForm';
-import { AdminLivePreview } from './AdminLivePreview';
+import { UnifiedConfigForm } from './UnifiedConfigForm';
+import { UnifiedLivePreview } from './UnifiedLivePreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Smartphone } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { FoodTruckConfig } from '@/components/food-truck-website';
 import { toast } from 'sonner';
-import { useConfig } from './ConfigProvider';
+import { useUnifiedConfig, useConfig } from './UnifiedConfigProvider';
 
-interface AdminConfigWrapperProps {
-  initialConfig: FoodTruckConfig;
-  onSave: (config: FoodTruckConfig) => Promise<void>;
+// Define the type for the wrapper mode
+export type WrapperMode = 'admin' | 'client';
+
+// Props for the UnifiedConfigWrapper
+interface UnifiedConfigWrapperProps {
+  mode: WrapperMode;
+  initialConfig?: FoodTruckConfig;
+  onSave?: (config: FoodTruckConfig) => Promise<void>;
   isSaving?: boolean;
   lastSaved?: Date | null;
   userId?: string;
 }
 
-export function AdminConfigWrapper({ 
+export function UnifiedConfigWrapper({ 
+  mode,
   initialConfig, 
   onSave, 
   isSaving = false, 
   lastSaved = null,
   userId 
-}: AdminConfigWrapperProps) {
+}: UnifiedConfigWrapperProps) {
+  const context = useUnifiedConfig();
   const { setConfig } = useConfig();
-  const [localConfig, setLocalConfig] = useState<FoodTruckConfig>(initialConfig);
-  const [activeTab, setActiveTab] = useState<string>("preview");
+  const [localConfig, setLocalConfig] = useState<FoodTruckConfig>(
+    initialConfig || context.config
+  );
+  const [activeTab, setActiveTab] = useState<string>("config");
 
   // Update local config when initialConfig changes
   useEffect(() => {
-    setLocalConfig(initialConfig);
-    setConfig(initialConfig);
+    if (initialConfig) {
+      setLocalConfig(initialConfig);
+      setConfig(initialConfig);
+    }
   }, [initialConfig, setConfig]);
 
-  // Handle saving the configuration
+  // Handle saving the configuration (admin mode only)
   const handleSaveConfig = async (newConfig: FoodTruckConfig) => {
+    if (mode !== 'admin' || !onSave) {
+      // In client mode, just update the config
+      setLocalConfig(newConfig);
+      setConfig(newConfig);
+      return;
+    }
+
     try {
       // Ensure we're working with a complete config object
       const completeConfig: FoodTruckConfig = {
@@ -77,69 +95,92 @@ export function AdminConfigWrapper({
     }
   };
 
+  // Render the appropriate form and preview based on mode
+  const renderForm = () => {
+    return (
+      <UnifiedConfigForm
+        mode={mode}
+        initialConfig={localConfig}
+        onSave={handleSaveConfig}
+        isSaving={isSaving}
+        lastSaved={lastSaved}
+        userId={userId}
+      />
+    );
+  };
+
+  // Render the appropriate preview based on mode
+  const renderPreview = () => {
+    return (
+      <UnifiedLivePreview
+        mode={mode}
+        config={mode === 'admin' ? localConfig : undefined}
+      />
+    );
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto">
       {/* Mobile View - Tabs for switching between Config and Preview */}
       <div className="md:hidden">
         <Tabs 
-          defaultValue="preview" 
+          defaultValue="config" 
           className="w-full"
           value={activeTab}
           onValueChange={setActiveTab}
         >
           <TabsList className="grid w-full grid-cols-2 mb-6 sticky top-0 z-10 bg-background">
-            <TabsTrigger value="preview" className="flex items-center gap-2 py-3">
-              <Smartphone className="h-4 w-4" />
-              <span>Preview</span>
-            </TabsTrigger>
             <TabsTrigger value="config" className="flex items-center gap-2 py-3">
               <Settings className="h-4 w-4" />
               <span>Configure</span>
             </TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center gap-2 py-3">
+              <Smartphone className="h-4 w-4" />
+              <span>Preview</span>
+            </TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="config" className="space-y-4 pb-8">
+            {renderForm()}
+          </TabsContent>
           
           <TabsContent value="preview" className="space-y-4 pb-8">
             <h2 className="text-xl font-bold text-gray-900 text-center mb-4">
               Preview Your Food Truck Website
             </h2>
-            <AdminLivePreview config={localConfig} />
-          </TabsContent>
-          
-          <TabsContent value="config" className="space-y-4 pb-8">
-            <AdminConfigForm 
-              initialConfig={localConfig} 
-              onSave={handleSaveConfig} 
-              isSaving={isSaving} 
-              lastSaved={lastSaved}
-              userId={userId}
-            />
+            {renderPreview()}
           </TabsContent>
         </Tabs>
       </div>
       
-      {/* Desktop View - Side by side with equal heights */}
-      <div className="hidden md:grid md:grid-cols-12 md:gap-8">
-        <div className="md:col-span-5 lg:col-span-4">
-          {/* Fixed height container to match preview height */}
-          <div className="h-full">
-            <AdminConfigForm 
-              initialConfig={localConfig} 
-              onSave={handleSaveConfig} 
-              isSaving={isSaving} 
-              lastSaved={lastSaved}
-              userId={userId}
-            />
-          </div>
+      {/* Desktop View - Stacked layout with config on top and preview below */}
+      <div className="hidden md:flex md:flex-col md:gap-8">
+        {/* Config Form Section */}
+        <div className="w-full">
+          {renderForm()}
         </div>
-        <div className="md:col-span-7 lg:col-span-8">
+        
+        {/* Preview Section - Full Width */}
+        <div className="w-full">
           <Card className="p-6 bg-gray-50 border-0 shadow-none">
             <h2 className="text-xl font-bold text-gray-900 text-center mb-6">
               Preview Your Food Truck Website
             </h2>
-            <AdminLivePreview config={localConfig} />
+            <div className="flex justify-center w-full">
+              {renderPreview()}
+            </div>
           </Card>
         </div>
       </div>
     </div>
   );
+}
+
+// Backward compatibility components
+export function AdminConfigWrapper(props: Omit<UnifiedConfigWrapperProps, 'mode'>) {
+  return <UnifiedConfigWrapper mode="admin" {...props} />;
+}
+
+export function ClientWrapper() {
+  return <UnifiedConfigWrapper mode="client" />;
 } 
