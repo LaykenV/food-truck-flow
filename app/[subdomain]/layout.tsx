@@ -5,6 +5,7 @@ import { CartProvider } from '@/lib/cartContext';
 import { Toaster } from '@/components/ui/sonner';
 import FoodTruckNavbar from '@/components/FoodTruckNavbar';
 import FoodTruckFooter from '@/components/FoodTruckFooter';
+import { trackPageView } from '@/lib/track-page-view';
 
 // Generate dynamic metadata
 export async function generateMetadata({
@@ -50,6 +51,16 @@ export default async function FoodTruckLayout({
   // If no food truck is found, return 404
   if (!foodTruck) {
     notFound();
+  }
+  
+  // Track page view for analytics
+  if (foodTruck.id) {
+    // Use Promise.allSettled to avoid blocking the page render if tracking fails
+    Promise.allSettled([trackPageView(foodTruck.id)])
+      .catch(error => {
+        // Log error but don't block page rendering
+        console.error('Error tracking page view:', error);
+      });
   }
   
   // Extract configuration data

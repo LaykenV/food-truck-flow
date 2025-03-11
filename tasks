@@ -10,8 +10,16 @@ add admin configs from dashboard with onboarding tour
 
 //fix landing page quirks
 //set up menu and order page
-get settings tab back and redo each tab
+//get settings tab back and redo each tab
 wire up each tab
+wire dashboard
+
+//wire menus tab and menu page 
+//wire orders tab
+
+add user button and refactor tabs
+dashboard
+menu page and orders
 
 add crud for admin panel
 preview header index, only change color in mobile, landing page x scroll

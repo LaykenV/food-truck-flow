@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ClientWrapper } from './components/UnifiedConfigWrapper';
 import { HeroSection } from './components/HeroSection';
@@ -7,6 +9,7 @@ import { Header } from './components/Header';
 import { UnifiedConfigProvider } from './components/UnifiedConfigProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
+import { AuthModalsWithConfig } from "@/components/auth-modals-with-config";
 
 export default function Home() {
   return (
@@ -184,9 +187,14 @@ export default function Home() {
             <p className="text-xl mb-8 opacity-90">
               Join thousands of food truck owners who are expanding their reach and increasing their revenue with FoodTruckFlow.
             </p>
-            <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
-              <Link href="/signup">Get Started Today</Link>
-            </Button>
+            <AuthModalsWithConfig 
+              initialView="sign-up"
+              trigger={
+                <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
+                  Get Started Today
+                </Button>
+              }
+            />
           </div>
         </section>
 

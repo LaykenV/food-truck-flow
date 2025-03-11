@@ -108,6 +108,7 @@ Managed in **Supabase PostgreSQL** with **RLS** for data isolation.
   - `description` (text)
   - `price` (numeric)
   - `category` (text)
+  - `image_url` (text)
   - `created_at` (timestamp, default `now()`)
   - `updated_at` (timestamp, default `now()`)
 

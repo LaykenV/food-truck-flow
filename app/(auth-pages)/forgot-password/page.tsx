@@ -3,8 +3,10 @@ import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { AuthModals } from "@/components/auth-modals";
 import { SmtpMessage } from "../smtp-message";
+import Link from "next/link";
 
 export default async function ForgotPassword(props: {
   searchParams: Promise<Message>;
@@ -42,8 +44,8 @@ export default async function ForgotPassword(props: {
       <div className="mt-6 text-center text-sm">
         <p>
           Remember your password?{' '}
-          <Link href="/sign-in" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign in
+          <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
+            Back to Home
           </Link>
         </p>
       </div>
