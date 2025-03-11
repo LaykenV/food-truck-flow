@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LucideHome, LucideSettings, LucideShoppingCart, LucideBarChart, LucideMenu, LucideCreditCard, LucideLogOut } from 'lucide-react'
+import { LucideHome, LucideSettings, LucideShoppingCart, LucideBarChart, LucideMenu, LucideCreditCard, LucideLogOut, LucideUser } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -44,9 +44,9 @@ export function AdminSidebar({ foodTruckName = "Food Truck" }: AdminSidebarProps
       icon: LucideBarChart
     },
     {
-      href: '/admin/subscribe',
-      label: 'Subscription',
-      icon: LucideCreditCard
+      href: '/admin/account',
+      label: 'Account',
+      icon: LucideUser
     },
     {
       href: '/admin/settings',

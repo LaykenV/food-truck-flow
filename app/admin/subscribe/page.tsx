@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Check, CreditCard } from "lucide-react";
+import { Check, CreditCard, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function SubscribePage() {
   const supabase = await createClient();
@@ -59,14 +60,22 @@ export default async function SubscribePage() {
       return;
     }
     
-    // Redirect to settings page after successful subscription
-    redirect('/admin/settings');
+    // Redirect to account page after successful subscription
+    redirect('/admin/account');
   }
   
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Subscription Plans</h1>
+        <div className="flex items-center">
+          <Button variant="ghost" size="sm" asChild className="mr-2">
+            <Link href="/admin/account">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Account
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight">Subscription Plans</h1>
+        </div>
         <SidebarTrigger className="md:hidden" />
       </div>
       
@@ -183,24 +192,34 @@ export default async function SubscribePage() {
                 {currentPlan === 'none' ? 'No active subscription' : `${currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} Plan`}
               </p>
             </div>
-            <div>
-              <h3 className="text-sm font-medium">Subscription ID</h3>
-              <p className="text-sm text-muted-foreground truncate">
-                {foodTruck?.stripe_subscription_id || 'N/A'}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium">Status</h3>
-              <p className="text-sm text-muted-foreground">
-                {isSubscribed ? 'Active' : 'Inactive'}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium">Next Billing Date</h3>
-              <p className="text-sm text-muted-foreground">
-                {isSubscribed ? 'Not available' : 'N/A'}
-              </p>
-            </div>
+            {isSubscribed && (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium">Subscription ID</h3>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {foodTruck?.stripe_subscription_id || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Status</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isSubscribed ? 'Active' : 'Inactive'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Next Billing Date</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isSubscribed ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Monthly Price</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {currentPlan === 'pro' ? '$49' : '$29'}/month
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:space-x-2 sm:space-y-0">

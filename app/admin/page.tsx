@@ -3,7 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity } from "lucide-react";
+import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity, LucideArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
+import { format, subDays } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChecklistClient } from "./checklist-client";
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -16,7 +24,108 @@ export default async function AdminDashboard() {
     .eq('user_id', user?.id)
     .single();
   
+  // Fetch menu items to check if any exist
+  const { data: menuItems } = await supabase
+    .from('Menus')
+    .select('id')
+    .eq('food_truck_id', foodTruck?.id)
+    .limit(1);
+  
   const isSubscribed = !!foodTruck?.stripe_subscription_id;
+  
+  // Check if the checklist should be shown
+  // Get the cookie that tracks if the checklist has been completed
+  const cookieStore = await cookies();
+  const checklistCompletedCookie = cookieStore.get('checklist_completed');
+  const checklistCompleted = checklistCompletedCookie?.value === 'true';
+  
+  // Check if all items are completed
+  const hasCustomName = foodTruck?.configuration?.name && foodTruck.configuration.name !== 'Food Truck Name';
+  const hasLogo = !!foodTruck?.configuration?.logo;
+  const hasContactInfo = foodTruck?.configuration?.contact?.email || 
+                         foodTruck?.configuration?.contact?.phone || 
+                         foodTruck?.configuration?.contact?.address;
+  const hasProfileSetup = hasCustomName && (hasLogo || hasContactInfo);
+  
+  const hasCustomColors = (foodTruck?.configuration?.primaryColor && foodTruck.configuration.primaryColor !== '#FF6B35') || 
+                          (foodTruck?.configuration?.secondaryColor && foodTruck.configuration.secondaryColor !== '#4CB944');
+  
+  const hasMenuItems = menuItems && menuItems.length > 0;
+  
+  const hasStripeApiKey = !!foodTruck?.stripe_api_key;
+  
+  const hasCustomDomain = foodTruck?.custom_domain && 
+                          !foodTruck.subdomain.startsWith('foodtruck-');
+  
+  // Calculate if all checklist items are completed
+  const allChecklistItemsCompleted = !!hasProfileSetup && 
+                                    !!hasCustomColors && 
+                                    !!hasMenuItems && 
+                                    !!hasStripeApiKey && 
+                                    !!hasCustomDomain && 
+                                    !!isSubscribed;
+  
+  // If all items are completed but the cookie isn't set, set it now
+  if (allChecklistItemsCompleted && !checklistCompleted) {
+    cookieStore.set('checklist_completed', 'true', { 
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365), // 1 year
+      path: '/' 
+    });
+  }
+  
+  // Function to mark checklist as completed (will be called client-side)
+  async function markChecklistAsCompleted() {
+    'use server'
+    const cookieStore = await cookies();
+    cookieStore.set('checklist_completed', 'true', { 
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365), // 1 year
+      path: '/' 
+    });
+  }
+  
+  // Fetch analytics data for the dashboard
+  // Get analytics data
+  const { data: analyticsData } = await supabase
+    .from('Analytics')
+    .select('*')
+    .eq('food_truck_id', foodTruck?.id)
+    .order('date', { ascending: false });
+  
+  // Calculate total orders and revenue directly from analytics data
+  const totalOrders = analyticsData?.reduce((sum, day) => sum + (day.orders_placed || 0), 0) || 0;
+  const totalRevenue = analyticsData?.reduce((sum, day) => sum + (day.revenue || 0), 0) || 0;
+  
+  // Calculate total page views
+  const totalPageViews = analyticsData?.reduce((sum, day) => sum + (day.page_views || 0), 0) || 0;
+  
+  // Generate dates for the last 30 days
+  const last30Days = Array.from({ length: 30 }, (_, i) => {
+    const date = subDays(new Date(), i);
+    return format(date, 'yyyy-MM-dd');
+  }).reverse();
+  
+  // Calculate percentage change for metrics
+  const calculatePercentChange = (data: any[] | null, metric: string) => {
+    if (!data || data.length < 30) return 0;
+    
+    const currentMonth = data.slice(0, 15).reduce((sum, day) => sum + (day[metric] || 0), 0);
+    const previousMonth = data.slice(15, 30).reduce((sum, day) => sum + (day[metric] || 0), 0);
+    
+    if (previousMonth === 0) return currentMonth > 0 ? 100 : 0;
+    return Math.round(((currentMonth - previousMonth) / previousMonth) * 100);
+  };
+  
+  const ordersPercentChange = calculatePercentChange(analyticsData, 'orders_placed');
+  const revenuePercentChange = calculatePercentChange(analyticsData, 'revenue');
+  const visitsPercentChange = calculatePercentChange(analyticsData, 'page_views');
+  
+  // Fetch recent orders for the activity feed
+  const { data: recentOrders } = await supabase
+    .from('Orders')
+    .select('*')
+    .eq('food_truck_id', foodTruck?.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
   
   return (
     <div className="space-y-6">
@@ -25,102 +134,32 @@ export default async function AdminDashboard() {
         <SidebarTrigger className="md:hidden" />
       </div>
       
-      {/* Getting Started Checklist */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Getting Started Checklist</CardTitle>
-          <CardDescription>Complete these tasks to set up your food truck website</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-2">
-              <Checkbox id="setup-profile" />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="setup-profile" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Set up your profile
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Add your food truck name, logo, and contact information
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-2">
-              <Checkbox id="customize-website" />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="customize-website" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Customize your website
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Choose colors, layout, and design elements
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-2">
-              <Checkbox id="add-menu" />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="add-menu" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Add menu items
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Create your menu with prices and descriptions
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-2">
-              <Checkbox id="setup-stripe" />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="setup-stripe" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Set up Stripe for payments
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Connect your Stripe account to accept online payments
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-2">
-              <Checkbox id="preview-site" />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="preview-site" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Preview your website
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Check how your website looks before publishing
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-2">
-              <Checkbox id="subscribe" checked={isSubscribed} disabled />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="subscribe" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Subscribe to a plan
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {isSubscribed 
-                    ? `Current plan: ${foodTruck?.subscription_plan || 'Basic'}`
-                    : 'Choose a subscription plan to publish your website'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Getting Started Checklist - Only show if not completed */}
+      {!checklistCompleted && (
+        <ChecklistClient 
+          initialChecklist={{
+            profileSetup: !!hasProfileSetup,
+            customColors: !!hasCustomColors,
+            menuItems: !!hasMenuItems,
+            stripeApiKey: !!hasStripeApiKey,
+            customDomain: !!hasCustomDomain,
+            subscribed: !!isSubscribed
+          }}
+          markChecklistAsCompleted={markChecklistAsCompleted}
+        />
+      )}
       
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
             <LucideShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{totalOrders}</div>
             <p className="text-xs text-muted-foreground">
-              +0% from last month
+              {ordersPercentChange >= 0 ? '+' : ''}{ordersPercentChange}% from last month
             </p>
           </CardContent>
         </Card>
@@ -131,9 +170,9 @@ export default async function AdminDashboard() {
             <LucideDollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0.00</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
-              +0% from last month
+              {revenuePercentChange >= 0 ? '+' : ''}{revenuePercentChange}% from last month
             </p>
           </CardContent>
         </Card>
@@ -144,22 +183,9 @@ export default async function AdminDashboard() {
             <LucideUsers className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{totalPageViews}</div>
             <p className="text-xs text-muted-foreground">
-              +0% from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
-            <LucideActivity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              +0 since last hour
+              {visitsPercentChange >= 0 ? '+' : ''}{visitsPercentChange}% from last month
             </p>
           </CardContent>
         </Card>
@@ -172,7 +198,35 @@ export default async function AdminDashboard() {
           <CardDescription>Your latest website and order activity</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">No recent activity to display.</p>
+          {recentOrders && recentOrders.length > 0 ? (
+            <ScrollArea className="h-[300px]">
+              <div className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-start justify-between border-b pb-4">
+                    <div>
+                      <p className="font-medium">{order.customer_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(order.created_at).toLocaleString()}
+                      </p>
+                      <p className="text-sm">
+                        {order.items.length} {order.items.length === 1 ? 'item' : 'items'} - {formatCurrency(order.total_amount)}
+                      </p>
+                    </div>
+                    <Badge variant={
+                      order.status === 'completed' ? 'default' :
+                      order.status === 'ready' ? 'secondary' :
+                      order.status === 'preparing' ? 'outline' :
+                      'secondary'
+                    }>
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          ) : (
+            <p className="text-sm text-muted-foreground">No recent activity to display.</p>
+          )}
         </CardContent>
       </Card>
     </div>
