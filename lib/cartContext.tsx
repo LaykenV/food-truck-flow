@@ -73,19 +73,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   
   // Add an item to the cart
   const addItem = (item: MenuItem) => {
-    setItems(prevItems => {
-      // Check if item already exists in cart
-      const existingItemIndex = prevItems.findIndex(cartItem => cartItem.id === item.id);
+    // Create a new function to avoid potential state closure issues
+    setItems((prevItems) => {
+      // Make a copy of the previous items array
+      const newItems = [...prevItems];
+      
+      // Find the existing item index
+      const existingItemIndex = newItems.findIndex(
+        (cartItem) => cartItem.id === item.id
+      );
       
       if (existingItemIndex >= 0) {
-        // Item exists, increment quantity
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += 1;
-        return updatedItems;
+        // Item exists, create a new object with incremented quantity
+        newItems[existingItemIndex] = {
+          ...newItems[existingItemIndex],
+          quantity: newItems[existingItemIndex].quantity + 1,
+        };
       } else {
         // Item doesn't exist, add it with quantity 1
-        return [...prevItems, { ...item, quantity: 1 }];
+        newItems.push({ ...item, quantity: 1 });
       }
+      
+      return newItems;
     });
   };
   

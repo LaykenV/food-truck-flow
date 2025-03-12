@@ -11,7 +11,7 @@ export default async function FoodTruckMenuPage({
   params: { subdomain: string }
 }) {
   // Get the subdomain from the params
-  const { subdomain } = params;
+  const { subdomain } = await params;
   
   // Fetch the food truck data using the cached function
   const foodTruck = await getFoodTruckData(subdomain);
@@ -41,10 +41,15 @@ export default async function FoodTruckMenuPage({
               <Utensils className="h-6 w-6 text-orange-500 mr-2" />
               <h1 className="text-3xl font-bold">Our Menu</h1>
             </div>
+            
+            {/* Menu Display Component */}
+            <div className="mb-8">
+              <MenuDisplay items={menuItems} primaryColor={primaryColor} />
+            </div>
           </div>
           
-          {/* Menu Content */}
-          <div className="lg:col-span-1">
+          {/* Cart Component */}
+          <div className="w-full md:w-1/4">
             <div className="sticky top-24 bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4 pb-4 border-b">Your Order</h2>
               <Cart foodTruckId={foodTruck.id} />

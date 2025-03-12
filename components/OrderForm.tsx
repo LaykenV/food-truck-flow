@@ -64,17 +64,16 @@ export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps)
     setIsSubmitting(true);
     
     try {
-      const supabase = createClient();
-      
-      // Create the order in the database
-      const { data, error } = await supabase
-        .from('Orders')
-        .insert({
+      // Use the new API route instead of directly interacting with Supabase
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           food_truck_id: foodTruckId,
           customer_name: formData.name,
           customer_email: formData.email,
-          customer_phone: formData.phone,
-          notes: formData.notes,
           items: foodTruckItems.map(item => ({
             id: item.id,
             name: item.name,
@@ -82,18 +81,18 @@ export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps)
             quantity: item.quantity,
           })),
           total_amount: totalPrice,
-          status: 'pending',
-        })
-        .select('id')
-        .single();
+        }),
+      });
       
-      if (error) {
-        throw error;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to place order');
       }
       
       // Store the order ID in localStorage for tracking
-      if (data?.id) {
-        localStorage.setItem('activeOrderId', data.id);
+      if (result.orderId) {
+        localStorage.setItem('activeOrderId', result.orderId);
         localStorage.setItem('orderExpiry', (Date.now() + 24 * 60 * 60 * 1000).toString());
       }
       
@@ -110,8 +109,8 @@ export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps)
         onSuccess();
       } else {
         const redirectPath = subdomain 
-          ? `/${subdomain}/order-confirmation?id=${data?.id}`
-          : `/order-confirmation?id=${data?.id}`;
+          ? `/${subdomain}/order-confirmation?id=${result.orderId}`
+          : `/order-confirmation?id=${result.orderId}`;
         router.push(redirectPath);
       }
     } catch (error) {
@@ -166,6 +165,9 @@ export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps)
               value={formData.phone}
               onChange={handleChange}
             />
+            <p className="text-xs text-muted-foreground">
+              For order notifications (not stored in database)
+            </p>
           </div>
           
           <div className="space-y-2">
@@ -178,6 +180,9 @@ export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps)
               onChange={handleChange}
               rows={3}
             />
+            <p className="text-xs text-muted-foreground">
+              These instructions are for the food truck staff but are not stored in the database
+            </p>
           </div>
           
           <div className="pt-2">

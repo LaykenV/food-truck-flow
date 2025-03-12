@@ -1,23 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CheckCircle, Clock, ArrowLeft, Home } from 'lucide-react';
 
-export default function OrderConfirmationPage({
-  params
-}: {
-  params: { subdomain: string }
-}) {
+export default function OrderConfirmationPage() {
+  // Use the useParams hook instead of accessing params directly
+  const params = useParams();
+  const subdomain = params.subdomain as string;
   const searchParams = useSearchParams();
   const orderId = searchParams.get('id');
-  const [orderStatus, setOrderStatus] = useState('pending');
+  const [orderStatus, setOrderStatus] = useState('preparing');
   const [loading, setLoading] = useState(true);
-  const { subdomain } = params;
   
   useEffect(() => {
     if (!orderId) return;
@@ -62,6 +60,20 @@ export default function OrderConfirmationPage({
       supabase.removeChannel(channel);
     };
   }, [orderId]);
+  
+  // Format the order status for display
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case 'preparing':
+        return 'Preparing';
+      case 'ready':
+        return 'Ready for Pickup';
+      case 'completed':
+        return 'Completed';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
   
   return (
     <div className="bg-white min-h-screen">
@@ -110,7 +122,7 @@ export default function OrderConfirmationPage({
                 </div>
                 <div className="pl-7">
                   <p className="capitalize font-medium">
-                    {loading ? 'Loading...' : orderStatus}
+                    {loading ? 'Loading...' : getStatusDisplay(orderStatus)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     We'll update this status as your order progresses

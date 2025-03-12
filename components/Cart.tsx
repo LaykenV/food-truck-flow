@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { MinusCircle, PlusCircle, ShoppingCart, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface CartProps {
   onCheckout?: () => void;
@@ -15,9 +16,19 @@ interface CartProps {
 
 export function Cart({ onCheckout, foodTruckId }: CartProps) {
   const { items, removeItem, updateQuantity, totalItems, totalPrice } = useCart();
+  const router = useRouter();
   
   // Filter items to only show those from this food truck
   const foodTruckItems = items.filter(item => item.food_truck_id === foodTruckId);
+  
+  const handleCheckout = () => {
+    if (onCheckout) {
+      onCheckout();
+    } else {
+      // Navigate to the order page
+      router.push('./order');
+    }
+  };
   
   if (foodTruckItems.length === 0) {
     return (
@@ -95,7 +106,11 @@ export function Cart({ onCheckout, foodTruckId }: CartProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={onCheckout}>
+        <Button 
+          className="w-full" 
+          onClick={handleCheckout}
+          disabled={foodTruckItems.length === 0}
+        >
           Checkout
         </Button>
       </CardFooter>

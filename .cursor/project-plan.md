@@ -50,13 +50,13 @@ FoodTruckFlow.com is a B2B SaaS platform designed for food truck owners to creat
 
 ### Subdomain and Custom Domain Support
 - Subdomains (e.g., `bobs-tacos.foodtruckflow.com`) for all users.
-- Custom domains with automatic SSL (via Let’s Encrypt) for Pro plan users.
+- Custom domains with automatic SSL (via Let's Encrypt) for Pro plan users.
 - Server-side logic with `getServerSideProps` maps domains to food trucks and checks `is_published`.
 
 ### Stripe Integration
 - Subscriptions via Stripe Checkout.
 - Owners provide Stripe API keys for order payments (encrypted in Supabase).
-- No extra fees beyond Stripe’s; refunds handled manually via Stripe dashboard.
+- No extra fees beyond Stripe's; refunds handled manually via Stripe dashboard.
 - Webhooks sync subscription status with the `FoodTrucks` table.
 
 ### Order Status Tracking
@@ -119,7 +119,7 @@ Managed in **Supabase PostgreSQL** with **RLS** for data isolation.
   - `customer_email` (text)
   - `items` (jsonb): Ordered items array
   - `total_amount` (numeric)
-  - `status` (text: 'pending', 'preparing', 'ready', 'completed')
+  - `status` (text: 'preparing', 'ready', 'completed')
   - `created_at` (timestamp, default `now()`)
   - `updated_at` (timestamp, default `now()`)
 
@@ -152,7 +152,7 @@ Managed in **Supabase PostgreSQL** with **RLS** for data isolation.
 - **Authentication**: Supabase Auth with email/password, social login; optional 2FA for admin.
 - **Data Isolation**: RLS at the database level.
 - **Encryption**: Sensitive data (e.g., Stripe API keys) encrypted in Supabase.
-- **SSL**: Automatic via Let’s Encrypt for all domains.
+- **SSL**: Automatic via Let's Encrypt for all domains.
 
 ## Design Guidelines
 - **Landing Page**: Clean, modern, bold typography, use-case focused.

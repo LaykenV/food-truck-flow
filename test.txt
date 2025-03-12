@@ -1,94 +1,71 @@
-# Analyzing the Template Rendering Strategy
+I'll provide a comprehensive plan for removing the sign-in and sign-up pages while retaining the forgot-password functionality. Here's the implementation plan:
 
-Looking at your `UnifiedConfigWrapper.tsx`, I can see you're already setting up a structure for rendering a preview of the food truck website. Let's think about how to best organize this to ensure UI consistency between the live site and preview.
+# Implementation Plan: Removing Sign-in/Sign-up Pages While Retaining Forgot Password
 
-## Current Setup Analysis
+## 1. Update Navigation and References
 
-In `UnifiedConfigWrapper.tsx`:
-- You have a `UnifiedLivePreview` component that renders the preview
-- You're passing a `mode` prop ('admin' or 'client') to control behavior
-- You're passing the `config` object to the preview
+### A. Fix Main Page CTA Button
+- Modify the "Get Started Today" button in `app/page.tsx` to open the auth modal instead of navigating to `/signup`
+- Replace the direct link with a client-side component that triggers the auth modal
 
-This is a good foundation, but we need to ensure the actual UI components are shared between the live site and preview.
+### B. Update Internal References
+- Ensure all components that might link to `/sign-in` or `/sign-up` are updated to use the modal approach instead
 
-## Recommended Approach
+## 2. Retain Forgot Password Functionality
 
-Here's how I'd structure this:
+### A. Keep Forgot Password Page
+- Retain the entire `app/(auth-pages)/forgot-password` directory and its contents
+- Keep the `smtp-message.tsx` component which is used by the forgot password page
 
-1. **Create a pure UI component called `FoodTruckTemplate`**:
-   - This component should accept:
-     - `config`: The configuration object
-     - `displayMode`: 'live' | 'preview'
-     - `subdomain`: Optional, for the live site
+### B. Update Auth Modal Links
+- Ensure the "Forgot Password?" links in both auth modal components continue to point to the `/forgot-password` page
+- Verify that the user experience flows smoothly from modal to forgot password page
 
-2. **Update your component structure**:
+## 3. Remove Unused Auth Pages
 
-```
-components/
-  ├── FoodTruckTemplate/
-  │   ├── index.tsx                 # Main wrapper component
-  │   ├── FoodTruckHero.tsx         # Hero section
-  │   ├── FoodTruckAbout.tsx        # About section
-  │   ├── FoodTruckContact.tsx      # Contact section
-  │   └── ... other sections
-  │
-  ├── UnifiedLivePreview.tsx        # Uses FoodTruckTemplate with displayMode="preview"
-  └── ... other components
-```
+### A. Remove Sign-in Page
+- Delete the `app/(auth-pages)/sign-in` directory and its contents
 
-3. **In `FoodTruckTemplate/index.tsx`**:
-   - Render all sections based on config
-   - Use the `displayMode` prop to conditionally:
-     - Disable links/buttons in preview mode
-     - Show "Preview Mode" indicators
-     - Skip any functionality that requires server-side data
+### B. Remove Sign-up Page
+- Delete the `app/(auth-pages)/sign-up` directory and its contents
 
-4. **Update `app/[subdomain]/page.tsx`**:
-   - Import and use `FoodTruckTemplate` with `displayMode="live"`
-   - Keep the data fetching logic
+## 4. Update Layout for Forgot Password
 
-5. **Update `UnifiedLivePreview.tsx`**:
-   - Import and use `FoodTruckTemplate` with `displayMode="preview"`
-   - Add any preview-specific wrappers (like mobile device frames)
+### A. Modify Auth Pages Layout
+- Update `app/(auth-pages)/layout.tsx` to only handle the forgot password page
+- Simplify the layout if it contained specific elements for sign-in/sign-up pages
 
-## Implementation Considerations
+## 5. Update Routing and Redirects
 
-1. **Handling Interactive Elements**:
-   - In the `FoodTruckTemplate`, use the `displayMode` prop to determine behavior:
-   ```tsx
-   const handleButtonClick = (e: React.MouseEvent) => {
-     if (displayMode === 'preview') {
-       e.preventDefault();
-       // Maybe show a toast: "This button is disabled in preview mode"
-     } else {
-       // Actual functionality for live mode
-     }
-   };
-   ```
+### A. Add Redirects for Old URLs
+- Implement redirects for `/sign-in` and `/sign-up` URLs to the homepage with the appropriate modal open
+- This ensures that any bookmarked links or external references continue to work
 
-2. **Styling Differences**:
-   - Use conditional classes based on `displayMode`:
-   ```tsx
-   <div className={`base-class ${displayMode === 'preview' ? 'preview-class' : 'live-class'}`}>
-   ```
+## 6. Testing Plan
 
-3. **Preview Indicators**:
-   - Add subtle indicators in preview mode:
-   ```tsx
-   {displayMode === 'preview' && (
-     <div className="preview-badge">Preview Mode</div>
-   )}
-   ```
+### A. Functional Testing
+- Test the auth modals for sign-in and sign-up functionality
+- Verify the forgot password flow works correctly
+- Test the redirects from old URLs
 
-4. **Handling Server Components**:
-   - Your `FoodTruckTemplate` should be a client component to work in the preview
-   - Any server-only functionality should be conditionally rendered based on `displayMode`
+### B. Edge Cases
+- Test what happens when a user is directed to `/sign-in` or `/sign-up` from an external link
+- Verify that deep links to these pages are properly handled
 
-## Benefits of This Approach
+## 7. Documentation Updates
 
-1. **Single Source of Truth**: The UI is defined in one place
-2. **Consistency**: The preview and live site will look identical
-3. **Maintainability**: Changes to the UI only need to be made once
-4. **Flexibility**: The `displayMode` prop allows for different behaviors while keeping the UI consistent
+### A. Update Internal Documentation
+- Document the change in authentication approach
+- Note that only forgot password remains as a standalone page
 
-This approach aligns perfectly with your project plan's emphasis on live preview functionality and will ensure a seamless experience between the admin dashboard preview and the actual published site.
+### B. User-Facing Updates
+- Update any user documentation or help content that might reference the standalone sign-in or sign-up pages
+
+## Implementation Notes
+
+1. The auth modals should be the primary entry point for authentication
+2. The forgot password page should remain a standalone page since it often involves email verification flows
+3. Consider adding state management to open the appropriate modal when redirecting from old URLs
+4. Ensure the layout for the forgot password page is appropriate as a standalone page
+
+This plan provides a structured approach to removing the sign-in and sign-up pages while maintaining the forgot password functionality, ensuring a smooth user experience throughout the transition.

@@ -15,11 +15,11 @@ export function MenuDisplay({ items, primaryColor }: MenuDisplayProps) {
   // Group items by category
   const categories = Array.from(new Set(items.map(item => item.category)));
   
-  // Set the first category as the default selected tab
-  const [selectedCategory, setSelectedCategory] = useState(categories[0] || 'All');
+  // Set "All" as the default selected tab
+  const [selectedCategory, setSelectedCategory] = useState('All');
   
-  // If there are no categories, show a message
-  if (categories.length === 0) {
+  // If there are no items, show a message
+  if (items.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">No menu items available</p>
@@ -31,6 +31,17 @@ export function MenuDisplay({ items, primaryColor }: MenuDisplayProps) {
     <Tabs defaultValue={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
       <ScrollArea className="w-full">
         <TabsList className="mb-4 flex w-max">
+          <TabsTrigger 
+            key="All" 
+            value="All"
+            className="px-4 py-2"
+            style={{ 
+              borderColor: selectedCategory === 'All' ? primaryColor : undefined,
+              color: selectedCategory === 'All' ? primaryColor : undefined
+            }}
+          >
+            All
+          </TabsTrigger>
           {categories.map(category => (
             <TabsTrigger 
               key={category} 
@@ -46,6 +57,18 @@ export function MenuDisplay({ items, primaryColor }: MenuDisplayProps) {
           ))}
         </TabsList>
       </ScrollArea>
+      
+      <TabsContent key="All" value="All" className="mt-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {items.map(item => (
+            <MenuItemComponent 
+              key={item.id} 
+              item={item} 
+              primaryColor={primaryColor}
+            />
+          ))}
+        </div>
+      </TabsContent>
       
       {categories.map(category => (
         <TabsContent key={category} value={category} className="mt-0">

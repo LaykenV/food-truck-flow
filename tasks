@@ -17,11 +17,18 @@ wire dashboard
 //wire menus tab and menu page 
 //wire orders tab
 
-add user button and refactor tabs
-dashboard
-menu page and orders
+//add user button and refactor tabs
+//dashboard
+menu page and  mock orders
 
-add crud for admin panel
-preview header index, only change color in mobile, landing page x scroll
-add order functionality mock
-analytics
+really redesign public facing site
+update config accordingly
+
+set up stripe for subscriptions
+set up stripe for cart checkout
+
+set up domain dns
+
+redo landing page?
+test?
+

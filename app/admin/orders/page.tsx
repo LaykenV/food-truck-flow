@@ -21,7 +21,7 @@ type Order = {
   customer_email: string
   items: OrderItem[]
   total_amount: number
-  status: 'pending' | 'preparing' | 'ready' | 'completed'
+  status: 'preparing' | 'ready' | 'completed'
   created_at: string
   updated_at: string
 }
@@ -230,8 +230,6 @@ export default function OrdersPage() {
   // Get status icon based on order status
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />
       case 'preparing':
         return <CookingPot className="h-4 w-4 text-blue-500" />
       case 'ready':
@@ -246,8 +244,6 @@ export default function OrdersPage() {
   // Get status badge based on order status
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>
       case 'preparing':
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>
       case 'ready':
@@ -264,13 +260,10 @@ export default function OrdersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Orders</h1>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            {orders.filter(o => o.status === 'pending').length} Pending
-          </Badge>
           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
             {orders.filter(o => o.status === 'preparing').length} Preparing
           </Badge>
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
             {orders.filter(o => o.status === 'ready').length} Ready
           </Badge>
         </div>
@@ -288,10 +281,9 @@ export default function OrdersPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-4 mb-4">
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="pending">Pending</TabsTrigger>
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">All Orders</TabsTrigger>
                   <TabsTrigger value="preparing">Preparing</TabsTrigger>
                   <TabsTrigger value="ready">Ready</TabsTrigger>
                 </TabsList>
@@ -340,15 +332,6 @@ export default function OrdersPage() {
                                 <div className="text-right">
                                   <p className="font-medium">${order.total_amount.toFixed(2)}</p>
                                   <div className="mt-2">
-                                    {order.status === 'pending' && (
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={() => updateOrderStatus(order.id, 'preparing')}
-                                      >
-                                        Start Preparing
-                                      </Button>
-                                    )}
                                     {order.status === 'preparing' && (
                                       <Button 
                                         variant="outline" 
@@ -386,58 +369,6 @@ export default function OrdersPage() {
                         ))}
                       </div>
                     )}
-                  </ScrollArea>
-                </TabsContent>
-                
-                <TabsContent value="pending" className="mt-0">
-                  <ScrollArea className="h-[60vh]">
-                    <div className="space-y-4">
-                      {orders.filter(o => o.status === 'pending').length === 0 ? (
-                        <div className="text-center py-8">
-                          <p className="text-gray-500">No pending orders</p>
-                        </div>
-                      ) : (
-                        orders.filter(o => o.status === 'pending').map((order) => (
-                          <Card key={order.id} className="overflow-hidden">
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-medium">{order.customer_name}</h3>
-                                    {getStatusBadge(order.status)}
-                                  </div>
-                                  <p className="text-sm text-gray-500">{order.customer_email}</p>
-                                  <p className="text-sm text-gray-500">Order #{order.id.substring(0, 8)}</p>
-                                  <p className="text-sm text-gray-500">{formatDate(order.created_at)}</p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="font-medium">${order.total_amount.toFixed(2)}</p>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className="mt-2"
-                                    onClick={() => updateOrderStatus(order.id, 'preparing')}
-                                  >
-                                    Start Preparing
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="mt-4 pt-4 border-t">
-                                <h4 className="text-sm font-medium mb-2">Order Items</h4>
-                                <ul className="space-y-1">
-                                  {order.items.map((item, index) => (
-                                    <li key={index} className="text-sm flex justify-between">
-                                      <span>{item.quantity}x {item.name}</span>
-                                      <span>${(item.price * item.quantity).toFixed(2)}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      )}
-                    </div>
                   </ScrollArea>
                 </TabsContent>
                 

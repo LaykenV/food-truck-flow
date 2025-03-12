@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/sonner';
 import FoodTruckNavbar from '@/components/FoodTruckNavbar';
 import FoodTruckFooter from '@/components/FoodTruckFooter';
 import { trackPageView } from '@/lib/track-page-view';
+import { OrderStatusTrackerWrapper } from '@/components/OrderStatusTrackerWrapper';
 
 // Generate dynamic metadata
 export async function generateMetadata({
@@ -71,6 +72,10 @@ export default async function FoodTruckLayout({
       <div className="min-h-screen flex flex-col">
         <FoodTruckNavbar config={config} subdomain={subdomain} displayMode="live" />
         <main className="flex-grow">
+          {/* Order Status Tracker - only shows if user has an active order */}
+          <div className="container mx-auto px-4 mt-20">
+            <OrderStatusTrackerWrapper />
+          </div>
           {children}
         </main>
         <FoodTruckFooter config={config} subdomain={subdomain} displayMode="live" />
