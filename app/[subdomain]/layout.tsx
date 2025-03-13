@@ -72,10 +72,8 @@ export default async function FoodTruckLayout({
       <div className="min-h-screen flex flex-col">
         <FoodTruckNavbar config={config} subdomain={subdomain} displayMode="live" />
         <main className="flex-grow">
-          {/* Order Status Tracker - only shows if user has an active order */}
-          <div className="container mx-auto px-4 mt-20">
-            <OrderStatusTrackerWrapper />
-          </div>
+          {/* Order Status Tracker is now fixed and doesn't need a container */}
+          <OrderStatusTrackerWrapper />
           {children}
         </main>
         <FoodTruckFooter config={config} subdomain={subdomain} displayMode="live" />

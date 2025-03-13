@@ -18,7 +18,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    const { food_truck_id, customer_name, customer_email, items, total_amount } = body;
+    const { 
+      food_truck_id, 
+      customer_name, 
+      customer_email, 
+      items, 
+      total_amount,
+      pickup_time,
+      is_asap 
+    } = body;
     
     if (!food_truck_id || !customer_name || !customer_email || !items || !total_amount) {
       return NextResponse.json(
@@ -33,6 +41,26 @@ export async function POST(request: NextRequest) {
         { error: 'Items must be a non-empty array' },
         { status: 400 }
       );
+    }
+    
+    // Validate pickup time if provided
+    if (pickup_time && !is_asap) {
+      const pickupDate = new Date(pickup_time);
+      const now = new Date();
+      
+      if (isNaN(pickupDate.getTime())) {
+        return NextResponse.json(
+          { error: 'Invalid pickup time format' },
+          { status: 400 }
+        );
+      }
+      
+      if (pickupDate < now) {
+        return NextResponse.json(
+          { error: 'Pickup time cannot be in the past' },
+          { status: 400 }
+        );
+      }
     }
     
     // TODO: In the future, get the food truck's Stripe API key and process payment
@@ -71,6 +99,8 @@ export async function POST(request: NextRequest) {
         items,
         total_amount,
         status: 'preparing', // Status must be one of: 'preparing', 'ready', 'completed'
+        pickup_time: pickup_time || null,
+        is_asap: is_asap !== undefined ? is_asap : true,
       })
       .select('id')
       .single();

@@ -33,7 +33,8 @@ CREATE TABLE Orders (
    - User fills out the order form with their name and email.
    - The form submits to the `/api/orders` endpoint.
    - The API creates a new order in the database with status 'preparing'.
-   - The order ID is stored in localStorage for tracking.
+   - The order ID is stored in a cookie (`activeOrders`) with an expiration time for tracking.
+   - A custom event (`orderStatusUpdate`) is triggered to notify the OrderStatusTracker.
 
 3. **Order Confirmation**:
    - User is redirected to the order confirmation page.
@@ -41,18 +42,43 @@ CREATE TABLE Orders (
 
 4. **Order Status Tracking**:
    - The `OrderStatusTracker` component displays the current order status on all pages.
-   - It only appears if the user has an active order (stored in localStorage).
+   - It appears as a floating widget if the user has active orders (stored in cookies).
    - Status updates in real-time using Supabase subscriptions.
+   - Users can minimize/maximize the tracker or dismiss it entirely.
+   - When multiple orders are active, users can switch between them.
+   - The tracker maintains a smooth UI experience with loading states when switching between orders.
+   - Orders are automatically removed from tracking when they expire (24 hours by default).
+   - Completed orders have their expiry time extended to 1 hour from completion.
 
 5. **Order Management**:
    - Food truck owners can view and update order status in the admin dashboard.
-   - Status updates trigger real-time updates for customers.
+   - Status updates trigger real-time updates for customers via Supabase subscriptions.
+   - Owners can mark orders as "ready" or "completed" with a single click.
 
 ### API Endpoints
 
 - `POST /api/orders`: Create a new order
 - `GET /api/orders/[id]`: Get order details
 - `PATCH /api/orders/[id]`: Update order status
+
+### Key Components
+
+1. **OrderForm**:
+   - Handles order submission and validation
+   - Manages the activeOrders cookie for order tracking
+   - Triggers the orderStatusUpdate event
+
+2. **OrderStatusTracker**:
+   - Displays current order status in a floating widget
+   - Supports multiple active orders with easy switching
+   - Uses Supabase real-time subscriptions for live updates
+   - Provides smooth UI transitions with loading states
+   - Can be minimized or dismissed by the user
+
+3. **Order Confirmation Page**:
+   - Displays detailed order information
+   - Shows real-time status updates
+   - Provides navigation back to the menu or home page
 
 ## Future Stripe Integration
 
@@ -193,9 +219,29 @@ function StripePaymentForm(props) {
    - Use Stripe test mode for development and testing.
    - Test various payment scenarios (success, failure, etc.).
 
+## UX Considerations
+
+1. **Order Status Tracking**:
+   - Provide clear visual feedback for status changes.
+   - Use loading indicators when fetching or updating status.
+   - Allow users to easily access order details from the tracker.
+   - Support multiple active orders with intuitive switching.
+
+2. **Error States**:
+   - Handle network errors gracefully.
+   - Provide clear error messages when operations fail.
+   - Offer retry options when appropriate.
+
+3. **Accessibility**:
+   - Ensure all components are keyboard navigable.
+   - Include proper ARIA attributes for screen readers.
+   - Maintain sufficient color contrast for status indicators.
+
 ## Resources
 
 - [Stripe API Documentation](https://stripe.com/docs/api)
 - [Stripe.js and Elements](https://stripe.com/docs/js)
 - [Stripe Connect](https://stripe.com/docs/connect)
-- [Stripe Webhooks](https://stripe.com/docs/webhooks) 
+- [Stripe Webhooks](https://stripe.com/docs/webhooks)
+- [Supabase Realtime](https://supabase.com/docs/guides/realtime)
+- [Next.js API Routes](https://nextjs.org/docs/api-routes/introduction) 

@@ -19,16 +19,33 @@ wire dashboard
 
 //add user button and refactor tabs
 //dashboard
-menu page and  mock orders
+//menu page and  mock orders
+//order actions
+//add notes? and pickup time
 
-really redesign public facing site
-update config accordingly
+landing page
+v0
+new background picture
+change testimonials and footer
+
+admin dashboard
+v0
+update config to match new design
+orders 2 sometimes
+analytics too ^
+
+template
+v0
+
+template
+admin dashboard
+optimize everything
+landing page
 
 set up stripe for subscriptions
 set up stripe for cart checkout
 
 set up domain dns
 
-redo landing page?
 test?
 

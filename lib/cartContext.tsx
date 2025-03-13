@@ -16,6 +16,7 @@ export type MenuItem = {
 // Define the cart item type (menu item with quantity)
 export type CartItem = MenuItem & {
   quantity: number;
+  notes?: string;
 };
 
 // Define the cart context type
@@ -24,6 +25,7 @@ type CartContextType = {
   addItem: (item: MenuItem) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
+  updateItemNotes: (itemId: string, notes: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -35,6 +37,7 @@ const CartContext = createContext<CartContextType>({
   addItem: () => {},
   removeItem: () => {},
   updateQuantity: () => {},
+  updateItemNotes: () => {},
   clearCart: () => {},
   totalItems: 0,
   totalPrice: 0,
@@ -117,6 +120,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
   
+  // Update notes for an item
+  const updateItemNotes = (itemId: string, notes: string) => {
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === itemId ? { ...item, notes } : item
+      )
+    );
+  };
+  
   // Clear the cart
   const clearCart = () => {
     setItems([]);
@@ -128,6 +140,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addItem,
       removeItem,
       updateQuantity,
+      updateItemNotes,
       clearCart,
       totalItems,
       totalPrice,

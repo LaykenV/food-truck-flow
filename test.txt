@@ -1,71 +1,431 @@
-I'll provide a comprehensive plan for removing the sign-in and sign-up pages while retaining the forgot-password functionality. Here's the implementation plan:
+# Food Truck Flow: Item Notes & Pickup Time Implementation Plan
 
-# Implementation Plan: Removing Sign-in/Sign-up Pages While Retaining Forgot Password
+## 1. Database Schema Updates
 
-## 1. Update Navigation and References
+```sql
+-- Update the Orders table to include pickup_time
+ALTER TABLE Orders 
+ADD COLUMN pickup_time TIMESTAMPTZ,
+ADD COLUMN is_asap BOOLEAN DEFAULT TRUE;
 
-### A. Fix Main Page CTA Button
-- Modify the "Get Started Today" button in `app/page.tsx` to open the auth modal instead of navigating to `/signup`
-- Replace the direct link with a client-side component that triggers the auth modal
+-- Ensure the items JSONB structure can include notes
+-- No schema change needed as JSONB can already accommodate this
+```
 
-### B. Update Internal References
-- Ensure all components that might link to `/sign-in` or `/sign-up` are updated to use the modal approach instead
+## 2. Frontend Components
 
-## 2. Retain Forgot Password Functionality
+### A. Item Notes Implementation
 
-### A. Keep Forgot Password Page
-- Retain the entire `app/(auth-pages)/forgot-password` directory and its contents
-- Keep the `smtp-message.tsx` component which is used by the forgot password page
+1. **Update CartContext**:
+   - Modify the cart item structure to include a `notes` field
+   - Add functionality to update notes for specific items
 
-### B. Update Auth Modal Links
-- Ensure the "Forgot Password?" links in both auth modal components continue to point to the `/forgot-password` page
-- Verify that the user experience flows smoothly from modal to forgot password page
+2. **Update Menu Item Component**:
+   - Add a notes input field when adding items to cart
+   - Allow editing notes from the cart view
 
-## 3. Remove Unused Auth Pages
+3. **Update Cart Component**:
+   - Display notes for each item
+   - Allow editing notes from the cart
 
-### A. Remove Sign-in Page
-- Delete the `app/(auth-pages)/sign-in` directory and its contents
+### B. Pickup Time Selection
 
-### B. Remove Sign-up Page
-- Delete the `app/(auth-pages)/sign-up` directory and its contents
+1. **Create PickupTimeSelector Component**:
+   - Create a new component with radio/select options
+   - Include ASAP option (default selected)
+   - Generate 5-minute interval options for the next hour or until closing time
+   - Handle time validation and formatting
 
-## 4. Update Layout for Forgot Password
+2. **Update OrderForm**:
+   - Integrate the PickupTimeSelector component
+   - Add pickup time to the form submission data
 
-### A. Modify Auth Pages Layout
-- Update `app/(auth-pages)/layout.tsx` to only handle the forgot password page
-- Simplify the layout if it contained specific elements for sign-in/sign-up pages
+## 3. API Updates
 
-## 5. Update Routing and Redirects
+1. **Update Order API Endpoint**:
+   - Modify `/api/orders/route.ts` to accept and store pickup time and item notes
+   - Add validation for pickup time
 
-### A. Add Redirects for Old URLs
-- Implement redirects for `/sign-in` and `/sign-up` URLs to the homepage with the appropriate modal open
-- This ensures that any bookmarked links or external references continue to work
+2. **Update Order Retrieval**:
+   - Update `fetch-order.ts` to include pickup time in returned data
 
-## 6. Testing Plan
+## 4. Admin Dashboard Updates
 
-### A. Functional Testing
-- Test the auth modals for sign-in and sign-up functionality
-- Verify the forgot password flow works correctly
-- Test the redirects from old URLs
+1. **Update Order Display**:
+   - Modify the admin orders page to show pickup time prominently
+   - Display item notes in the order details
+   - Sort orders by pickup time for better management
 
-### B. Edge Cases
-- Test what happens when a user is directed to `/sign-in` or `/sign-up` from an external link
-- Verify that deep links to these pages are properly handled
+2. **Update Order Status Management**:
+   - Consider pickup time when displaying and managing orders
+   - Add visual indicators for orders approaching their pickup time
 
-## 7. Documentation Updates
+## 5. Order Status Tracker Updates
 
-### A. Update Internal Documentation
-- Document the change in authentication approach
-- Note that only forgot password remains as a standalone page
+1. **Update OrderStatusTracker**:
+   - Include pickup time in the status display
+   - Add countdown for upcoming pickup times
 
-### B. User-Facing Updates
-- Update any user documentation or help content that might reference the standalone sign-in or sign-up pages
+## Implementation Details
 
-## Implementation Notes
+### Step 1: Update Cart Context and Components
 
-1. The auth modals should be the primary entry point for authentication
-2. The forgot password page should remain a standalone page since it often involves email verification flows
-3. Consider adding state management to open the appropriate modal when redirecting from old URLs
-4. Ensure the layout for the forgot password page is appropriate as a standalone page
+```typescript
+// lib/cartContext.tsx
+// Update CartItem interface
+export interface CartItem {
+  id: string;
+  food_truck_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  notes?: string; // Add notes field
+}
 
-This plan provides a structured approach to removing the sign-in and sign-up pages while maintaining the forgot password functionality, ensuring a smooth user experience throughout the transition.
+// Add function to update notes
+const updateItemNotes = (itemId: string, notes: string) => {
+  setItems(prevItems => 
+    prevItems.map(item => 
+      item.id === itemId ? { ...item, notes } : item
+    )
+  );
+};
+
+// Include in context value
+const value = {
+  // ... existing context values ...
+  updateItemNotes,
+};
+```
+
+### Step 2: Create PickupTimeSelector Component
+
+```typescript
+// components/PickupTimeSelector.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, addMinutes, isBefore, isAfter, parseISO } from 'date-fns';
+
+interface PickupTimeSelectorProps {
+  closingTime?: string; // ISO string for closing time
+  onChange: (pickupTime: { time: Date | null, isAsap: boolean }) => void;
+}
+
+export function PickupTimeSelector({ closingTime, onChange }: PickupTimeSelectorProps) {
+  const [isAsap, setIsAsap] = useState(true);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [timeOptions, setTimeOptions] = useState<Date[]>([]);
+  
+  // Generate time options in 5-minute intervals
+  useEffect(() => {
+    const options: Date[] = [];
+    const now = new Date();
+    const close = closingTime ? parseISO(closingTime) : addMinutes(now, 60);
+    
+    // Start with the next 5-minute interval
+    let currentTime = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      now.getHours(),
+      Math.ceil(now.getMinutes() / 5) * 5
+    );
+    
+    // Generate options until closing time or for 1 hour
+    while (isBefore(currentTime, close) && options.length < 12) {
+      options.push(new Date(currentTime));
+      currentTime = addMinutes(currentTime, 5);
+    }
+    
+    setTimeOptions(options);
+  }, [closingTime]);
+  
+  // Handle ASAP selection
+  const handleAsapChange = (value: string) => {
+    const asap = value === 'asap';
+    setIsAsap(asap);
+    onChange({ 
+      time: asap ? null : (selectedTime ? new Date(selectedTime) : null),
+      isAsap: asap
+    });
+  };
+  
+  // Handle specific time selection
+  const handleTimeChange = (value: string) => {
+    setSelectedTime(value);
+    setIsAsap(false);
+    onChange({ 
+      time: new Date(value),
+      isAsap: false
+    });
+  };
+  
+  return (
+    <div className="space-y-4">
+      <RadioGroup 
+        defaultValue="asap" 
+        value={isAsap ? 'asap' : 'specific'}
+        onValueChange={handleAsapChange}
+      >
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="asap" id="asap" />
+          <Label htmlFor="asap">As soon as possible</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="specific" id="specific" />
+          <Label htmlFor="specific">Choose a specific time</Label>
+        </div>
+      </RadioGroup>
+      
+      {!isAsap && (
+        <Select
+          value={selectedTime || ''}
+          onValueChange={handleTimeChange}
+          disabled={isAsap || timeOptions.length === 0}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a pickup time" />
+          </SelectTrigger>
+          <SelectContent>
+            {timeOptions.map((time) => (
+              <SelectItem key={time.toISOString()} value={time.toISOString()}>
+                {format(time, 'h:mm a')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  );
+}
+```
+
+### Step 3: Update API Endpoint
+
+```typescript
+// app/api/orders/route.ts
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const body = await request.json();
+    
+    // Validate required fields
+    const { 
+      food_truck_id, 
+      customer_name, 
+      customer_email, 
+      items, 
+      total_amount,
+      pickup_time,
+      is_asap 
+    } = body;
+    
+    // ... existing validation ...
+    
+    // Create the order in the database
+    const { data, error } = await supabase
+      .from('Orders')
+      .insert({
+        food_truck_id,
+        customer_name,
+        customer_email,
+        items,
+        total_amount,
+        status: 'preparing',
+        pickup_time: pickup_time || null,
+        is_asap: is_asap !== undefined ? is_asap : true,
+      })
+      .select('id')
+      .single();
+    
+    // ... rest of the function ...
+  } catch (error) {
+    // ... error handling ...
+  }
+}
+```
+
+### Step 4: Update OrderForm Component
+
+```typescript
+// components/OrderForm.tsx
+export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps) {
+  // ... existing state ...
+  
+  // Add pickup time state
+  const [pickupInfo, setPickupInfo] = useState<{ time: Date | null, isAsap: boolean }>({
+    time: null,
+    isAsap: true
+  });
+  
+  // ... existing code ...
+  
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // ... existing validation ...
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Use the API route with updated data
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          food_truck_id: foodTruckId,
+          customer_name: formData.name,
+          customer_email: formData.email,
+          items: foodTruckItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            notes: item.notes || '' // Include item notes
+          })),
+          total_amount: totalPrice,
+          pickup_time: pickupInfo.time ? pickupInfo.time.toISOString() : null,
+          is_asap: pickupInfo.isAsap
+        }),
+      });
+      
+      // ... rest of the function ...
+    } catch (error) {
+      // ... error handling ...
+    }
+  };
+  
+  return (
+    <Card className="w-full">
+      {/* ... existing card header ... */}
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          {/* ... existing form fields ... */}
+          
+          {/* Add pickup time selector */}
+          <div className="space-y-2">
+            <Label htmlFor="pickup-time">Pickup Time</Label>
+            <PickupTimeSelector 
+              onChange={setPickupInfo}
+              // You can pass closing time if available
+              // closingTime={foodTruck?.hours?.closing}
+            />
+          </div>
+          
+          {/* ... rest of the form ... */}
+        </CardContent>
+        
+        {/* ... card footer ... */}
+      </form>
+    </Card>
+  );
+}
+```
+
+### Step 5: Update Cart Component
+
+```typescript
+// components/Cart.tsx
+export function Cart({ foodTruckId }: CartProps) {
+  const { items, removeItem, updateQuantity, updateItemNotes, totalPrice } = useCart();
+  const [editingNotes, setEditingNotes] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  
+  // Filter items to only show those from this food truck
+  const foodTruckItems = items.filter(item => item.food_truck_id === foodTruckId);
+  
+  // Handle opening the notes editor
+  const handleEditNotes = (itemId: string, currentNotes: string = '') => {
+    setEditingNotes(itemId);
+    setNoteText(currentNotes);
+  };
+  
+  // Handle saving notes
+  const handleSaveNotes = (itemId: string) => {
+    updateItemNotes(itemId, noteText);
+    setEditingNotes(null);
+  };
+  
+  return (
+    <div className="space-y-4">
+      {/* ... existing cart header ... */}
+      
+      {foodTruckItems.length === 0 ? (
+        // ... empty cart message ...
+      ) : (
+        <div className="space-y-4">
+          {foodTruckItems.map((item) => (
+            <div key={item.id} className="flex flex-col border-b pb-4">
+              <div className="flex justify-between">
+                {/* ... existing item display ... */}
+              </div>
+              
+              {/* Notes section */}
+              {editingNotes === item.id ? (
+                <div className="mt-2">
+                  <Textarea
+                    placeholder="Add special instructions..."
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    className="text-sm"
+                    rows={2}
+                  />
+                  <div className="flex justify-end mt-1 space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setEditingNotes(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSaveNotes(item.id)}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-1">
+                  {item.notes ? (
+                    <div className="text-sm text-gray-600 flex justify-between items-start">
+                      <div className="italic">"{item.notes}"</div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 px-2"
+                        onClick={() => handleEditNotes(item.id, item.notes)}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs text-gray-500"
+                      onClick={() => handleEditNotes(item.id)}
+                    >
+                      + Add special instructions
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {/* ... total price and checkout button ... */}
+        </div>
+      )}
+    </div>
+  );
+}
+```
