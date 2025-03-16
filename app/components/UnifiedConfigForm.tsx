@@ -519,12 +519,6 @@ export function UnifiedConfigForm({
                 <Share2 className="h-4 w-4" />
                 <span>Social</span>
               </TabsTrigger>
-              {mode === 'admin' && (
-                <TabsTrigger value="json" className="flex items-center gap-1 whitespace-nowrap">
-                  <Type className="h-4 w-4" />
-                  <span>JSON</span>
-                </TabsTrigger>
-              )}
             </TabsList>
           </div>
 
@@ -581,6 +575,59 @@ export function UnifiedConfigForm({
                       Upload a logo image (PNG or JPG, square format recommended)
                     </p>
                   </div>
+                </div>
+              </div>
+              
+              <Separator className="my-4" />
+              
+              <div>
+                <Label className="mb-2 block">Brand Colors</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="primaryColor" className="text-sm">Primary Color</Label>
+                    <div className="flex items-center gap-3 mt-1">
+                      <div 
+                        className="w-10 h-10 rounded-md border shadow-sm" 
+                        style={{ backgroundColor: formValues.primaryColor }}
+                      />
+                      <Input
+                        id="primaryColor"
+                        name="primaryColor"
+                        type="color"
+                        value={formValues.primaryColor}
+                        onChange={handleInputChange}
+                        className="w-full h-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="secondaryColor" className="text-sm">Secondary Color</Label>
+                    <div className="flex items-center gap-3 mt-1">
+                      <div 
+                        className="w-10 h-10 rounded-md border shadow-sm" 
+                        style={{ backgroundColor: formValues.secondaryColor }}
+                      />
+                      <Input
+                        id="secondaryColor"
+                        name="secondaryColor"
+                        type="color"
+                        value={formValues.secondaryColor}
+                        onChange={handleInputChange}
+                        className="w-full h-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-4 border rounded-md bg-gray-50">
+                  <h4 className="text-sm font-medium mb-2">Color Preview</h4>
+                  <div 
+                    className="w-full h-8 rounded-md"
+                    style={{ 
+                      background: `linear-gradient(to right, ${formValues.primaryColor} 0%, ${formValues.secondaryColor} 100%)`
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -791,9 +838,13 @@ export function UnifiedConfigForm({
                                 key={day} 
                                 className={`h-8 rounded-md flex items-center justify-center text-xs ${
                                   hasSchedule 
-                                    ? 'bg-primary/20 text-primary font-medium cursor-pointer hover:bg-primary/30' 
+                                    ? 'font-medium cursor-pointer hover:bg-opacity-30' 
                                     : 'bg-gray-100 text-gray-400'
                                 }`}
+                                style={hasSchedule ? {
+                                  backgroundColor: `${formValues.primaryColor}33`,
+                                  color: formValues.primaryColor
+                                } : {}}
                                 onClick={() => {
                                   if (hasSchedule) {
                                     const index = formValues.scheduleDays.findIndex(d => d.day === day);
@@ -847,7 +898,7 @@ export function UnifiedConfigForm({
                                 <CardContent className="p-4">
                                   <div className="flex flex-col">
                                     <div className="flex items-center mb-2">
-                                      <Calendar className="h-4 w-4 text-primary mr-2" />
+                                      <Calendar className="h-4 w-4 mr-2" style={{ color: formValues.primaryColor }} />
                                       <h3 className="font-bold text-sm">{dayRange}</h3>
                                     </div>
                                     

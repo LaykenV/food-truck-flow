@@ -15,6 +15,7 @@ export interface FoodTruckHeroProps {
     name?: string;
     tagline?: string;
     primaryColor?: string;
+    secondaryColor?: string;
   };
   displayMode: DisplayMode;
   subdomain: string;
@@ -28,6 +29,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
     name = 'Food Truck',
     tagline = 'Delicious food on wheels',
     primaryColor = '#FF6B35',
+    secondaryColor = '#4CB944',
   } = config;
 
   const heroTitle = hero?.title || name;
@@ -44,8 +46,8 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
   };
 
   return (
-    <div className={`relative min-h-[70vh] flex items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
-      {/* Background Image with Overlay */}
+    <div className={`relative h-screen flex items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
+      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
           src={heroImage}
@@ -55,47 +57,75 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
           sizes="100vw"
           priority
         />
-        <div 
-          className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/30"
-        ></div>
+        {/* Removed gradient overlay */}
       </div>
 
       {/* Hero Content */}
       <div className="container mx-auto px-4 relative z-10 py-20 pt-28">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-md">
             {heroTitle}
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-8">
+          <p className="text-xl md:text-2xl text-white/90 mb-8 drop-shadow">
             {heroSubtitle}
           </p>
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
             {displayMode === 'live' ? (
-              <Button
-                asChild
-                size="lg"
-                className="bg-white hover:bg-gray-100 text-gray-900 font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
-                style={{ 
-                  backgroundColor: 'white',
-                  color: primaryColor
-                }}
-              >
-                <Link href={`/${subdomain}/menu`}>
-                  View Our Menu
-                </Link>
-              </Button>
+              <>
+                <Button
+                  asChild
+                  size="lg"
+                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
+                  style={{ 
+                    backgroundColor: primaryColor,
+                    color: 'white'
+                  }}
+                >
+                  <Link href={`/${subdomain}/menu`}>
+                    View Our Menu
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all border-2"
+                  style={{ 
+                    borderColor: 'white',
+                    color: 'white'
+                  }}
+                >
+                  <Link href="#schedule-section">
+                    Find Us
+                  </Link>
+                </Button>
+              </>
             ) : (
-              <Button
-                size="lg"
-                className="bg-white hover:bg-gray-100 text-gray-900 font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
-                style={{ 
-                  backgroundColor: 'white',
-                  color: primaryColor
-                }}
-                onClick={handleButtonClick}
-              >
-                View Our Menu
-              </Button>
+              <>
+                <Button
+                  size="lg"
+                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
+                  style={{ 
+                    backgroundColor: primaryColor,
+                    color: 'white'
+                  }}
+                  onClick={handleButtonClick}
+                >
+                  View Our Menu
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all border-2"
+                  style={{ 
+                    borderColor: 'white',
+                    color: 'white'
+                  }}
+                  onClick={handleButtonClick}
+                >
+                  Find Us
+                </Button>
+              </>
             )}
           </div>
         </div>

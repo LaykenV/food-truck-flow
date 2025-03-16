@@ -21,9 +21,10 @@ interface ScheduleDay {
 interface DashboardScheduleProps {
   initialSchedule: ScheduleDay[];
   onUpdateSchedule: (schedule: ScheduleDay[]) => Promise<any>;
+  primaryColor?: string;
 }
 
-export function DashboardSchedule({ initialSchedule, onUpdateSchedule }: DashboardScheduleProps) {
+export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryColor = '#FF6B35' }: DashboardScheduleProps) {
   const [schedule, setSchedule] = useState<ScheduleDay[]>(initialSchedule);
   const [isEditing, setIsEditing] = useState(false);
   const [editingDay, setEditingDay] = useState<ScheduleDay | null>(null);
@@ -178,12 +179,12 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule }: Dashboa
                 : `${firstDay.day} - ${lastDay.day}`;
                 
               return (
-                <Card key={groupIndex} className="min-w-[260px] border-l-4 border-orange-500">
+                <Card key={groupIndex} className="min-w-[260px] border-l-4" style={{ borderLeftColor: primaryColor }}>
                   <CardContent className="p-4">
                     <div className="flex flex-col">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-orange-500 mr-2" />
+                          <Calendar className="h-4 w-4 mr-2" style={{ color: primaryColor }} />
                           <h3 className="font-medium text-sm">{dayRange}</h3>
                         </div>
                         <div className="flex items-center space-x-1">
@@ -233,12 +234,12 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule }: Dashboa
             : `${firstDay.day} - ${lastDay.day}`;
             
           return (
-            <Card key={groupIndex} className="border-l-4 border-orange-500">
+            <Card key={groupIndex} className="border-l-4" style={{ borderLeftColor: primaryColor }}>
               <CardContent className="p-4">
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center">
-                      <Calendar className="h-5 w-5 text-orange-500 mr-2" />
+                      <Calendar className="h-5 w-5 mr-2" style={{ color: primaryColor }} />
                       <h3 className="font-medium">{dayRange}</h3>
                     </div>
                     <div className="flex items-center space-x-1">

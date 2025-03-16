@@ -209,6 +209,7 @@ export default async function AdminDashboard() {
           <DashboardSchedule 
             initialSchedule={scheduleData} 
             onUpdateSchedule={updateSchedule} 
+            primaryColor={foodTruck?.configuration?.primaryColor || '#FF6B35'}
           />
         </CardContent>
       </Card>
