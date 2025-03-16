@@ -30,7 +30,9 @@ FoodTruckFlow.com is a B2B SaaS platform designed for food truck owners to creat
 - Hosted at `[truckname].foodtruckflow.com` (subdomain) or custom domain (Pro plan).
 - **Features**:
   - Menu-centric design with interactive cards (e.g., flip/expand on hover/tap).
-  - Sections: Landing, About, Gallery, Events, Reviews (with star ratings), Locations (Google Maps), Contact.
+  - Sections: Landing, About, Schedule, Gallery, Events, Reviews (with star ratings), Locations (Google Maps), Contact.
+  - Weekly schedule with locations and hours for each day.
+  - Future Google Maps integration for visualizing truck locations.
   - Online ordering with Stripe and Apple Pay support.
   - Real-time order status component using Supabase subscriptions (shown if an active order exists).
 - Data fetched from Supabase, filtered by `food_truck_id`.

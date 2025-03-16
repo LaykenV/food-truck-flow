@@ -235,6 +235,36 @@ export const createFoodTruckForUser = async (userId: string, userConfig?: any) =
     socials: {
       twitter: "",
       instagram: ""
+    },
+    schedule: {
+      title: "Weekly Schedule",
+      description: "Find us at these locations throughout the week",
+      days: [
+        {
+          day: "Monday",
+          location: "Downtown",
+          address: "123 Main St",
+          hours: "11:00 AM - 2:00 PM"
+        },
+        {
+          day: "Wednesday",
+          location: "Business District",
+          address: "456 Market Ave",
+          hours: "11:00 AM - 2:00 PM"
+        },
+        {
+          day: "Friday",
+          location: "Food Truck Friday",
+          address: "789 Park Blvd",
+          hours: "5:00 PM - 9:00 PM"
+        },
+        {
+          day: "Saturday",
+          location: "Farmers Market",
+          address: "321 Harvest Lane",
+          hours: "9:00 AM - 1:00 PM"
+        }
+      ]
     }
   };
   

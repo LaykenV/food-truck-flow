@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import FoodTruckHero from './FoodTruckHero';
 import FoodTruckAbout from './FoodTruckAbout';
 import FoodTruckContact from './FoodTruckContact';
+import FoodTruckSchedule from './FoodTruckSchedule';
 
 // Define the configuration type
 export type FoodTruckConfig = {
@@ -29,6 +30,20 @@ export type FoodTruckConfig = {
     instagram?: string;
     facebook?: string;
   };
+  schedule?: {
+    title?: string;
+    description?: string;
+    days?: {
+      day: string;
+      location?: string;
+      address?: string;
+      hours?: string;
+      coordinates?: {
+        lat: number;
+        lng: number;
+      };
+    }[];
+  };
   tagline?: string;
   primaryColor?: string;
   secondaryColor?: string;
@@ -42,20 +57,41 @@ export interface FoodTruckTemplateProps {
   config: FoodTruckConfig;
   displayMode: DisplayMode;
   subdomain?: string;
+  forceViewMode?: 'mobile' | 'desktop';
 }
 
 export default function FoodTruckTemplate({ 
   config, 
   displayMode, 
-  subdomain = 'preview' 
+  subdomain = 'preview',
+  forceViewMode
 }: FoodTruckTemplateProps) {
   // Client-side state to prevent hydration mismatch
   const [isClient, setIsClient] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
   
   // Use useEffect to set isClient to true after component mounts
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    
+    // Set mobile view based on forceViewMode or window size
+    const handleResize = () => {
+      if (forceViewMode === 'mobile') {
+        setIsMobileView(true);
+      } else if (forceViewMode === 'desktop') {
+        setIsMobileView(false);
+      } else {
+        setIsMobileView(window.innerWidth < 768);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [forceViewMode]);
   
   // If not yet client-side, render a simplified version to prevent hydration mismatch
   if (!isClient) {
@@ -76,25 +112,35 @@ export default function FoodTruckTemplate({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className={`flex flex-col ${isMobileView ? 'mobile-view' : ''}`}>
       <main className="flex-grow">
         {/* Hero Section */}
         <FoodTruckHero 
           config={config} 
           displayMode={displayMode} 
-          subdomain={subdomain} 
+          subdomain={subdomain}
+          forceViewMode={forceViewMode}
         />
         
         {/* About Section */}
         <FoodTruckAbout 
           config={config} 
-          displayMode={displayMode} 
+          displayMode={displayMode}
+          forceViewMode={forceViewMode}
+        />
+        
+        {/* Schedule Section */}
+        <FoodTruckSchedule
+          config={config}
+          displayMode={displayMode}
+          forceViewMode={forceViewMode}
         />
         
         {/* Contact Section */}
         <FoodTruckContact 
           config={config} 
-          displayMode={displayMode} 
+          displayMode={displayMode}
+          forceViewMode={forceViewMode}
         />
       </main>
     </div>

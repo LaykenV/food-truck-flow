@@ -17,6 +17,7 @@ export interface FoodTruckAboutProps {
     };
   };
   displayMode: DisplayMode;
+  forceViewMode?: 'mobile' | 'desktop';
 }
 
 export default function FoodTruckAbout({ config, displayMode }: FoodTruckAboutProps) {

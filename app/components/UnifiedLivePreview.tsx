@@ -117,6 +117,58 @@ export function UnifiedLivePreview({
       <div className="h-[600px] overflow-y-auto overflow-x-hidden" id="preview-scroll-container">
         {/* Wrapper to constrain width and prevent horizontal scrolling */}
         <div className="w-full max-w-[375px] mx-auto mobile-preview-container">
+          <style jsx global>{`
+            .mobile-preview-container .mobile-view,
+            .mobile-preview-container {
+              /* Force mobile styling */
+              --container-width: 375px;
+              max-width: var(--container-width);
+            }
+            
+            .mobile-preview-container h1 {
+              font-size: 1.5rem !important;
+            }
+            
+            .mobile-preview-container h2 {
+              font-size: 1.25rem !important;
+            }
+            
+            .mobile-preview-container p {
+              font-size: 0.875rem !important;
+            }
+            
+            .mobile-preview-container .grid {
+              grid-template-columns: 1fr !important;
+            }
+            
+            .mobile-preview-container .md\\:grid-cols-2,
+            .mobile-preview-container .md\\:grid-cols-3,
+            .mobile-preview-container .lg\\:grid-cols-2,
+            .mobile-preview-container .lg\\:grid-cols-3 {
+              grid-template-columns: 1fr !important;
+            }
+            
+            .mobile-preview-container .md\\:flex-row {
+              flex-direction: column !important;
+            }
+            
+            .mobile-preview-container .md\\:col-span-2 {
+              grid-column: span 1 !important;
+            }
+            
+            .mobile-preview-container .hidden.md\\:block,
+            .mobile-preview-container .hidden.md\\:flex,
+            .mobile-preview-container .hidden.lg\\:block,
+            .mobile-preview-container .hidden.lg\\:flex {
+              display: none !important;
+            }
+            
+            .mobile-preview-container .md\\:px-6,
+            .mobile-preview-container .lg\\:px-8 {
+              padding-left: 1rem !important;
+              padding-right: 1rem !important;
+            }
+          `}</style>
           <div className="flex flex-col" style={{ minHeight: '600px' }}>
             <FoodTruckNavbar 
               config={configToUse} 
@@ -129,12 +181,14 @@ export function UnifiedLivePreview({
                 config={configToUse} 
                 displayMode="preview" 
                 subdomain={subdomain}
+                forceViewMode="mobile"
               />
             </main>
             <FoodTruckFooter 
               config={configToUse} 
               subdomain={subdomain}
               displayMode="preview"
+              forceViewMode="mobile"
             />
           </div>
         </div>
@@ -175,12 +229,14 @@ export function UnifiedLivePreview({
                 config={configToUse} 
                 displayMode="preview" 
                 subdomain={subdomain}
+                forceViewMode="desktop"
               />
             </main>
             <FoodTruckFooter 
               config={configToUse} 
               subdomain={subdomain}
               displayMode="preview"
+              forceViewMode="desktop"
             />
           </div>
         </div>

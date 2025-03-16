@@ -97,6 +97,36 @@ function getDefaultConfig() {
       twitter: '',
       instagram: '',
       facebook: ''
+    },
+    schedule: {
+      title: 'Weekly Schedule',
+      description: 'Find us at these locations throughout the week',
+      days: [
+        {
+          day: 'Monday',
+          location: 'Downtown',
+          address: '123 Main St',
+          hours: '11:00 AM - 2:00 PM'
+        },
+        {
+          day: 'Wednesday',
+          location: 'Business District',
+          address: '456 Market Ave',
+          hours: '11:00 AM - 2:00 PM'
+        },
+        {
+          day: 'Friday',
+          location: 'Food Truck Friday',
+          address: '789 Park Blvd',
+          hours: '5:00 PM - 9:00 PM'
+        },
+        {
+          day: 'Saturday',
+          location: 'Farmers Market',
+          address: '321 Harvest Lane',
+          hours: '9:00 AM - 1:00 PM'
+        }
+      ]
     }
   };
 }
@@ -128,6 +158,11 @@ function mapDatabaseConfigToFoodTruckConfig(dbConfig: any) {
       twitter: dbConfig.socialTwitter || dbConfig.socials?.twitter || '',
       instagram: dbConfig.socialInstagram || dbConfig.socials?.instagram || '',
       facebook: dbConfig.socialFacebook || dbConfig.socials?.facebook || ''
+    },
+    schedule: {
+      title: dbConfig.scheduleTitle || dbConfig.schedule?.title || 'Weekly Schedule',
+      description: dbConfig.scheduleDescription || dbConfig.schedule?.description || 'Find us at these locations throughout the week',
+      days: dbConfig.scheduleDays || dbConfig.schedule?.days || []
     }
   };
 } 

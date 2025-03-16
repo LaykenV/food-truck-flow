@@ -82,6 +82,11 @@ export function UnifiedConfigWrapper({
           twitter: newConfig.socials?.twitter || '',
           instagram: newConfig.socials?.instagram || '',
           facebook: newConfig.socials?.facebook || ''
+        },
+        schedule: {
+          title: newConfig.schedule?.title || 'Weekly Schedule',
+          description: newConfig.schedule?.description || 'Find us at these locations throughout the week',
+          days: newConfig.schedule?.days || []
         }
       };
       

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Clock, Phone } from 'lucide-react';
+import { MapPin, Clock, Phone, Calendar } from 'lucide-react';
 
 // Define the configuration type
 export type FoodTruckConfig = {
@@ -29,6 +29,20 @@ export type FoodTruckConfig = {
     twitter?: string;
     instagram?: string;
     facebook?: string;
+  };
+  schedule?: {
+    title?: string;
+    description?: string;
+    days?: {
+      day: string;
+      location?: string;
+      address?: string;
+      hours?: string;
+      coordinates?: {
+        lat: number;
+        lng: number;
+      };
+    }[];
   };
   tagline?: string;
   primaryColor?: string;
@@ -90,6 +104,7 @@ export default function FoodTruckWebsite({ config, displayMode, subdomain }: Foo
     about,
     contact,
     socials,
+    schedule,
     tagline = 'Delicious food on wheels',
     primaryColor = '#FF6B35',
     secondaryColor = '#4CB944'
@@ -302,6 +317,61 @@ export default function FoodTruckWebsite({ config, displayMode, subdomain }: Foo
             </div>
           </div>
         </section>
+        
+        {/* Schedule Section */}
+        {schedule && schedule.days && schedule.days.length > 0 && (
+          <section id="schedule-section" className="py-12 bg-gray-50">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto text-center mb-8">
+                <h2 className="text-2xl font-bold mb-4">{schedule.title || 'Our Schedule'}</h2>
+                <p className="text-gray-600">
+                  {schedule.description || 'Find us at these locations throughout the week.'}
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+                  // Find the schedule for this day
+                  const daySchedule = schedule.days?.find(
+                    (d) => d.day.toLowerCase() === day.toLowerCase()
+                  );
+                  
+                  return (
+                    <Card key={day} className={daySchedule ? 'border-l-4' : ''} style={{ borderLeftColor: daySchedule ? primaryColor : 'transparent' }}>
+                      <CardContent className="pt-4 p-4">
+                        <div className="flex flex-col">
+                          <div className="flex items-center mb-3">
+                            <Calendar className="h-4 w-4 mr-2" style={{ color: primaryColor }} />
+                            <h3 className="font-bold text-base">{day}</h3>
+                          </div>
+                          
+                          {daySchedule ? (
+                            <div className="space-y-2">
+                              {daySchedule.location && (
+                                <p className="font-medium text-sm">{daySchedule.location}</p>
+                              )}
+                              {daySchedule.address && (
+                                <div className="flex items-start">
+                                  <MapPin className="h-3 w-3 text-gray-400 mr-1 mt-1 flex-shrink-0" />
+                                  <p className="text-gray-600 text-xs">{daySchedule.address}</p>
+                                </div>
+                              )}
+                              {daySchedule.hours && (
+                                <p className="text-gray-600 text-xs">Hours: {daySchedule.hours}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 italic text-xs">Not scheduled</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
         
         {/* Contact Section */}
         <section id="contact-section" className="py-12 bg-gray-50">

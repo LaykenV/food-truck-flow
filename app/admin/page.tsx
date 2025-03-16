@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity, LucideArrowUpRight } from "lucide-react";
+import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity, LucideArrowUpRight, LucideCalendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cookies } from "next/headers";
@@ -12,6 +12,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChecklistClient } from "./checklist-client";
+import { DashboardSchedule } from "./dashboard-schedule";
+import { updateSchedule } from "./actions";
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -127,6 +129,9 @@ export default async function AdminDashboard() {
     .order('created_at', { ascending: false })
     .limit(5);
   
+  // Get schedule data from configuration
+  const scheduleData = foodTruck?.configuration?.schedule?.days || [];
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -190,6 +195,23 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Weekly Schedule */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle>Weekly Schedule</CardTitle>
+            <CardDescription>Manage your food truck's weekly locations</CardDescription>
+          </div>
+          <LucideCalendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <DashboardSchedule 
+            initialSchedule={scheduleData} 
+            onUpdateSchedule={updateSchedule} 
+          />
+        </CardContent>
+      </Card>
       
       {/* Recent Activity */}
       <Card>

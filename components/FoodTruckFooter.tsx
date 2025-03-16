@@ -21,12 +21,14 @@ export interface FoodTruckFooterProps {
   };
   subdomain: string;
   displayMode?: DisplayMode;
+  forceViewMode?: 'mobile' | 'desktop';
 }
 
 export default function FoodTruckFooter({ 
   config, 
   subdomain,
-  displayMode = 'live'
+  displayMode = 'live',
+  forceViewMode
 }: FoodTruckFooterProps) {
   // Extract configuration data with defaults
   const {

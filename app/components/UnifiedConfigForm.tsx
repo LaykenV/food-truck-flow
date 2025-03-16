@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { FoodTruckConfig } from '@/components/food-truck-website';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,13 +20,20 @@ import {
   RefreshCw,
   Building,
   Link as LinkIcon,
-  Share2
+  Share2,
+  Calendar,
+  Plus,
+  Trash2,
+  MapPin,
+  Clock
 } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from 'sonner';
 import { ConfigHistoryDrawer } from './ConfigHistoryDrawer';
 import { useConfig } from './UnifiedConfigProvider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Define the type for the form mode
 export type FormMode = 'admin' | 'client';
@@ -70,11 +77,24 @@ export function UnifiedConfigForm({
     socialTwitter: configToUse.socials?.twitter || '',
     socialInstagram: configToUse.socials?.instagram || '',
     socialFacebook: configToUse.socials?.facebook || '',
+    scheduleTitle: configToUse.schedule?.title || 'Weekly Schedule',
+    scheduleDescription: configToUse.schedule?.description || 'Find us at these locations throughout the week',
+    scheduleDays: configToUse.schedule?.days || [],
   });
 
   const [activeTab, setActiveTab] = useState<string>("branding");
   const [statusMessage, setStatusMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedScheduleDay, setSelectedScheduleDay] = useState<{index: number, day: any} | null>(null);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [timeValues, setTimeValues] = useState({
+    startHour: "11",
+    startMinute: "00",
+    startAmPm: "AM",
+    endHour: "2",
+    endMinute: "00",
+    endAmPm: "PM"
+  });
 
   // Update form values when initialConfig changes
   useEffect(() => {
@@ -97,6 +117,9 @@ export function UnifiedConfigForm({
         socialTwitter: initialConfig.socials?.twitter || '',
         socialInstagram: initialConfig.socials?.instagram || '',
         socialFacebook: initialConfig.socials?.facebook || '',
+        scheduleTitle: initialConfig.schedule?.title || 'Weekly Schedule',
+        scheduleDescription: initialConfig.schedule?.description || 'Find us at these locations throughout the week',
+        scheduleDays: initialConfig.schedule?.days || [],
       });
     }
   }, [initialConfig]);
@@ -128,6 +151,11 @@ export function UnifiedConfigForm({
         twitter: formValues.socialTwitter,
         instagram: formValues.socialInstagram,
         facebook: formValues.socialFacebook
+      },
+      schedule: {
+        title: formValues.scheduleTitle,
+        description: formValues.scheduleDescription,
+        days: formValues.scheduleDays
       }
     };
   };
@@ -167,39 +195,6 @@ export function UnifiedConfigForm({
         setIsSubmitting(false);
       }
     }
-  };
-
-  // Reset form to default values (client mode only)
-  const handleReset = () => {
-    if (mode !== 'client') return;
-    
-    const defaultValues = {
-      name: 'Food Truck Name',
-      tagline: 'Tasty meals on wheels',
-      logo: '',
-      primaryColor: '#FF6B35',
-      secondaryColor: '#4CB944',
-      heroImage: '/images/placeholder-hero.jpg',
-      heroTitle: 'Delicious Food Truck',
-      heroSubtitle: 'Serving the best street food in town',
-      aboutTitle: 'About Our Food Truck',
-      aboutContent: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      aboutImage: '',
-      contactEmail: '',
-      contactPhone: '',
-      contactAddress: '123 Main Street, City, State 12345',
-      socialTwitter: '',
-      socialInstagram: '',
-      socialFacebook: '',
-    };
-    
-    setFormValues(defaultValues);
-    setStatusMessage('reset');
-    
-    // Clear status message after 3 seconds
-    setTimeout(() => {
-      setStatusMessage('');
-    }, 3000);
   };
 
   // Handle input changes
@@ -276,10 +271,167 @@ export function UnifiedConfigForm({
       socialTwitter: config.socials?.twitter || '',
       socialInstagram: config.socials?.instagram || '',
       socialFacebook: config.socials?.facebook || '',
+      scheduleTitle: config.schedule?.title || 'Weekly Schedule',
+      scheduleDescription: config.schedule?.description || 'Find us at these locations throughout the week',
+      scheduleDays: config.schedule?.days || [],
     };
     
     setFormValues(updatedFormValues);
     toast.info('Restored configuration from history. Click Save to apply changes.');
+  };
+
+  // Group consecutive days at the same location
+  const groupedScheduleDays = useMemo(() => {
+    const days = [...formValues.scheduleDays];
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+    // Sort days by day of week
+    days.sort((a, b) => {
+      return daysOfWeek.indexOf(a.day) - daysOfWeek.indexOf(b.day);
+    });
+    
+    // Group consecutive days at the same location
+    const groups: any[] = [];
+    let currentGroup: any[] = [];
+    
+    days.forEach((day, index) => {
+      if (index === 0) {
+        currentGroup.push(day);
+      } else {
+        const prevDay = days[index - 1];
+        const prevDayIndex = daysOfWeek.indexOf(prevDay.day);
+        const currentDayIndex = daysOfWeek.indexOf(day.day);
+        
+        // Check if days are consecutive and at the same location
+        const isConsecutive = (currentDayIndex === prevDayIndex + 1) || 
+                             (prevDayIndex === 6 && currentDayIndex === 0); // Sunday to Monday
+        const isSameLocation = day.location === prevDay.location && 
+                              day.address === prevDay.address &&
+                              day.hours === prevDay.hours;
+        
+        if (isConsecutive && isSameLocation) {
+          currentGroup.push(day);
+        } else {
+          groups.push([...currentGroup]);
+          currentGroup = [day];
+        }
+      }
+    });
+    
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+    
+    return groups;
+  }, [formValues.scheduleDays]);
+
+  // Handle opening the schedule day modal
+  const handleOpenScheduleModal = (index: number) => {
+    const day = formValues.scheduleDays[index];
+    setSelectedScheduleDay({ index, day });
+    // Initialize selectedDays with the current day to fix checkbox behavior
+    setSelectedDays(day ? [day.day] : []);
+    
+    // Parse hours for time values if available
+    if (day && day.hours) {
+      try {
+        const hoursParts = day.hours.split(' - ');
+        if (hoursParts.length === 2) {
+          const startParts = hoursParts[0].split(' ');
+          const endParts = hoursParts[1].split(' ');
+          
+          if (startParts.length === 2 && endParts.length === 2) {
+            const [startTime, startAmPm] = startParts;
+            const [endTime, endAmPm] = endParts;
+            
+            const [startHour, startMinute] = startTime.split(':');
+            const [endHour, endMinute] = endTime.split(':');
+            
+            setTimeValues({
+              startHour,
+              startMinute,
+              startAmPm,
+              endHour,
+              endMinute,
+              endAmPm
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing hours:', error);
+      }
+    }
+  };
+
+  // Handle adding multiple schedule days
+  const handleAddMultipleScheduleDays = () => {
+    if (selectedDays.length === 0) {
+      toast.error("Please select at least one day of the week");
+      return;
+    }
+
+    // Format the hours string
+    const hoursString = `${timeValues.startHour}:${timeValues.startMinute} ${timeValues.startAmPm} - ${timeValues.endHour}:${timeValues.endMinute} ${timeValues.endAmPm}`;
+
+    // Create new days
+    const newDays = selectedDays.map(day => ({
+      day,
+      location: selectedScheduleDay?.day.location || '',
+      address: selectedScheduleDay?.day.address || '',
+      hours: hoursString
+    }));
+
+    // Add new days to the schedule
+    setFormValues(prev => ({
+      ...prev,
+      scheduleDays: [...prev.scheduleDays, ...newDays]
+    }));
+
+    // Clear selected days
+    setSelectedDays([]);
+    setSelectedScheduleDay(null);
+  };
+
+  // Toggle day selection
+  const toggleDaySelection = (day: string) => {
+    setSelectedDays(prev => {
+      // If this day is already in the array, remove it
+      if (prev.includes(day)) {
+        return prev.filter(d => d !== day);
+      } 
+      // Otherwise add it to the array
+      return [...prev, day];
+    });
+  };
+
+  // Handle time change
+  const handleTimeChange = (field: string, value: string) => {
+    setTimeValues(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle removing a schedule day
+  const handleRemoveScheduleDay = (index: number) => {
+    setFormValues(prev => ({
+      ...prev,
+      scheduleDays: prev.scheduleDays.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Handle saving schedule day from modal
+  const handleSaveScheduleDay = (day: any) => {
+    if (selectedScheduleDay === null) return;
+    
+    setFormValues(prev => ({
+      ...prev,
+      scheduleDays: prev.scheduleDays.map((d, i) => 
+        i === selectedScheduleDay.index ? day : d
+      )
+    }));
+    
+    setSelectedScheduleDay(null);
   };
 
   return (
@@ -299,17 +451,7 @@ export function UnifiedConfigForm({
           
           {/* Admin mode controls */}
           {mode === 'admin' && (
-            <div className="flex items-center gap-2 self-end md:self-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleReset}
-                disabled={isSaving}
-                className="h-9"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Reset
-              </Button>
+            <div className="hidden md:flex items-center gap-2 self-end md:self-auto">
               <Button
                 onClick={handleSubmitChanges}
                 disabled={isSaving}
@@ -364,6 +506,10 @@ export function UnifiedConfigForm({
               <TabsTrigger value="about" className="flex items-center gap-1 whitespace-nowrap">
                 <Info className="h-4 w-4" />
                 <span>About</span>
+              </TabsTrigger>
+              <TabsTrigger value="schedule" className="flex items-center gap-1 whitespace-nowrap">
+                <Calendar className="h-4 w-4" />
+                <span>Schedule</span>
               </TabsTrigger>
               <TabsTrigger value="contact" className="flex items-center gap-1 whitespace-nowrap">
                 <Phone className="h-4 w-4" />
@@ -544,6 +690,198 @@ export function UnifiedConfigForm({
             </div>
           </TabsContent>
           
+          <TabsContent value="schedule" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Schedule</h3>
+                </div>
+                
+                <div>
+                  <Label htmlFor="scheduleTitle">Schedule Section Title</Label>
+                  <Input
+                    id="scheduleTitle"
+                    name="scheduleTitle"
+                    value={formValues.scheduleTitle}
+                    onChange={handleInputChange}
+                    placeholder="Title for your schedule section"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="scheduleDescription">Schedule Description</Label>
+                  <Textarea
+                    id="scheduleDescription"
+                    name="scheduleDescription"
+                    value={formValues.scheduleDescription}
+                    onChange={handleInputChange}
+                    placeholder="Description for your schedule section"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <Separator className="my-4" />
+                
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label>Weekly Schedule</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedScheduleDay({
+                          index: formValues.scheduleDays.length,
+                          day: {
+                            day: 'Monday',
+                            location: '',
+                            address: '',
+                            hours: ''
+                          }
+                        });
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Day
+                    </Button>
+                  </div>
+                  
+                  {formValues.scheduleDays.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed rounded-md">
+                      <p className="text-muted-foreground">No schedule days added yet.</p>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setSelectedScheduleDay({
+                            index: formValues.scheduleDays.length,
+                            day: {
+                              day: 'Monday',
+                              location: '',
+                              address: '',
+                              hours: ''
+                            }
+                          });
+                        }}
+                        className="mt-2"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Your First Day
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* Calendar-like view of the week */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-7 gap-1 mb-4">
+                          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
+                            <div key={day} className="text-center text-sm font-medium text-gray-500">
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+                            const hasSchedule = formValues.scheduleDays.some(d => d.day === day);
+                            return (
+                              <div 
+                                key={day} 
+                                className={`h-8 rounded-md flex items-center justify-center text-xs ${
+                                  hasSchedule 
+                                    ? 'bg-primary/20 text-primary font-medium cursor-pointer hover:bg-primary/30' 
+                                    : 'bg-gray-100 text-gray-400'
+                                }`}
+                                onClick={() => {
+                                  if (hasSchedule) {
+                                    const index = formValues.scheduleDays.findIndex(d => d.day === day);
+                                    handleOpenScheduleModal(index);
+                                  } else {
+                                    // Add a new day for this day of week
+                                    const newIndex = formValues.scheduleDays.length;
+                                    setFormValues(prev => ({
+                                      ...prev,
+                                      scheduleDays: [
+                                        ...prev.scheduleDays,
+                                        {
+                                          day,
+                                          location: '',
+                                          address: '',
+                                          hours: ''
+                                        }
+                                      ]
+                                    }));
+                                    setTimeout(() => {
+                                      handleOpenScheduleModal(newIndex);
+                                    }, 100);
+                                  }
+                                }}
+                              >
+                                {hasSchedule ? '✓' : '+'}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      {/* Grouped schedule cards */}
+                      <div className="space-y-4 mt-4">
+                        <h4 className="font-medium text-sm text-gray-500">Schedule Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {groupedScheduleDays.map((group, groupIndex) => {
+                            const firstDay = group[0];
+                            const lastDay = group[group.length - 1];
+                            const dayRange = group.length === 1 
+                              ? firstDay.day 
+                              : `${firstDay.day} - ${lastDay.day}`;
+                              
+                            return (
+                              <Card 
+                                key={groupIndex} 
+                                className="border-l-4 hover:shadow-md transition-shadow cursor-pointer"
+                                style={{ borderLeftColor: formValues.primaryColor || '#FF6B35' }}
+                                onClick={() => handleOpenScheduleModal(formValues.scheduleDays.indexOf(firstDay))}
+                              >
+                                <CardContent className="p-4">
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center mb-2">
+                                      <Calendar className="h-4 w-4 text-primary mr-2" />
+                                      <h3 className="font-bold text-sm">{dayRange}</h3>
+                                    </div>
+                                    
+                                    {firstDay.location && (
+                                      <p className="font-medium text-sm">{firstDay.location}</p>
+                                    )}
+                                    
+                                    {firstDay.address && (
+                                      <div className="flex items-start mt-1">
+                                        <MapPin className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
+                                        <p className="text-gray-600 text-xs">{firstDay.address}</p>
+                                      </div>
+                                    )}
+                                    
+                                    {firstDay.hours && (
+                                      <div className="flex items-start mt-1">
+                                        <Clock className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
+                                        <p className="text-gray-600 text-xs">{firstDay.hours}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="contact" className="space-y-4">
             <div className="space-y-4">
               <div>
@@ -651,6 +989,229 @@ export function UnifiedConfigForm({
           </Button>
         </CardFooter>
       )}
+
+      {/* Admin mode mobile submit button */}
+      {mode === 'admin' && (
+        <CardFooter className="md:hidden flex justify-end border-t pt-4">
+          <Button
+            onClick={handleSubmitChanges}
+            disabled={isSaving}
+            className="w-full"
+          >
+            {isSaving ? (
+              <>
+                <svg className="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      )}
+
+      {/* Schedule Day Edit Modal */}
+      <Dialog open={selectedScheduleDay !== null} onOpenChange={(open) => !open && setSelectedScheduleDay(null)}>
+        <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Schedule Day</DialogTitle>
+          </DialogHeader>
+          
+          {selectedScheduleDay ? (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label>Select Days</Label>
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 mt-2">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                      <div key={day} className="flex flex-col items-center">
+                        <Checkbox 
+                          id={`day-${day}`} 
+                          checked={selectedDays.includes(day)}
+                          onCheckedChange={() => toggleDaySelection(day)}
+                          className="mb-1"
+                        />
+                        <Label 
+                          htmlFor={`day-${day}`} 
+                          className="text-xs cursor-pointer"
+                        >
+                          {day.substring(0, 3)}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Select multiple days to apply the same schedule
+                  </p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="modal-location">Location</Label>
+                  <Input
+                    id="modal-location"
+                    value={selectedScheduleDay.day.location || ''}
+                    onChange={(e) => setSelectedScheduleDay({
+                      ...selectedScheduleDay,
+                      day: { ...selectedScheduleDay.day, location: e.target.value }
+                    })}
+                    placeholder="Downtown, Food Truck Park, etc."
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="modal-address">Address</Label>
+                  <Input
+                    id="modal-address"
+                    value={selectedScheduleDay.day.address || ''}
+                    onChange={(e) => setSelectedScheduleDay({
+                      ...selectedScheduleDay,
+                      day: { ...selectedScheduleDay.day, address: e.target.value }
+                    })}
+                    placeholder="123 Main St, City, State"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Hours</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                    <div>
+                      <Label className="text-xs">Start Time</Label>
+                      <div className="flex items-center gap-1 mt-1">
+                        <select
+                          value={timeValues.startHour}
+                          onChange={(e) => handleTimeChange('startHour', e.target.value)}
+                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
+                            <option key={hour} value={hour}>{hour}</option>
+                          ))}
+                        </select>
+                        <span>:</span>
+                        <select
+                          value={timeValues.startMinute}
+                          onChange={(e) => handleTimeChange('startMinute', e.target.value)}
+                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {['00', '15', '30', '45'].map(minute => (
+                            <option key={minute} value={minute}>{minute}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={timeValues.startAmPm}
+                          onChange={(e) => handleTimeChange('startAmPm', e.target.value)}
+                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="AM">AM</option>
+                          <option value="PM">PM</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-xs">End Time</Label>
+                      <div className="flex items-center gap-1 mt-1">
+                        <select
+                          value={timeValues.endHour}
+                          onChange={(e) => handleTimeChange('endHour', e.target.value)}
+                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
+                            <option key={hour} value={hour}>{hour}</option>
+                          ))}
+                        </select>
+                        <span>:</span>
+                        <select
+                          value={timeValues.endMinute}
+                          onChange={(e) => handleTimeChange('endMinute', e.target.value)}
+                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {['00', '15', '30', '45'].map(minute => (
+                            <option key={minute} value={minute}>{minute}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={timeValues.endAmPm}
+                          onChange={(e) => handleTimeChange('endAmPm', e.target.value)}
+                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="AM">AM</option>
+                          <option value="PM">PM</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          
+          <DialogFooter className="flex flex-col sm:flex-row justify-between gap-2">
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={() => {
+                if (selectedScheduleDay) {
+                  handleRemoveScheduleDay(selectedScheduleDay.index);
+                  setSelectedScheduleDay(null);
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Delete
+            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setSelectedScheduleDay(null);
+                  setSelectedDays([]);
+                }}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              {selectedDays.length > 0 ? (
+                <Button 
+                  type="button" 
+                  onClick={handleAddMultipleScheduleDays}
+                  className="w-full sm:w-auto"
+                >
+                  Add {selectedDays.length} Day{selectedDays.length > 1 ? 's' : ''}
+                </Button>
+              ) : (
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    if (selectedScheduleDay) {
+                      // Format the hours string
+                      const hoursString = `${timeValues.startHour}:${timeValues.startMinute} ${timeValues.startAmPm} - ${timeValues.endHour}:${timeValues.endMinute} ${timeValues.endAmPm}`;
+                      
+                      // Update the day with the new hours
+                      const updatedDay = {
+                        ...selectedScheduleDay.day,
+                        hours: hoursString
+                      };
+                      
+                      handleSaveScheduleDay(updatedDay);
+                    }
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  Save
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

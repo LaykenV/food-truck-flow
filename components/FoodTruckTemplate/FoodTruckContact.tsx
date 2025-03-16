@@ -16,6 +16,7 @@ export interface FoodTruckContactProps {
     };
   };
   displayMode: DisplayMode;
+  forceViewMode?: 'mobile' | 'desktop';
 }
 
 export default function FoodTruckContact({ config, displayMode }: FoodTruckContactProps) {

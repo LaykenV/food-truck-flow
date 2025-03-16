@@ -18,6 +18,7 @@ export interface FoodTruckHeroProps {
   };
   displayMode: DisplayMode;
   subdomain: string;
+  forceViewMode?: 'mobile' | 'desktop';
 }
 
 export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTruckHeroProps) {
