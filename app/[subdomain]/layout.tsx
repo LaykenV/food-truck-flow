@@ -3,8 +3,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { CartProvider } from '@/lib/cartContext';
 import { Toaster } from '@/components/ui/sonner';
-import FoodTruckNavbar from '@/components/FoodTruckNavbar';
-import FoodTruckFooter from '@/components/FoodTruckFooter';
+import FoodTruckNavbar from '@/components/FoodTruckTemplate/FoodTruckNavbar';
 import { trackPageView } from '@/lib/track-page-view';
 import { OrderStatusTrackerWrapper } from '@/components/OrderStatusTrackerWrapper';
 
@@ -76,7 +75,6 @@ export default async function FoodTruckLayout({
           <OrderStatusTrackerWrapper />
           {children}
         </main>
-        <FoodTruckFooter config={config} subdomain={subdomain} displayMode="live" />
       </div>
       <Toaster />
     </CartProvider>

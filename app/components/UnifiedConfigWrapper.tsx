@@ -6,7 +6,7 @@ import { UnifiedLivePreview } from './UnifiedLivePreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Smartphone } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { FoodTruckConfig } from '@/components/food-truck-website';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { toast } from 'sonner';
 import { useUnifiedConfig, useConfig } from './UnifiedConfigProvider';
 

@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 import { DisplayMode } from '.';
 import { useMemo } from 'react';
+import MapComponent from '../MapComponent';
 
 export interface FoodTruckScheduleProps {
   config: {
@@ -58,17 +59,17 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
         currentGroup.push(day);
       } else {
         const prevDay = days[index - 1];
-        const prevDayIndex = daysOfWeek.indexOf(prevDay.day);
-        const currentDayIndex = daysOfWeek.indexOf(day.day);
         
-        // Check if days are consecutive and at the same location
-        const isConsecutive = (currentDayIndex === prevDayIndex + 1) || 
-                             (prevDayIndex === 6 && currentDayIndex === 0); // Sunday to Monday
-        const isSameLocation = day.location === prevDay.location && 
-                              day.address === prevDay.address &&
-                              day.hours === prevDay.hours;
-        
-        if (isConsecutive && isSameLocation) {
+        // Check if consecutive days and same location
+        const isPrevDayConsecutive = 
+          (daysOfWeek.indexOf(day.day) - daysOfWeek.indexOf(prevDay.day) === 1) ||
+          (prevDay.day === 'Sunday' && day.day === 'Monday');
+          
+        const isSameLocation = 
+          day.location === prevDay.location && 
+          day.address === prevDay.address;
+          
+        if (isPrevDayConsecutive && isSameLocation) {
           currentGroup.push(day);
         } else {
           groups.push([...currentGroup]);
@@ -82,95 +83,136 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
     }
     
     return groups;
-  }, [scheduleDays]);
+  }, [scheduleDays, daysOfWeek]);
   
-  // Create a map of days that have schedules for quick lookup
-  const scheduledDaysMap = useMemo(() => {
-    const map = new Map();
-    scheduleDays.forEach(day => {
-      map.set(day.day, day);
-    });
-    return map;
-  }, [scheduleDays]);
+  // If no schedule days, show a message
+  if (scheduleDays.length === 0) {
+    return (
+      <section id="locations" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 
+              className="text-3xl md:text-4xl font-bold mb-4" 
+              style={{ color: secondaryColor }}
+            >
+              {schedule?.title || 'Our Schedule'}
+            </h2>
+            <div 
+              className="w-16 h-1 mx-auto mb-6"
+              style={{ backgroundColor: primaryColor }}
+            ></div>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Schedule information coming soon!
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   
   return (
-    <section id="schedule-section" className="py-16 bg-gray-50">
+    <section id="locations" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: primaryColor }}>
-            {schedule?.title || 'Our Schedule'}
+        <div className="text-center mb-12">
+          <h2 
+            className="text-3xl md:text-4xl font-bold mb-4" 
+            style={{ color: secondaryColor }}
+          >
+            {schedule?.title || 'Find Our Truck'}
           </h2>
-          <p className="text-gray-600 text-lg">
-            {schedule?.description || 'Find us at these locations throughout the week.'}
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            {schedule?.description || 'Check out our weekly schedule and locations'}
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {/* Render grouped schedule days */}
-          {groupedScheduleDays.map((group, groupIndex) => {
-            const firstDay = group[0];
-            const lastDay = group[group.length - 1];
-            const dayRange = group.length === 1 
-              ? firstDay.day 
-              : `${firstDay.day} - ${lastDay.day}`;
-              
-            return (
-              <Card key={groupIndex} className="border-l-4 hover:shadow-md transition-shadow" style={{ borderLeftColor: primaryColor }}>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col">
-                    <div className="flex items-center mb-4">
-                      <Calendar className="h-5 w-5 mr-2" style={{ color: primaryColor }} />
-                      <h3 className="font-bold text-lg" style={{ color: primaryColor }}>{dayRange}</h3>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {firstDay.location && (
-                        <p className="font-medium">{firstDay.location}</p>
-                      )}
+        {/* Side-scrolling container for mobile */}
+        <div className="relative -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex overflow-x-auto pb-6 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 snap-x snap-mandatory md:overflow-x-visible md:pb-0">
+            {/* Render grouped schedule days */}
+            {groupedScheduleDays.map((group, groupIndex) => {
+              const firstDay = group[0];
+              const lastDay = group[group.length - 1];
+              const dayRange = group.length === 1 
+                ? firstDay.day 
+                : `${firstDay.day} - ${lastDay.day}`;
+                
+              return (
+                <div 
+                  key={groupIndex} 
+                  className="min-w-[280px] max-w-[280px] mr-4 md:mr-0 md:min-w-0 md:max-w-none snap-start"
+                >
+                  <Card className="h-full">
+                    <CardContent className="p-0">
+                      <div className="p-4">
+                        <div className="flex items-center mb-4">
+                          <div 
+                            className="p-2 rounded-full mr-3"
+                            style={{ 
+                              backgroundColor: `color-mix(in srgb, ${secondaryColor} 20%, white)` 
+                            }}
+                          >
+                            <MapPin 
+                              className="h-4 w-4" 
+                              style={{ color: secondaryColor }}
+                            />
+                          </div>
+                          <h3 className="font-bold text-lg">{firstDay.location || 'Location'}</h3>
+                        </div>
+                        {firstDay.address && (
+                          <p className="text-muted-foreground mb-4">{firstDay.address}</p>
+                        )}
+                      </div>
+                      
+                      {/* Map Component */}
                       {firstDay.address && (
-                        <div className="flex items-start">
-                          <MapPin className="h-4 w-4 mr-1 mt-1 flex-shrink-0" style={{ color: secondaryColor }} />
-                          <p className="text-gray-600 text-sm">{firstDay.address}</p>
+                        <div className="mb-4">
+                          <MapComponent address={firstDay.address} height="150px" />
                         </div>
                       )}
-                      {firstDay.hours && (
-                        <div className="flex items-start">
-                          <Clock className="h-4 w-4 mr-1 mt-1 flex-shrink-0" style={{ color: secondaryColor }} />
-                          <p className="text-gray-600 text-sm">{firstDay.hours}</p>
+                      
+                      <div className="p-4 border-t border-border">
+                        <div className="flex items-center">
+                          <div 
+                            className="p-2 rounded-full mr-3"
+                            style={{ 
+                              backgroundColor: `color-mix(in srgb, ${primaryColor} 20%, white)` 
+                            }}
+                          >
+                            <Calendar 
+                              className="h-4 w-4" 
+                              style={{ color: primaryColor }}
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium">{dayRange}</p>
+                            <p className="text-muted-foreground text-sm">{firstDay.hours || 'Check our social media for hours'}</p>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-          
-          {/* Render empty days */}
-          {daysOfWeek.filter(day => !scheduledDaysMap.has(day)).map(day => (
-            <Card key={day} className="hover:shadow-md transition-shadow border border-gray-200">
-              <CardContent className="pt-6">
-                <div className="flex flex-col">
-                  <div className="flex items-center mb-4">
-                    <Calendar className="h-5 w-5 mr-2" style={{ color: primaryColor }} />
-                    <h3 className="font-bold text-lg" style={{ color: primaryColor }}>{day}</h3>
-                  </div>
-                  <p className="text-gray-500 italic">Not scheduled</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
-        {/* Future Google Maps integration placeholder */}
-        {scheduleDays.some(day => day.coordinates) && (
-          <div className="mt-12 p-4 border border-dashed rounded-lg bg-gray-50 text-center" 
-               style={{ borderColor: primaryColor }}>
-            <p className="text-gray-500">
-              Google Maps integration coming soon! You'll be able to see all our locations on a map.
-            </p>
+              );
+            })}
           </div>
-        )}
+          
+          {/* Scroll indicators for mobile */}
+          <div className="flex justify-center mt-4 md:hidden">
+            <div className="flex space-x-2">
+              {groupedScheduleDays.map((_, index) => (
+                <div 
+                  key={index} 
+                  className="w-2 h-2 rounded-full"
+                  style={{ 
+                    backgroundColor: index === 0 
+                      ? secondaryColor 
+                      : `color-mix(in srgb, ${secondaryColor} 30%, white)` 
+                  }}
+                ></div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

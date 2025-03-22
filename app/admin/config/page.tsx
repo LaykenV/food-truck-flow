@@ -133,6 +133,11 @@ function getDefaultConfig() {
 
 // Helper function to map database configuration to FoodTruckConfig format
 function mapDatabaseConfigToFoodTruckConfig(dbConfig: any) {
+  // Check for legacy social property and migrate it
+  if (dbConfig.social && !dbConfig.socials) {
+    dbConfig.socials = dbConfig.social;
+  }
+  
   return {
     name: dbConfig.truckName || dbConfig.name || 'Food Truck Name',
     tagline: dbConfig.tagline || 'Tasty meals on wheels',

@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { FoodTruckConfig } from '../../components/FoodTruckTemplate';
 import { Card, CardContent } from '@/components/ui/card';
 import FoodTruckTemplate from '../../components/FoodTruckTemplate';
-import FoodTruckNavbar from '../../components/FoodTruckNavbar';
-import FoodTruckFooter from '../../components/FoodTruckFooter';
+import FoodTruckNavbar from '../../components/FoodTruckTemplate/FoodTruckNavbar';
+import FoodTruckFooter from '../../components/FoodTruckTemplate/FoodTruckFooter';
 import { useConfig } from './UnifiedConfigProvider';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Smartphone, Monitor } from 'lucide-react';
@@ -170,12 +170,6 @@ export function UnifiedLivePreview({
             }
           `}</style>
           <div className="flex flex-col" style={{ minHeight: '600px' }}>
-            <FoodTruckNavbar 
-              config={configToUse} 
-              subdomain={subdomain}
-              displayMode="preview"
-              forceViewMode="mobile"
-            />
             <main className="flex-grow">
               <FoodTruckTemplate 
                 config={configToUse} 
@@ -184,12 +178,6 @@ export function UnifiedLivePreview({
                 forceViewMode="mobile"
               />
             </main>
-            <FoodTruckFooter 
-              config={configToUse} 
-              subdomain={subdomain}
-              displayMode="preview"
-              forceViewMode="mobile"
-            />
           </div>
         </div>
       </div>
@@ -218,12 +206,6 @@ export function UnifiedLivePreview({
       <div className="h-[600px] overflow-y-auto overflow-x-hidden" id="desktop-preview-scroll-container">
         <div className="desktop-preview-container">
           <div className="flex flex-col" style={{ minHeight: '600px' }}>
-            <FoodTruckNavbar 
-              config={configToUse} 
-              subdomain={subdomain}
-              displayMode="preview"
-              forceViewMode="desktop"
-            />
             <main className="flex-grow">
               <FoodTruckTemplate 
                 config={configToUse} 
@@ -232,12 +214,6 @@ export function UnifiedLivePreview({
                 forceViewMode="desktop"
               />
             </main>
-            <FoodTruckFooter 
-              config={configToUse} 
-              subdomain={subdomain}
-              displayMode="preview"
-              forceViewMode="desktop"
-            />
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { FoodTruckConfig } from '@/components/food-truck-website';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 
 // Default configuration for the live preview
 const defaultConfig: FoodTruckConfig = {

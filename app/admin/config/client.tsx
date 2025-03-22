@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AdminConfigWrapper } from '@/app/components/UnifiedConfigWrapper';
-import { FoodTruckConfig } from '@/components/food-truck-website';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { UnifiedConfigProvider } from '@/app/components/UnifiedConfigProvider';
 import { toast } from 'sonner';
 import { saveConfiguration, subscribeToConfigChanges } from '@/utils/config-utils';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FoodTruckConfig } from '@/components/food-truck-website';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { getConfigurationHistory } from '@/utils/config-utils';
 import {
   Sheet,

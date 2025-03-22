@@ -39,7 +39,9 @@ orders 2 sometimes
 analytics too ^
 
 template
-fix rest of ui and other pages and seo
+    home page
+    menu page
+    order page seo loading optimization
 
 template
 admin dashboard

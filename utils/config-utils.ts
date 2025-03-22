@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/client';
-import { FoodTruckConfig } from '@/components/food-truck-website';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { toast } from 'sonner';
 
 /**

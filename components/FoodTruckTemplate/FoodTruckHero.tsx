@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 import { DisplayMode } from '.';
 
 export interface FoodTruckHeroProps {
@@ -29,7 +30,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
     name = 'Food Truck',
     tagline = 'Delicious food on wheels',
     primaryColor = '#FF6B35',
-    secondaryColor = '#4CB944',
+    secondaryColor = '#2EC4B6',
   } = config;
 
   const heroTitle = hero?.title || name;
@@ -46,7 +47,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
   };
 
   return (
-    <div className={`relative h-screen flex items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
+    <section className={`relative min-h-[100vh] flex items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -57,25 +58,37 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
           sizes="100vw"
           priority
         />
-        {/* Removed gradient overlay */}
+        <div 
+          className="absolute inset-0" 
+          style={{ 
+            background: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.4))` 
+          }}
+        />
       </div>
 
       {/* Hero Content */}
-      <div className="container mx-auto px-4 relative z-10 py-20 pt-28">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-md">
+      <div className="container relative z-10 mx-auto px-4 py-20 mt-16">
+        <div className="max-w-3xl">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             {heroTitle}
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-8 drop-shadow">
+          <div 
+            className="w-24 h-2 mb-6"
+            style={{ 
+              background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+            }}
+          ></div>
+          <p className="text-xl md:text-2xl text-white/90 mb-8">
             {heroSubtitle}
           </p>
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             {displayMode === 'live' ? (
               <>
                 <Button
                   asChild
                   size="lg"
-                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
+                  className="group"
+                  id="hero-menu-button"
                   style={{ 
                     backgroundColor: primaryColor,
                     color: 'white'
@@ -83,17 +96,22 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                 >
                   <Link href={`/${subdomain}/menu`}>
                     View Our Menu
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
                 <Button
                   asChild
                   size="lg"
                   variant="outline"
-                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all border-2"
+                  className="group border-2 hover:text-white"
                   style={{ 
-                    borderColor: 'white',
-                    color: 'white'
-                  }}
+                    borderColor: secondaryColor,
+                    color: secondaryColor,
+                    backgroundColor: 'transparent',
+                    "&:hover": {
+                      backgroundColor: secondaryColor
+                    }
+                  } as React.CSSProperties}
                 >
                   <Link href="#schedule-section">
                     Find Us
@@ -104,7 +122,8 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
               <>
                 <Button
                   size="lg"
-                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
+                  className="group"
+                  id="hero-menu-button"
                   style={{ 
                     backgroundColor: primaryColor,
                     color: 'white'
@@ -112,15 +131,20 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                   onClick={handleButtonClick}
                 >
                   View Our Menu
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="font-medium px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all border-2"
+                  className="group border-2 hover:text-white"
                   style={{ 
-                    borderColor: 'white',
-                    color: 'white'
-                  }}
+                    borderColor: secondaryColor,
+                    color: secondaryColor,
+                    backgroundColor: 'transparent',
+                    "&:hover": {
+                      backgroundColor: secondaryColor
+                    }
+                  } as React.CSSProperties}
                   onClick={handleButtonClick}
                 >
                   Find Us
@@ -130,6 +154,14 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
           </div>
         </div>
       </div>
-    </div>
+      
+      {/* Bottom accent line */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-2 z-10"
+        style={{ 
+          background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+        }}
+      ></div>
+    </section>
   );
 } 

@@ -5,7 +5,7 @@ import { UnifiedConfigProvider } from './UnifiedConfigProvider';
 import { UnifiedConfigWrapper } from './UnifiedConfigWrapper';
 import { UnifiedConfigForm } from './UnifiedConfigForm';
 import { UnifiedLivePreview } from './UnifiedLivePreview';
-import { FoodTruckConfig } from '@/components/food-truck-website';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

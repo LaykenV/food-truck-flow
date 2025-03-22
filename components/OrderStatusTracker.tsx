@@ -34,6 +34,7 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
   const [loading, setLoading] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [menuButtonVisible, setMenuButtonVisible] = useState(false);
   
   // Use a ref to track the last selected order ID to prevent unwanted switches
   const userSelectedOrderRef = useRef<string | null>(null);
@@ -385,6 +386,45 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
     );
   };
   
+  // Update position when floating menu button appears/disappears
+  useEffect(() => {
+    const checkForMenuButton = () => {
+      // Look for the floating menu button using the specific class name
+      const menuButton = document.querySelector('.floating-menu-button');
+      const isVisible = !!menuButton && 
+        window.getComputedStyle(menuButton).visibility !== 'hidden' && 
+        window.getComputedStyle(menuButton).opacity !== '0';
+      
+      if (isVisible !== menuButtonVisible) {
+        setMenuButtonVisible(isVisible);
+      }
+    };
+
+    // Check more frequently to ensure we don't miss the menu button
+    const intervalId = setInterval(checkForMenuButton, 300);
+
+    // Set up an observer to detect when elements are added/removed
+    const observer = new MutationObserver(() => {
+      checkForMenuButton();
+    });
+
+    // Start observing the body for DOM changes
+    observer.observe(document.body, { 
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
+
+    // Check initially
+    setTimeout(checkForMenuButton, 100);
+
+    return () => {
+      clearInterval(intervalId);
+      observer.disconnect();
+    };
+  }, [menuButtonVisible]);
+  
   // If there's no active order or we're still loading initially, don't render anything
   if (!currentOrderId || (loading && !orderStatus) || isDismissed) {
     return null;
@@ -453,10 +493,15 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
   
   return (
     <div className={cn(
-      "fixed bottom-4 right-4 z-50 transition-all duration-300 ease-in-out",
-      "sm:bottom-6 sm:right-6",
-      "md:bottom-8 md:right-8",
-      isMinimized ? "w-14 h-14" : "w-full max-w-xs"
+      "fixed z-50 transition-all duration-500 ease-in-out",
+      "sm:right-6",
+      "md:right-8",
+      isMinimized ? "w-14 h-14" : "w-full max-w-xs",
+      // Adjust position based on whether the menu button is visible
+      menuButtonVisible ? 
+        "bottom-20 sm:bottom-24 md:bottom-24" : 
+        "bottom-4 sm:bottom-6 md:bottom-8",
+      "right-4"
     )}>
       {isMinimized ? (
         <Button 

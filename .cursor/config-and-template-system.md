@@ -27,7 +27,7 @@ export type FoodTruckConfig = {
     phone?: string;
     address?: string;
   };
-  social?: {
+  socials?: {
     twitter?: string;
     instagram?: string;
     facebook?: string;

@@ -5,6 +5,9 @@ import FoodTruckHero from './FoodTruckHero';
 import FoodTruckAbout from './FoodTruckAbout';
 import FoodTruckContact from './FoodTruckContact';
 import FoodTruckSchedule from './FoodTruckSchedule';
+import FoodTruckNavbar from './FoodTruckNavbar';
+import FoodTruckFooter from './FoodTruckFooter';
+import FloatingMenuButton from './FloatingMenuButton';
 
 // Define the configuration type
 export type FoodTruckConfig = {
@@ -25,7 +28,7 @@ export type FoodTruckConfig = {
     phone?: string;
     address?: string;
   };
-  social?: {
+  socials?: {
     twitter?: string;
     instagram?: string;
     facebook?: string;
@@ -69,6 +72,7 @@ export default function FoodTruckTemplate({
   // Client-side state to prevent hydration mismatch
   const [isClient, setIsClient] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [hasOrderTracker, setHasOrderTracker] = useState(false);
   
   // Use useEffect to set isClient to true after component mounts
   useEffect(() => {
@@ -88,8 +92,19 @@ export default function FoodTruckTemplate({
     handleResize();
     window.addEventListener('resize', handleResize);
     
+    // Check if the OrderStatusTracker is present in the DOM
+    const checkForOrderTracker = () => {
+      const orderTrackerElement = document.querySelector('[class*="OrderStatusTracker"]');
+      setHasOrderTracker(!!orderTrackerElement);
+    };
+    
+    // Check initially and then periodically
+    checkForOrderTracker();
+    const trackerCheckInterval = setInterval(checkForOrderTracker, 2000);
+    
     return () => {
       window.removeEventListener('resize', handleResize);
+      clearInterval(trackerCheckInterval);
     };
   }, [forceViewMode]);
   
@@ -113,6 +128,14 @@ export default function FoodTruckTemplate({
 
   return (
     <div className={`flex flex-col ${isMobileView ? 'mobile-view' : ''}`}>
+      {/* Navbar */}
+      <FoodTruckNavbar
+        config={config}
+        subdomain={subdomain}
+        displayMode={displayMode}
+        forceViewMode={forceViewMode}
+      />
+      
       <main className="flex-grow">
         {/* Hero Section */}
         <FoodTruckHero 
@@ -143,6 +166,23 @@ export default function FoodTruckTemplate({
           forceViewMode={forceViewMode}
         />
       </main>
+      
+      {/* Floating Menu Button */}
+      <FloatingMenuButton
+        subdomain={subdomain}
+        displayMode={displayMode}
+        primaryColor={config.primaryColor}
+        secondaryColor={config.secondaryColor}
+        hasOrderTracker={hasOrderTracker}
+      />
+      
+      {/* Footer */}
+      <FoodTruckFooter
+        config={config}
+        subdomain={subdomain}
+        displayMode={displayMode}
+        forceViewMode={forceViewMode}
+      />
     </div>
   );
 } 
