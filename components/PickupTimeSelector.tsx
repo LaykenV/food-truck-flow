@@ -16,12 +16,16 @@ interface PickupTimeSelectorProps {
   closingTime?: string; // ISO string for closing time
   onChange: (pickupTime: PickupTimeInfo) => void;
   className?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 export function PickupTimeSelector({ 
   closingTime, 
   onChange, 
-  className 
+  className,
+  primaryColor = '#FF6B35',
+  secondaryColor = '#2EC4B6'
 }: PickupTimeSelectorProps) {
   const [isAsap, setIsAsap] = useState(true);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -79,6 +83,32 @@ export function PickupTimeSelector({
     });
   };
   
+  // Define custom styles
+  const radioStyle = {
+    "--primary": primaryColor,
+    color: primaryColor
+  } as React.CSSProperties;
+  
+  const activeRadioLabelStyle = {
+    color: primaryColor,
+    fontWeight: 600
+  } as React.CSSProperties;
+  
+  const inactiveRadioLabelStyle = {
+    color: 'var(--foreground)',
+    fontWeight: 400
+  } as React.CSSProperties;
+  
+  const selectStyle = {
+    borderColor: `${secondaryColor}60`,
+    backgroundColor: `${secondaryColor}08`
+  } as React.CSSProperties;
+  
+  const selectValueStyle = {
+    color: secondaryColor,
+    fontWeight: 500
+  } as React.CSSProperties;
+  
   return (
     <div className={cn("space-y-4", className)}>
       <RadioGroup 
@@ -88,12 +118,24 @@ export function PickupTimeSelector({
         className="space-y-2"
       >
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="asap" id="asap" />
-          <Label htmlFor="asap" className="cursor-pointer">As soon as possible</Label>
+          <RadioGroupItem value="asap" id="asap" style={radioStyle} />
+          <Label 
+            htmlFor="asap" 
+            className="cursor-pointer transition-colors"
+            style={isAsap ? activeRadioLabelStyle : inactiveRadioLabelStyle}
+          >
+            As soon as possible
+          </Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="specific" id="specific" />
-          <Label htmlFor="specific" className="cursor-pointer">Choose a specific time</Label>
+          <RadioGroupItem value="specific" id="specific" style={radioStyle} />
+          <Label 
+            htmlFor="specific" 
+            className="cursor-pointer transition-colors"
+            style={!isAsap ? activeRadioLabelStyle : inactiveRadioLabelStyle}
+          >
+            Choose a specific time
+          </Label>
         </div>
       </RadioGroup>
       
@@ -104,18 +146,27 @@ export function PickupTimeSelector({
             onValueChange={handleTimeChange}
             disabled={timeOptions.length === 0}
           >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a pickup time" />
+            <SelectTrigger className="w-full" style={selectStyle}>
+              <SelectValue placeholder="Select a pickup time" style={selectValueStyle} />
             </SelectTrigger>
             <SelectContent className="max-h-[300px]">
               {timeOptions.map((time) => (
-                <SelectItem key={time.toISOString()} value={time.toISOString()}>
+                <SelectItem 
+                  key={time.toISOString()} 
+                  value={time.toISOString()}
+                  className="hover:bg-opacity-10"
+                  style={{ 
+                    "--accent": secondaryColor,
+                    "--accent-foreground": "white"
+                  } as React.CSSProperties}
+                >
                   {format(time, 'h:mm a')}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            <span style={{ color: secondaryColor }}>●</span>
             Please allow at least 15 minutes for preparation
           </p>
         </div>

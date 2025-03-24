@@ -78,6 +78,7 @@ function getDefaultConfig() {
     logo: '',
     primaryColor: '#FF6B35',
     secondaryColor: '#4CB944',
+    heroFont: '#FFFFFF',
     hero: {
       image: '/images/placeholder-hero.jpg',
       title: 'Delicious Food Truck',
@@ -90,8 +91,7 @@ function getDefaultConfig() {
     },
     contact: {
       email: '',
-      phone: '',
-      address: ''
+      phone: ''
     },
     socials: {
       twitter: '',
@@ -144,6 +144,7 @@ function mapDatabaseConfigToFoodTruckConfig(dbConfig: any) {
     logo: dbConfig.logo || '',
     primaryColor: dbConfig.primaryColor || '#FF6B35',
     secondaryColor: dbConfig.secondaryColor || '#4CB944',
+    heroFont: dbConfig.heroFont || '#FFFFFF',
     hero: {
       image: dbConfig.heroImage || dbConfig.hero?.image || '/images/placeholder-hero.jpg',
       title: dbConfig.heroTitle || dbConfig.hero?.title || 'Delicious Food Truck',
@@ -156,8 +157,7 @@ function mapDatabaseConfigToFoodTruckConfig(dbConfig: any) {
     },
     contact: {
       email: dbConfig.contactEmail || dbConfig.contact?.email || '',
-      phone: dbConfig.contactPhone || dbConfig.contact?.phone || '',
-      address: dbConfig.contactAddress || dbConfig.contact?.address || ''
+      phone: dbConfig.contactPhone || dbConfig.contact?.phone || ''
     },
     socials: {
       twitter: dbConfig.socialTwitter || dbConfig.socials?.twitter || '',

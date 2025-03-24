@@ -26,7 +26,6 @@ export type FoodTruckConfig = {
   contact?: {
     email?: string;
     phone?: string;
-    address?: string;
   };
   socials?: {
     twitter?: string;
@@ -50,6 +49,7 @@ export type FoodTruckConfig = {
   tagline?: string;
   primaryColor?: string;
   secondaryColor?: string;
+  heroFont?: string;
 };
 
 // Define the display mode type

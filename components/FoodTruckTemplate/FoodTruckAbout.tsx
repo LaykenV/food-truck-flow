@@ -10,7 +10,6 @@ export interface FoodTruckAboutProps {
       image?: string;
     };
     contact?: {
-      address?: string;
       phone?: string;
       email?: string;
     };

@@ -15,6 +15,7 @@ const defaultConfig: FoodTruckConfig = {
   tagline: "Tasty meals on wheels",
   primaryColor: "#FF6B35", // Vibrant orange
   secondaryColor: "#4CB944", // Fresh green
+  heroFont: "#FFFFFF", // White for hero text
   about: {
     title: "About Our Food Truck",
     content: "Tell your story here...",
@@ -22,8 +23,7 @@ const defaultConfig: FoodTruckConfig = {
   },
   contact: {
     email: "",
-    phone: "",
-    address: ""
+    phone: ""
   },
   socials: {
     twitter: "",

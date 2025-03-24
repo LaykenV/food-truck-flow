@@ -65,6 +65,7 @@ export function UnifiedConfigForm({
     logo: configToUse.logo || '',
     primaryColor: configToUse.primaryColor || '#FF6B35',
     secondaryColor: configToUse.secondaryColor || '#4CB944',
+    heroFont: configToUse.heroFont || '#FFFFFF',
     heroImage: configToUse.hero?.image || '',
     heroTitle: configToUse.hero?.title || '',
     heroSubtitle: configToUse.hero?.subtitle || '',
@@ -73,7 +74,6 @@ export function UnifiedConfigForm({
     aboutImage: configToUse.about?.image || '',
     contactEmail: configToUse.contact?.email || '',
     contactPhone: configToUse.contact?.phone || '',
-    contactAddress: configToUse.contact?.address || '',
     socialTwitter: configToUse.socials?.twitter || '',
     socialInstagram: configToUse.socials?.instagram || '',
     socialFacebook: configToUse.socials?.facebook || '',
@@ -105,6 +105,7 @@ export function UnifiedConfigForm({
         logo: initialConfig.logo || '',
         primaryColor: initialConfig.primaryColor || '#FF6B35',
         secondaryColor: initialConfig.secondaryColor || '#4CB944',
+        heroFont: initialConfig.heroFont || '#FFFFFF',
         heroImage: initialConfig.hero?.image || '',
         heroTitle: initialConfig.hero?.title || '',
         heroSubtitle: initialConfig.hero?.subtitle || '',
@@ -113,7 +114,6 @@ export function UnifiedConfigForm({
         aboutImage: initialConfig.about?.image || '',
         contactEmail: initialConfig.contact?.email || '',
         contactPhone: initialConfig.contact?.phone || '',
-        contactAddress: initialConfig.contact?.address || '',
         socialTwitter: initialConfig.socials?.twitter || '',
         socialInstagram: initialConfig.socials?.instagram || '',
         socialFacebook: initialConfig.socials?.facebook || '',
@@ -132,6 +132,7 @@ export function UnifiedConfigForm({
       logo: formValues.logo,
       primaryColor: formValues.primaryColor,
       secondaryColor: formValues.secondaryColor,
+      heroFont: formValues.heroFont,
       hero: {
         image: formValues.heroImage,
         title: formValues.heroTitle,
@@ -144,8 +145,7 @@ export function UnifiedConfigForm({
       },
       contact: {
         email: formValues.contactEmail,
-        phone: formValues.contactPhone,
-        address: formValues.contactAddress
+        phone: formValues.contactPhone
       },
       socials: {
         twitter: formValues.socialTwitter,
@@ -259,6 +259,7 @@ export function UnifiedConfigForm({
       logo: config.logo || '',
       primaryColor: config.primaryColor || '#FF6B35',
       secondaryColor: config.secondaryColor || '#4CB944',
+      heroFont: config.heroFont || '#FFFFFF',
       heroImage: config.hero?.image || '',
       heroTitle: config.hero?.title || '',
       heroSubtitle: config.hero?.subtitle || '',
@@ -267,7 +268,6 @@ export function UnifiedConfigForm({
       aboutImage: config.about?.image || '',
       contactEmail: config.contact?.email || '',
       contactPhone: config.contact?.phone || '',
-      contactAddress: config.contact?.address || '',
       socialTwitter: config.socials?.twitter || '',
       socialInstagram: config.socials?.instagram || '',
       socialFacebook: config.socials?.facebook || '',
@@ -660,6 +660,24 @@ export function UnifiedConfigForm({
               </div>
               
               <div>
+                <Label htmlFor="heroFont">Hero Text Color</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  <div 
+                    className="w-10 h-10 rounded-md border shadow-sm" 
+                    style={{ backgroundColor: formValues.heroFont }}
+                  />
+                  <Input
+                    id="heroFont"
+                    name="heroFont"
+                    type="color"
+                    value={formValues.heroFont}
+                    onChange={handleInputChange}
+                    className="w-full h-10"
+                  />
+                </div>
+              </div>
+              
+              <div>
                 <Label htmlFor="heroImage">Hero Background Image</Label>
                 <div className="mt-1">
                   {formValues.heroImage && (
@@ -956,18 +974,6 @@ export function UnifiedConfigForm({
                   value={formValues.contactPhone}
                   onChange={handleInputChange}
                   placeholder="(123) 456-7890"
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="contactAddress">Address</Label>
-                <Textarea
-                  id="contactAddress"
-                  name="contactAddress"
-                  value={formValues.contactAddress}
-                  onChange={handleInputChange}
-                  placeholder="Your food truck's primary location or address"
                   className="mt-1"
                 />
               </div>

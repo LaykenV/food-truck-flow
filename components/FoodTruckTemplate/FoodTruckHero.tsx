@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { DisplayMode } from '.';
+import { useCallback } from 'react';
 
 export interface FoodTruckHeroProps {
   config: {
@@ -17,6 +18,7 @@ export interface FoodTruckHeroProps {
     tagline?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    heroFont?: string;
   };
   displayMode: DisplayMode;
   subdomain: string;
@@ -31,6 +33,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
     tagline = 'Delicious food on wheels',
     primaryColor = '#FF6B35',
     secondaryColor = '#2EC4B6',
+    heroFont = '#FFFFFF', // Default to white if not specified
   } = config;
 
   const heroTitle = hero?.title || name;
@@ -45,6 +48,19 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
     }
     // Live mode will follow the link naturally
   };
+
+  // Handle smooth scroll to schedule section
+  const handleSmoothScroll = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    const scheduleSection = document.getElementById('schedule-section');
+    if (scheduleSection) {
+      scheduleSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, []);
 
   return (
     <section className={`relative min-h-[100vh] flex items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
@@ -69,7 +85,10 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
       {/* Hero Content */}
       <div className="container relative z-10 mx-auto px-4 py-20 mt-16">
         <div className="max-w-3xl">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+          <h1 
+            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
+            style={{ color: heroFont }}
+          >
             {heroTitle}
           </h1>
           <div 
@@ -78,7 +97,10 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
               background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
             }}
           ></div>
-          <p className="text-xl md:text-2xl text-white/90 mb-8">
+          <p 
+            className="text-xl md:text-2xl mb-8"
+            style={{ color: heroFont }}
+          >
             {heroSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -100,7 +122,6 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                   </Link>
                 </Button>
                 <Button
-                  asChild
                   size="lg"
                   variant="outline"
                   className="group border-2 hover:text-white"
@@ -112,10 +133,9 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                       backgroundColor: secondaryColor
                     }
                   } as React.CSSProperties}
+                  onClick={handleSmoothScroll}
                 >
-                  <Link href="#schedule-section">
-                    Find Us
-                  </Link>
+                  Find Us
                 </Button>
               </>
             ) : (
@@ -145,7 +165,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                       backgroundColor: secondaryColor
                     }
                   } as React.CSSProperties}
-                  onClick={handleButtonClick}
+                  onClick={handleSmoothScroll}
                 >
                   Find Us
                 </Button>

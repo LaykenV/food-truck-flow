@@ -27,32 +27,74 @@ export default async function FoodTruckMenuPage({
   // Extract configuration data
   const config = foodTruck.configuration || {};
   const primaryColor = config.primaryColor || '#FF6B35';
+  const secondaryColor = config.secondaryColor || '#2EC4B6';
+  
+  // Create dynamic styles for the page
+  const headerStyle = { color: primaryColor };
+  const sectionBgStyle = { backgroundColor: `${secondaryColor}10` }; // Lighter background
   
   return (
-    <div className="bg-white">
+    <div className="min-h-screen bg-white">
       {/* Spacer for navbar */}
       <div className="h-16"></div>
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Menu Header */}
-          <div className="w-full md:w-3/4">
-            <div className="flex items-center mb-6">
-              <Utensils className="h-6 w-6 text-orange-500 mr-2" />
-              <h1 className="text-3xl font-bold">Our Menu</h1>
-            </div>
-            
-            {/* Menu Display Component */}
-            <div className="mb-8">
-              <MenuDisplay items={menuItems} primaryColor={primaryColor} />
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        {/* Menu Header with Primary Color */}
+        <div className="mb-6 md:mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2" style={headerStyle}>
+            Our Menu
+          </h1>
+          <p className="text-gray-600 max-w-md mx-auto">
+            Explore our delicious offerings and add your favorites to your order
+          </p>
+        </div>
+        
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Cart Component for Mobile (shown above menu) */}
+          <div className="w-full lg:hidden mb-6">
+            <div 
+              className="rounded-xl overflow-hidden" 
+              style={{ 
+                boxShadow: `0 4px 20px rgba(0, 0, 0, 0.1)`,
+                border: `1px solid rgba(${parseInt(primaryColor.slice(1, 3), 16)}, ${parseInt(primaryColor.slice(3, 5), 16)}, ${parseInt(primaryColor.slice(5, 7), 16)}, 0.1)`
+              }}
+            >
+              <div className="p-4 border-b" style={{ backgroundColor: `${primaryColor}10` }}>
+                <h2 className="text-xl font-bold" style={{ color: primaryColor }}>Your Order</h2>
+              </div>
+              <Cart foodTruckId={foodTruck.id} primaryColor={primaryColor} secondaryColor={secondaryColor} />
             </div>
           </div>
           
-          {/* Cart Component */}
-          <div className="w-full md:w-1/4">
-            <div className="sticky top-24 bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-4 pb-4 border-b">Your Order</h2>
-              <Cart foodTruckId={foodTruck.id} />
+          {/* Menu Display Component with Primary & Secondary Colors */}
+          <div className="w-full lg:w-3/4">
+            <div className="rounded-xl overflow-hidden" style={{ boxShadow: `0 4px 20px rgba(0, 0, 0, 0.05)` }}>
+              <div className="p-4 md:p-6 rounded-t-xl" style={sectionBgStyle}>
+                <div className="flex items-center">
+                  <Utensils className="h-6 w-6 mr-3" style={{ color: primaryColor }} />
+                  <h2 className="text-2xl font-bold" style={{ color: secondaryColor }}>Menu Items</h2>
+                </div>
+              </div>
+              
+              <div className="p-4 md:p-6">
+                <MenuDisplay items={menuItems} primaryColor={primaryColor} secondaryColor={secondaryColor} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Cart Component for Desktop (shown on right side) */}
+          <div className="w-full lg:w-1/4 hidden lg:block">
+            <div 
+              className="sticky top-24 rounded-xl overflow-hidden" 
+              style={{ 
+                boxShadow: `0 4px 20px rgba(0, 0, 0, 0.1)`,
+                border: `1px solid rgba(${parseInt(primaryColor.slice(1, 3), 16)}, ${parseInt(primaryColor.slice(3, 5), 16)}, ${parseInt(primaryColor.slice(5, 7), 16)}, 0.1)`
+              }}
+            >
+              <div className="p-4 border-b" style={{ backgroundColor: `${primaryColor}10` }}>
+                <h2 className="text-xl font-bold" style={{ color: primaryColor }}>Your Order</h2>
+              </div>
+              <Cart foodTruckId={foodTruck.id} primaryColor={primaryColor} secondaryColor={secondaryColor} />
             </div>
           </div>
         </div>

@@ -39,9 +39,11 @@ orders 2 sometimes
 analytics too ^
 
 template
-    home page
-    menu page
-    order page seo loading optimization
+    home page - mapbox integration - //heroFont config, //find us scroll, //remove location
+    menu page - make card full pic and modal with notes, ai photo modeling, //fonts
+    order page seo loading optimization - only place order when open - redesign cart - too much primary color
+    colors to order tracker
+    optimize everything
 
 template
 admin dashboard
@@ -50,6 +52,9 @@ landing page
 
 set up stripe for subscriptions
 set up stripe for cart checkout
+set up google maps
+photo sizing
+professional photo with gemini
 
 set up domain dns
 

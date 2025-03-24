@@ -19,6 +19,8 @@ interface OrderFormProps {
   foodTruckId: string;
   subdomain?: string;
   onSuccess?: () => void;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 interface ActiveOrder {
@@ -33,7 +35,13 @@ const triggerOrderUpdate = () => {
   window.dispatchEvent(event);
 };
 
-export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps) {
+export function OrderForm({ 
+  foodTruckId, 
+  subdomain, 
+  onSuccess, 
+  primaryColor = '#FF6B35', 
+  secondaryColor = '#2EC4B6'
+}: OrderFormProps) {
   const { items, totalPrice, clearCart } = useCart();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -175,120 +183,146 @@ export function OrderForm({ foodTruckId, subdomain, onSuccess }: OrderFormProps)
     }
   };
   
+  // Define styles using the color props
+  const labelStyle = { color: primaryColor };
+  const focusRingStyle = { 
+    "--focus-ring": `0 0 0 2px ${primaryColor}30`,
+    "--ring": `0 0 0 1px ${primaryColor}30`
+  } as React.CSSProperties;
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Complete Your Order</CardTitle>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              name="name"
-              placeholder="Your name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone (optional)</Label>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="Your phone number"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-            <p className="text-xs text-muted-foreground">
-              For order notifications (not stored in database)
-            </p>
-          </div>
-          
-          {/* Pickup Time Selector */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              Pickup Time
-            </Label>
-            <PickupTimeSelector 
-              onChange={setPickupInfo}
-              className="pt-1"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="notes">Additional Order Notes (optional)</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              placeholder="Any special requests or instructions for the entire order"
-              value={formData.notes}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
-          
-          {/* Order Summary */}
-          <div className="mt-6 space-y-4 bg-muted/50 p-4 rounded-lg">
-            <h3 className="font-medium">Order Summary</h3>
-            <div className="space-y-2">
-              {foodTruckItems.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <div className="flex-1">
-                    <span className="font-medium">{item.quantity}x {item.name}</span>
-                    {item.notes && (
-                      <p className="text-xs text-muted-foreground italic mt-0.5">
-                        "{item.notes}"
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right">{formatCurrency(item.price * item.quantity)}</div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Contact Information */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name" style={{ color: primaryColor }}>Name</Label>
+          <Input
+            id="name"
+            name="name"
+            placeholder="Your name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            className="border-gray-300 focus:border-transparent"
+            style={focusRingStyle}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email" style={{ color: primaryColor }}>Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Your email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            className="border-gray-300 focus:border-transparent"
+            style={focusRingStyle}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="phone" style={{ color: primaryColor }}>Phone (optional)</Label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            placeholder="Your phone number"
+            value={formData.phone}
+            onChange={handleChange}
+            className="border-gray-300 focus:border-transparent"
+            style={focusRingStyle}
+          />
+          <p className="text-xs text-muted-foreground">
+            For order notifications (not stored in database)
+          </p>
+        </div>
+        
+        {/* Pickup Time Selector */}
+        <div className="space-y-2 p-3 rounded-md" style={{ backgroundColor: `${secondaryColor}08` }}>
+          <Label className="flex items-center gap-1.5" style={{ color: primaryColor }}>
+            <Clock className="h-4 w-4" style={{ color: secondaryColor }} />
+            Pickup Time
+          </Label>
+          <PickupTimeSelector 
+            onChange={setPickupInfo}
+            className="pt-1"
+            primaryColor={primaryColor}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="notes" style={{ color: primaryColor }}>Additional Order Notes (optional)</Label>
+          <Textarea
+            id="notes"
+            name="notes"
+            placeholder="Any special requests or instructions for the entire order"
+            value={formData.notes}
+            onChange={handleChange}
+            rows={3}
+            className="border-gray-300 focus:border-transparent"
+            style={focusRingStyle}
+          />
+        </div>
+      </div>
+      
+      {/* Order Summary */}
+      <div className="space-y-4 rounded-lg p-4" style={{ backgroundColor: `${secondaryColor}10` }}>
+        <h3 className="font-medium flex items-center gap-2">
+          <span style={{ color: secondaryColor }}>●</span>
+          <span style={{ color: primaryColor }}>Order Summary</span>
+        </h3>
+        <div className="space-y-2 text-sm">
+          {foodTruckItems.length === 0 ? (
+            <p className="text-gray-500">Your cart is empty</p>
+          ) : (
+            <>
+              {foodTruckItems.map(item => (
+                <div key={item.id} className="flex justify-between">
+                  <span>{item.quantity} × {item.name}</span>
+                  <span>{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               ))}
-            </div>
-            <div className="pt-2 border-t">
-              <div className="flex justify-between font-medium">
+              <div className="border-t pt-2 mt-2 font-medium flex justify-between">
                 <span>Total</span>
-                <span>{formatCurrency(totalPrice)}</span>
+                <span style={{ color: secondaryColor }}>{formatCurrency(totalPrice)}</span>
               </div>
-            </div>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            Back to Menu
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              'Place Order'
-            )}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {/* Form Actions */}
+      <div className="flex justify-end space-x-4">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={handleCancel}
+          style={{ color: secondaryColor, borderColor: `${secondaryColor}60` }}
+          className="hover:bg-transparent hover:border-opacity-80 transition-all"
+        >
+          Cancel
+        </Button>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || foodTruckItems.length === 0}
+          style={{ 
+            background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` 
+          }}
+          className="transition-all hover:opacity-90"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            'Place Order'
+          )}
+        </Button>
+      </div>
+    </form>
   );
 } 

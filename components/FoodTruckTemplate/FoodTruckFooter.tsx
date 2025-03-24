@@ -9,7 +9,6 @@ export interface FoodTruckFooterProps {
     contact?: {
       email?: string;
       phone?: string;
-      address?: string;
     };
     socials?: {
       twitter?: string;

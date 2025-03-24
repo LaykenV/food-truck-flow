@@ -45,8 +45,7 @@ export default async function AdminDashboard() {
   const hasCustomName = foodTruck?.configuration?.name && foodTruck.configuration.name !== 'Food Truck Name';
   const hasLogo = !!foodTruck?.configuration?.logo;
   const hasContactInfo = foodTruck?.configuration?.contact?.email || 
-                         foodTruck?.configuration?.contact?.phone || 
-                         foodTruck?.configuration?.contact?.address;
+                         foodTruck?.configuration?.contact?.phone;
   const hasProfileSetup = hasCustomName && (hasLogo || hasContactInfo);
   
   const hasCustomColors = (foodTruck?.configuration?.primaryColor && foodTruck.configuration.primaryColor !== '#FF6B35') || 

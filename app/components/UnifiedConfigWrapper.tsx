@@ -63,6 +63,7 @@ export function UnifiedConfigWrapper({
         logo: newConfig.logo || '',
         primaryColor: newConfig.primaryColor || '#FF6B35',
         secondaryColor: newConfig.secondaryColor || '#4CB944',
+        heroFont: newConfig.heroFont || '#FFFFFF',
         hero: {
           image: newConfig.hero?.image || '',
           title: newConfig.hero?.title || '',
@@ -75,8 +76,7 @@ export function UnifiedConfigWrapper({
         },
         contact: {
           email: newConfig.contact?.email || '',
-          phone: newConfig.contact?.phone || '',
-          address: newConfig.contact?.address || ''
+          phone: newConfig.contact?.phone || ''
         },
         socials: {
           twitter: newConfig.socials?.twitter || '',

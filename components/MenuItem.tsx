@@ -15,16 +15,16 @@ import { Label } from '@/components/ui/label';
 interface MenuItemProps {
   item: MenuItemType;
   primaryColor?: string;
+  secondaryColor?: string;
 }
 
-export function MenuItem({ item, primaryColor = '#FF6B35' }: MenuItemProps) {
+export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2EC4B6' }: MenuItemProps) {
   const { addItem, updateItemNotes } = useCart();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notes, setNotes] = useState('');
   
   const handleAddToCart = () => {
     addItem(item);
-    // Get the item ID from the cart (it will be the same as the menu item ID)
     if (notes.trim()) {
       updateItemNotes(item.id, notes.trim());
     }
@@ -32,40 +32,56 @@ export function MenuItem({ item, primaryColor = '#FF6B35' }: MenuItemProps) {
     setIsDialogOpen(false);
   };
   
+  // Get the image source - support both item.image and item.image_url
+  const imageSource = item.image || (item as any).image_url;
+  
   return (
-    <Card className="overflow-hidden h-full flex flex-col">
-      {item.image ? (
-        <div className="relative h-40 w-full">
+    <Card className="overflow-hidden h-full flex flex-col hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+      {imageSource ? (
+        <div className="relative h-32 w-full">
           <Image 
-            src={item.image} 
+            src={imageSource} 
             alt={item.name} 
             fill 
             className="object-cover" 
             sizes="(max-width: 768px) 100vw, 33vw"
           />
+          <div 
+            className="absolute bottom-0 right-0 p-1.5 px-2.5 rounded-tl-md font-medium text-white text-sm"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {formatCurrency(item.price)}
+          </div>
         </div>
       ) : (
-        <div className="h-40 bg-gray-200"></div>
+        <div className="h-32 bg-gray-200 flex items-center justify-center">
+          <span className="text-gray-400">No image available</span>
+          <div 
+            className="absolute bottom-0 right-0 p-1.5 px-2.5 rounded-tl-md font-medium text-white text-sm"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {formatCurrency(item.price)}
+          </div>
+        </div>
       )}
-      <CardContent className="p-4 flex-grow">
-        <h3 className="text-base font-medium text-gray-900">{item.name}</h3>
-        <p className="mt-1 text-sm text-gray-500 line-clamp-2">{item.description}</p>
-        <p className="mt-2 text-base font-medium text-gray-900">{formatCurrency(item.price)}</p>
+      <CardContent className="p-3 flex-grow">
+        <h3 className="text-base font-medium text-gray-900 line-clamp-1">{item.name}</h3>
+        <p className="mt-1 text-xs text-gray-500 line-clamp-2">{item.description}</p>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-3 pt-0">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button 
-              className="w-full"
+              className="w-full transition-all hover:opacity-90 h-9 text-sm"
               style={{ backgroundColor: primaryColor }}
             >
-              <PlusCircle className="h-4 w-4 mr-2" />
+              <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
               Add to Cart
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Add {item.name} to Cart</DialogTitle>
+              <DialogTitle style={{ color: primaryColor }}>Add {item.name} to Cart</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">

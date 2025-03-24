@@ -82,6 +82,7 @@ export function ConfigHistoryDrawer({ userId, onSelectVersion }: ConfigHistoryDr
       logo: item.config.logo || '',
       primaryColor: item.config.primaryColor || '#FF6B35',
       secondaryColor: item.config.secondaryColor || '#4CB944',
+      heroFont: item.config.heroFont || '#FFFFFF',
       hero: {
         image: item.config.hero?.image || '',
         title: item.config.hero?.title || '',
@@ -94,8 +95,7 @@ export function ConfigHistoryDrawer({ userId, onSelectVersion }: ConfigHistoryDr
       },
       contact: {
         email: item.config.contact?.email || '',
-        phone: item.config.contact?.phone || '',
-        address: item.config.contact?.address || ''
+        phone: item.config.contact?.phone || ''
       },
       socials: {
         twitter: item.config.socials?.twitter || '',

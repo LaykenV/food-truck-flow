@@ -13,9 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 interface CartProps {
   onCheckout?: () => void;
   foodTruckId: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
-export function Cart({ onCheckout, foodTruckId }: CartProps) {
+export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', secondaryColor = '#2EC4B6' }: CartProps) {
   const { items, removeItem, updateQuantity, updateItemNotes, totalItems, totalPrice } = useCart();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -50,7 +52,7 @@ export function Cart({ onCheckout, foodTruckId }: CartProps) {
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" style={{ color: primaryColor }} />
             Your Cart
           </CardTitle>
         </CardHeader>
@@ -69,13 +71,13 @@ export function Cart({ onCheckout, foodTruckId }: CartProps) {
   
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="p-4">
         <CardTitle className="flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5" />
+          <ShoppingCart className="h-5 w-5" style={{ color: primaryColor }} />
           Your Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-4 p-4 pt-0">
         {foodTruckItems.map((item) => (
           <div key={item.id} className="flex flex-col border-b pb-4">
             <div className="flex items-start justify-between gap-4">
@@ -135,6 +137,7 @@ export function Cart({ onCheckout, foodTruckId }: CartProps) {
                   <Button 
                     size="sm" 
                     onClick={() => handleSaveNotes(item.id)}
+                    style={{ backgroundColor: primaryColor }}
                   >
                     Save
                   </Button>
@@ -145,7 +148,7 @@ export function Cart({ onCheckout, foodTruckId }: CartProps) {
                 {item.notes ? (
                   <div className="text-sm text-muted-foreground flex justify-between items-start">
                     <div className="flex items-start gap-1">
-                      <MessageCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <MessageCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
                       <span className="italic">{item.notes}</span>
                     </div>
                     <Button 
@@ -165,7 +168,7 @@ export function Cart({ onCheckout, foodTruckId }: CartProps) {
                     className="text-xs text-muted-foreground flex items-center"
                     onClick={() => handleEditNotes(item.id)}
                   >
-                    <MessageCircle className="h-3 w-3 mr-1" />
+                    <MessageCircle className="h-3 w-3 mr-1" style={{ color: primaryColor }} />
                     Add special instructions
                   </Button>
                 )}
@@ -176,13 +179,14 @@ export function Cart({ onCheckout, foodTruckId }: CartProps) {
         <Separator />
         <div className="flex items-center justify-between font-medium">
           <div>Total</div>
-          <div>{formatCurrency(totalPrice)}</div>
+          <div style={{ color: primaryColor }}>{formatCurrency(totalPrice)}</div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="p-4 pt-0">
         <Button 
-          className="w-full" 
+          className="w-full transition-all hover:opacity-90" 
           onClick={handleCheckout}
+          style={{ backgroundColor: primaryColor }}
           disabled={foodTruckItems.length === 0}
         >
           Checkout

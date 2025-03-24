@@ -10,6 +10,7 @@ export type MenuItem = {
   price: number;
   category: string;
   image?: string;
+  image_url?: string;
   food_truck_id: string;
 };
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { Phone, Mail, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Phone, Mail, Instagram, Facebook, Twitter } from 'lucide-react';
 import { DisplayMode } from '.';
 
 export interface FoodTruckContactProps {
@@ -9,7 +9,6 @@ export interface FoodTruckContactProps {
     contact?: {
       email?: string;
       phone?: string;
-      address?: string;
     };
     socials?: {
       instagram?: string;
@@ -155,75 +154,75 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
         </div>
         
         <div 
-          className="max-w-4xl mx-auto bg-background rounded-lg p-8 shadow-sm"
+          className="max-w-4xl mx-auto bg-background rounded-lg p-8 shadow-lg"
           style={{ 
             borderWidth: "1px",
-            borderImage: `linear-gradient(to right, ${primaryColor}, ${secondaryColor}) 1` 
+            borderImage: `linear-gradient(to right, ${primaryColor}, ${secondaryColor}) 1`,
+            boxShadow: `0 10px 30px rgba(0, 0, 0, 0.1), 0 1px 8px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.08)`
           }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {/* Phone */}
             <div className="flex flex-col items-center text-center group">
               <div 
-                className="p-3 rounded-full mb-4 transition-colors"
+                className="p-4 rounded-full mb-5 transition-all transform group-hover:scale-110 duration-300"
                 style={{ 
-                  backgroundColor: `color-mix(in srgb, ${primaryColor} 10%, white)` 
+                  backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, white)`,
+                  boxShadow: `0 4px 20px ${primaryColor}30`
                 }}
               >
                 <Phone 
-                  className="h-6 w-6" 
+                  className="h-8 w-8" 
                   style={{ color: primaryColor }}
                 />
               </div>
-              <h4 className="font-bold text-lg mb-2 text-foreground">{contact?.phone || "Contact us to get our phone number"}</h4>
-              <p className="text-muted-foreground">Call us anytime</p>
+              <h4 className="font-bold text-xl mb-3 text-foreground">{contact?.phone || "Contact us to get our phone number"}</h4>
+              <p className="text-muted-foreground text-lg">Call us anytime</p>
             </div>
             
             {/* Email */}
             <div className="flex flex-col items-center text-center group">
               <div 
-                className="p-3 rounded-full mb-4 transition-colors"
+                className="p-4 rounded-full mb-5 transition-all transform group-hover:scale-110 duration-300"
                 style={{ 
-                  backgroundColor: `color-mix(in srgb, ${secondaryColor} 10%, white)` 
+                  backgroundColor: `color-mix(in srgb, ${secondaryColor} 15%, white)`,
+                  boxShadow: `0 4px 20px ${secondaryColor}30`
                 }}
               >
                 <Mail 
-                  className="h-6 w-6" 
+                  className="h-8 w-8" 
                   style={{ color: secondaryColor }}
                 />
               </div>
-              <h4 className="font-bold text-lg mb-2 text-foreground">{contact?.email || "info@foodtruckname.com"}</h4>
-              <p className="text-muted-foreground">Email us anytime</p>
-            </div>
-            
-            {/* Address */}
-            <div className="flex flex-col items-center text-center group">
-              <div 
-                className="p-3 rounded-full mb-4 transition-colors"
-                style={{ 
-                  background: `linear-gradient(135deg, ${primaryColor}20, ${secondaryColor}20)` 
-                }}
-              >
-                <MapPin 
-                  className="h-6 w-6" 
-                  style={{ 
-                    color: `color-mix(in srgb, ${primaryColor} 50%, ${secondaryColor})` 
-                  }}
-                />
-              </div>
-              <h4 className="font-bold text-lg mb-2 text-foreground">Location</h4>
-              <p className="text-muted-foreground">{contact?.address || "Various locations - check our social media for updates"}</p>
+              <h4 className="font-bold text-xl mb-3 text-foreground">{contact?.email || "info@foodtruckname.com"}</h4>
+              <p className="text-muted-foreground text-lg">Email us anytime</p>
             </div>
           </div>
           
-          <div className="mt-12 text-center">
-            <h4 className="font-bold text-lg mb-4 text-foreground">Follow Us</h4>
-            <div className="flex justify-center space-x-6">
+          <div 
+            className="mt-16 text-center pt-10"
+            style={{
+              borderTop: `1px solid color-mix(in srgb, ${primaryColor} 30%, ${secondaryColor})20`
+            }}
+          >
+            <h4 className="font-bold text-xl mb-6 text-foreground">Follow Us</h4>
+            <div className="flex justify-center space-x-8">
               {instagramUrl ? (
                 renderExternalLink(
                   instagramUrl,
-                  <Instagram size={24} style={{ color: primaryColor }} />,
-                  "text-muted-foreground transition-all p-2 rounded-full hover:scale-110 hover:bg-primary/10",
+                  <div 
+                    className="p-3 rounded-full transition-all hover:scale-110 duration-300"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${primaryColor}20, ${primaryColor}10)`,
+                      boxShadow: `0 4px 12px ${primaryColor}30`
+                    }}
+                  >
+                    <Instagram 
+                      size={28} 
+                      style={{ color: primaryColor }} 
+                    />
+                  </div>,
+                  "text-muted-foreground",
                   "Follow us on Instagram"
                 )
               ) : null}
@@ -231,8 +230,19 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
               {facebookUrl ? (
                 renderExternalLink(
                   facebookUrl,
-                  <Facebook size={24} style={{ color: secondaryColor }} />,
-                  "text-muted-foreground transition-all p-2 rounded-full hover:scale-110 hover:bg-secondary/10",
+                  <div 
+                    className="p-3 rounded-full transition-all hover:scale-110 duration-300"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${secondaryColor}20, ${secondaryColor}10)`,
+                      boxShadow: `0 4px 12px ${secondaryColor}30`
+                    }}
+                  >
+                    <Facebook 
+                      size={28} 
+                      style={{ color: secondaryColor }} 
+                    />
+                  </div>,
+                  "text-muted-foreground",
                   "Follow us on Facebook"
                 )
               ) : null}
@@ -240,15 +250,26 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
               {twitterUrl ? (
                 renderExternalLink(
                   twitterUrl,
-                  <Twitter size={24} style={{ color: `color-mix(in srgb, ${primaryColor} 50%, ${secondaryColor})` }} />,
-                  "text-muted-foreground transition-all p-2 rounded-full hover:scale-110 hover:bg-primary/5 hover:bg-secondary/5",
+                  <div 
+                    className="p-3 rounded-full transition-all hover:scale-110 duration-300"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
+                      boxShadow: `0 4px 12px ${primaryColor}20, 0 4px 12px ${secondaryColor}20`
+                    }}
+                  >
+                    <Twitter 
+                      size={28} 
+                      style={{ color: `color-mix(in srgb, ${primaryColor} 50%, ${secondaryColor})` }} 
+                    />
+                  </div>,
+                  "text-muted-foreground",
                   "Follow us on Twitter/X"
                 )
               ) : null}
               
               {/* Show a message if no social links are available */}
               {!instagramUrl && !facebookUrl && !twitterUrl && (
-                <div className="text-muted-foreground/70 text-sm italic">
+                <div className="text-muted-foreground/70 text-sm italic mt-2 p-4 rounded-lg bg-muted/30">
                   Social media links will appear here when added
                 </div>
               )}
