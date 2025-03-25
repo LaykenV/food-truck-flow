@@ -148,7 +148,7 @@ export default function FoodTruckNavbar({
   const renderLink = (href: string, children: React.ReactNode, className: string) => {
     if (displayMode === 'live') {
       return (
-        <Link href={href} className={className}>
+        <Link href={href} className={className} prefetch={true}>
           {children}
         </Link>
       );
@@ -177,7 +177,7 @@ export default function FoodTruckNavbar({
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             {/* Logo and Name */}
-            <div className={isMobileView ? "flex-1" : ""}>
+            <div className={isMobileView ? "flex-1 flex justify-center" : ""}>
               {renderLink(`/${subdomain}`, (
                 <div className="flex items-center gap-2">
                   {logo ? (
@@ -212,59 +212,52 @@ export default function FoodTruckNavbar({
               ), "flex items-center gap-2")}
             </div>
 
-            {/* Desktop Navigation - Removed */}
-
-            {/* Cart Button */}
-            <div className="flex justify-end">
-              {displayMode === 'live' ? (
-                <Link 
-                  href={`/${subdomain}/order`}
-                  className={cn(
-                    "flex items-center justify-center p-2 rounded-full transition-colors relative",
-                    scrolled || isNonHeroPage 
-                      ? "text-foreground hover:bg-muted" 
-                      : "text-white hover:bg-white/10"
-                  )}
-                  aria-label="View Cart"
-                  style={{
-                    color: scrolled || isNonHeroPage ? secondaryColor : "white"
-                  }}
-                >
-                  <ShoppingCart size={24} />
-                  {itemCount > 0 && (
-                    <span 
-                      className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
-                    >
-                      {itemCount}
-                    </span>
-                  )}
-                </Link>
-              ) : (
-                <Button 
-                  variant="ghost"
-                  size="sm" 
-                  className={cn(
-                    "flex items-center justify-center p-2 rounded-full transition-colors relative",
-                    scrolled || isNonHeroPage 
-                      ? "text-foreground hover:bg-muted" 
-                      : "text-white hover:bg-white/10"
-                  )}
-                  style={{
-                    color: scrolled || isNonHeroPage ? secondaryColor : "white"
-                  }}
-                  onClick={handleLinkClick}
-                >
-                  <ShoppingCart size={24} />
-                  {itemCount > 0 && (
-                    <span 
-                      className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
-                    >
-                      {itemCount}
-                    </span>
-                  )}
-                </Button>
-              )}
-            </div>
+            {/* Cart Button - only show on desktop */}
+            {!isMobileView && (
+              <div className="flex justify-end">
+                {displayMode === 'live' ? (
+                  <Link 
+                    href={`/${subdomain}/order`}
+                    className={cn(
+                      "flex items-center justify-center p-2 rounded-full transition-colors relative",
+                      scrolled || isNonHeroPage 
+                        ? "text-foreground hover:bg-muted" 
+                        : "text-white hover:bg-white/10"
+                    )}
+                    aria-label="View Cart"
+                    style={{
+                      color: scrolled || isNonHeroPage ? secondaryColor : "white"
+                    }}
+                  >
+                    <ShoppingCart size={24} />
+                    {itemCount > 0 && (
+                      <span 
+                        className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                      >
+                        {itemCount}
+                      </span>
+                    )}
+                  </Link>
+                ) : (
+                  <Button 
+                    variant="ghost"
+                    size="sm" 
+                    className={cn(
+                      "flex items-center justify-center p-2 rounded-full transition-colors relative",
+                      scrolled || isNonHeroPage 
+                        ? "text-foreground hover:bg-muted" 
+                        : "text-white hover:bg-white/10"
+                    )}
+                    style={{
+                      color: scrolled || isNonHeroPage ? secondaryColor : "white"
+                    }}
+                    onClick={handleLinkClick}
+                  >
+                    <ShoppingCart size={24} />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>

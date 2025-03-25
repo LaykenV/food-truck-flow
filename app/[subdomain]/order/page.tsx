@@ -2,6 +2,7 @@ import { getFoodTruckData } from '@/lib/fetch-food-truck';
 import { notFound } from 'next/navigation';
 import { Cart } from '@/components/Cart';
 import { OrderForm } from '@/components/OrderForm';
+import { ShoppingCartDrawer } from '@/components/ShoppingCartDrawer';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
@@ -64,6 +65,15 @@ export default async function FoodTruckOrderPage({
         </div>
       </div>
       
+      {/* ShoppingCartDrawer for Mobile */}
+      <div className="lg:hidden">
+        <ShoppingCartDrawer 
+          foodTruckId={foodTruck.id} 
+          primaryColor={primaryColor} 
+          secondaryColor={secondaryColor} 
+        />
+      </div>
+      
       {/* Order Content */}
       <div className="container mx-auto px-4 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -90,8 +100,8 @@ export default async function FoodTruckOrderPage({
             </div>
           </div>
           
-          {/* Order Summary */}
-          <div>
+          {/* Order Summary - Hidden on mobile (since we use drawer) */}
+          <div className="hidden lg:block">
             <div 
               className="rounded-xl overflow-hidden shadow-md"
               style={{ 
@@ -107,11 +117,38 @@ export default async function FoodTruckOrderPage({
                   foodTruckId={foodTruck.id} 
                   primaryColor={primaryColor}
                   secondaryColor={secondaryColor}
+                  hideCheckoutButton={true}
                 />
               </div>
             </div>
             
             {/* Additional Information */}
+            <div 
+              className="mt-6 rounded-xl overflow-hidden shadow-md"
+              style={{ backgroundColor: `${secondaryColor}08` }}
+            >
+              <div className="p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <span style={iconStyle}>●</span>
+                  <span style={headingStyle}>Need Help?</span>
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  If you have any questions about your order, please contact us:
+                </p>
+                <p className="text-gray-600">
+                  {config.contact?.phone && (
+                    <span className="block">Phone: <span style={{ color: secondaryColor }}>{config.contact.phone}</span></span>
+                  )}
+                  {config.contact?.email && (
+                    <span className="block">Email: <span style={{ color: secondaryColor }}>{config.contact.email}</span></span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Need Help Section - Mobile Only */}
+          <div className="lg:hidden">
             <div 
               className="mt-6 rounded-xl overflow-hidden shadow-md"
               style={{ backgroundColor: `${secondaryColor}08` }}

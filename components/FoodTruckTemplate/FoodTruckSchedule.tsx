@@ -4,7 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 import { DisplayMode } from '.';
 import { useMemo } from 'react';
-import MapComponent from '../MapComponent';
+import MapComponent from '@/components/MapComponent';
+import { formatTimeRange } from '@/lib/schedule-utils';
 
 export interface FoodTruckScheduleProps {
   config: {
@@ -15,7 +16,9 @@ export interface FoodTruckScheduleProps {
         day: string;
         location?: string;
         address?: string;
-        hours?: string;
+        openTime?: string; 
+        closeTime?: string;
+        isClosed?: boolean;
         coordinates?: {
           lat: number;
           lng: number;
@@ -59,17 +62,19 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
         currentGroup.push(day);
       } else {
         const prevDay = days[index - 1];
+        const prevDayIndex = daysOfWeek.indexOf(prevDay.day);
+        const currentDayIndex = daysOfWeek.indexOf(day.day);
         
-        // Check if consecutive days and same location
-        const isPrevDayConsecutive = 
-          (daysOfWeek.indexOf(day.day) - daysOfWeek.indexOf(prevDay.day) === 1) ||
-          (prevDay.day === 'Sunday' && day.day === 'Monday');
-          
-        const isSameLocation = 
-          day.location === prevDay.location && 
-          day.address === prevDay.address;
-          
-        if (isPrevDayConsecutive && isSameLocation) {
+        // Check if days are consecutive and at the same location
+        const isConsecutive = (currentDayIndex === prevDayIndex + 1) || 
+                             (prevDayIndex === 6 && currentDayIndex === 0); // Sunday to Monday
+        const isSameLocation = day.location === prevDay.location && 
+                              day.address === prevDay.address &&
+                              day.openTime === prevDay.openTime &&
+                              day.closeTime === prevDay.closeTime &&
+                              day.isClosed === prevDay.isClosed;
+        
+        if (isConsecutive && isSameLocation) {
           currentGroup.push(day);
         } else {
           groups.push([...currentGroup]);
@@ -185,7 +190,15 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
                           </div>
                           <div>
                             <p className="font-medium">{dayRange}</p>
-                            <p className="text-muted-foreground text-sm">{firstDay.hours || 'Check our social media for hours'}</p>
+                            {firstDay.isClosed ? (
+                              <p className="text-destructive text-sm font-medium">Closed Today</p>
+                            ) : (
+                              <p className="text-muted-foreground text-sm">
+                                {(firstDay.openTime && firstDay.closeTime) ? 
+                                  formatTimeRange(firstDay.openTime, firstDay.closeTime) : 
+                                  'Check our social media for hours'}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>

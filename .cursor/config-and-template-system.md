@@ -179,12 +179,56 @@ The template system will integrate with the menu system:
 
 ### Schedule System
 
-The template system includes a schedule system:
+The template system includes a comprehensive schedule management system:
 
-1. Schedule information is stored in the `schedule` field of the configuration
-2. Each day can have a location, address, and hours
-3. Future integration with Google Maps is planned for location visualization
-4. The schedule is displayed in a weekly format with cards for each day
+1. **Data Structure**: Schedule information is stored in the `schedule` field of the configuration
+   - Title and description for the schedule section
+   - Days array with detailed time and location information:
+     - `day`: Day of the week
+     - `location`: Name of the location
+     - `address`: Physical address
+     - `hours`: Display format of hours (e.g., "11:00 AM - 2:00 PM")
+     - `openTime`: Structured opening time in 24h format (e.g., "11:00")
+     - `closeTime`: Structured closing time in 24h format (e.g., "14:00")
+     - `isClosed`: Override flag to manually mark a day as closed
+     - `coordinates`: Latitude/longitude for map display
+
+2. **Admin Interface**: Schedule management is handled through dedicated components
+   - Dedicated `/admin/schedule` page for comprehensive schedule management
+   - Focused "Today's Schedule" card on the dashboard showing current day's information
+   - Real-time open/closed status indicator based on current time and configured hours
+   - One-click "Close for Today" button on dashboard to quickly mark the current day as closed
+   - Ability to reopen a manually closed day
+
+3. **Schedule Management Features**:
+   - Add, edit, and delete schedule days
+   - Time pickers for structured time input
+   - Toggle for manually marking days as closed
+   - Batch edit multiple days with the same location/hours
+   - Visual calendar-style view of the week
+   - Group consecutive days at the same location for better organization
+   - Metadata management (title and description)
+
+4. **Status Indication**:
+   - Visual indicator shows if the food truck is currently open or closed
+   - Different visual styling for manually closed days vs. naturally closed due to hours
+   - Structured time parsing for accurate open/closed determination
+   - Handling of overnight hours (when close time is earlier than open time)
+   - Priority given to manual closure over time-based determination
+   - Messaging about order acceptance status based on open/closed state
+   - Warning when no schedule is configured for the current day
+
+5. **Public-Facing Display**:
+   - Weekly schedule displayed on the food truck's public website
+   - Clear visual indication when a day is manually marked as closed
+   - Responsive grid/list layout for different screen sizes
+   - Highlighting of current day for better user experience
+
+6. **Server/Client Compatibility**:
+   - Separate utility functions for server and client components
+   - Client-side: `isScheduledOpen` and `getTodaySchedule` in `schedule-utils.ts`
+   - Server-side: `isScheduledOpenServer` and `getTodayScheduleServer` in `schedule-utils-server.ts`
+   - Consistent behavior between server and client rendering
 
 ### Order System
 
@@ -253,6 +297,10 @@ According to the project plan, the following enhancements are planned for the te
 5. **SEO Management** with basic meta tag fields
 6. **Custom domain support** for Pro plan users
 7. **Google Maps integration** for the schedule section to visualize locations
+8. **Enhanced schedule status**:
+   - Automatic timezone detection and adjustment
+   - Manual override for open/closed status
+   - Special holiday/closure announcements
 
 ## Best Practices
 

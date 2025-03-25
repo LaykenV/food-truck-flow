@@ -15,9 +15,10 @@ interface CartProps {
   foodTruckId: string;
   primaryColor?: string;
   secondaryColor?: string;
+  hideCheckoutButton?: boolean;
 }
 
-export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', secondaryColor = '#2EC4B6' }: CartProps) {
+export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', secondaryColor = '#2EC4B6', hideCheckoutButton = false }: CartProps) {
   const { items, removeItem, updateQuantity, updateItemNotes, totalItems, totalPrice } = useCart();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -31,7 +32,9 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
       onCheckout();
     } else {
       // Navigate to the order page
-      router.push('./order');
+      const currentPath = window.location.pathname;
+      const subdomain = currentPath.split('/')[1]; // Extract the subdomain from URL
+      router.push(`/${subdomain}/order`);
     }
   };
 
@@ -49,14 +52,8 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
   
   if (foodTruckItems.length === 0) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" style={{ color: primaryColor }} />
-            Your Cart
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="w-full border-0 shadow-none">
+        <CardContent className="p-4">
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <ShoppingCart className="h-12 w-12 text-muted-foreground mb-3" />
             <p className="text-muted-foreground">Your cart is empty</p>
@@ -70,14 +67,8 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
   }
   
   return (
-    <Card className="w-full">
-      <CardHeader className="p-4">
-        <CardTitle className="flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5" style={{ color: primaryColor }} />
-          Your Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-4 p-4 pt-0">
+    <Card className="w-full border-0 shadow-none">
+      <CardContent className="grid gap-4 p-4">
         {foodTruckItems.map((item) => (
           <div key={item.id} className="flex flex-col border-b pb-4">
             <div className="flex items-start justify-between gap-4">
@@ -182,16 +173,21 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
           <div style={{ color: primaryColor }}>{formatCurrency(totalPrice)}</div>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button 
-          className="w-full transition-all hover:opacity-90" 
-          onClick={handleCheckout}
-          style={{ backgroundColor: primaryColor }}
-          disabled={foodTruckItems.length === 0}
-        >
-          Checkout
-        </Button>
-      </CardFooter>
+      {!hideCheckoutButton && (
+        <CardFooter className="p-4 pt-0">
+          <Button 
+            className="w-full py-6 font-medium text-white transition-all hover:scale-105 active:scale-100"
+            onClick={handleCheckout}
+            style={{ 
+              background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
+              boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)'
+            }}
+            disabled={foodTruckItems.length === 0}
+          >
+            Checkout
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 } 

@@ -116,8 +116,8 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                     color: 'white'
                   }}
                 >
-                  <Link href={`/${subdomain}/menu`}>
-                    View Our Menu
+                  <Link href={`/${subdomain}/menu`} prefetch={true}>
+                    Start Order
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
@@ -150,7 +150,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                   }}
                   onClick={handleButtonClick}
                 >
-                  View Our Menu
+                  Start Order
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
                 <Button

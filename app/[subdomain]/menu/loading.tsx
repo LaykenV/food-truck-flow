@@ -29,57 +29,74 @@ export default function Loading() {
           
           {/* Menu Display Skeleton */}
           <div className="w-full lg:w-3/4">
-            <div className="rounded-xl overflow-hidden bg-white shadow-sm">
-              <div className="p-4 md:p-6 bg-gray-50 rounded-t-xl">
+            <div className="rounded-xl overflow-hidden bg-white shadow-sm border">
+              <div className="p-4 md:p-6 bg-gray-50 border-b rounded-t-xl">
                 <div className="flex items-center">
                   <Skeleton className="h-6 w-6 mr-3 rounded-full" />
-                  <Skeleton className="h-8 w-40" />
+                  <Skeleton className="h-8 w-32" />
                 </div>
               </div>
               
               <div className="p-4 md:p-6">
-                {/* Mobile View Skeleton */}
-                <div className="lg:hidden">
-                  {/* Category sections */}
-                  {[1, 2, 3].map((category) => (
-                    <div key={category} className="space-y-4 mb-10">
-                      {/* Category heading */}
-                      <Skeleton className="h-7 w-40 mb-2" />
-                      
-                      {/* Horizontal items */}
-                      <div className="flex space-x-4 overflow-hidden">
-                        {[1, 2, 3].map((item) => (
-                          <div key={item} className="w-[250px] flex-shrink-0">
-                            <div className="rounded-lg overflow-hidden border h-[190px]">
-                              <Skeleton className="h-32 w-full" />
-                              <div className="p-3">
-                                <Skeleton className="h-5 w-full mb-2" />
-                                <Skeleton className="h-4 w-full mb-2" />
-                                <Skeleton className="h-9 w-full mt-1" />
-                              </div>
+                {/* Mobile View - Horizontal Scrollable Categories */}
+                <div className="space-y-10 lg:hidden">
+                  {/* First Category */}
+                  <div className="space-y-4">
+                    <Skeleton className="h-7 w-32 mb-2" />
+                    
+                    <div className="flex space-x-4 overflow-x-auto pb-2">
+                      {/* Photo-centric Card Skeletons */}
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="w-[250px] flex-shrink-0">
+                          <div className="rounded-md overflow-hidden border h-full flex flex-col">
+                            <Skeleton className="aspect-square w-full" />
+                            <div className="p-3">
+                              <Skeleton className="h-5 w-3/4 mb-1" />
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  
+                  {/* Second Category */}
+                  <div className="space-y-4">
+                    <Skeleton className="h-7 w-40 mb-2" />
+                    
+                    <div className="flex space-x-4 overflow-x-auto pb-2">
+                      {/* Photo-centric Card Skeletons */}
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="w-[250px] flex-shrink-0">
+                          <div className="rounded-md overflow-hidden border h-full flex flex-col">
+                            <Skeleton className="aspect-square w-full" />
+                            <div className="p-3">
+                              <Skeleton className="h-5 w-3/4 mb-1" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 
-                {/* Desktop View Skeleton */}
+                {/* Desktop View - Tabs and Grid */}
                 <div className="hidden lg:block">
                   {/* Tabs */}
-                  <Skeleton className="h-10 w-96 mb-6" />
+                  <div className="mb-4 flex space-x-1 overflow-x-auto pb-1">
+                    <Skeleton className="h-9 w-16 rounded-md" />
+                    <Skeleton className="h-9 w-20 rounded-md" />
+                    <Skeleton className="h-9 w-24 rounded-md" />
+                    <Skeleton className="h-9 w-28 rounded-md" />
+                  </div>
                   
-                  {/* Grid layout items */}
+                  {/* Grid Layout */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3, 4, 5, 6].map((item) => (
-                      <div key={item} className="rounded-lg overflow-hidden border">
-                        <Skeleton className="h-32 w-full" />
+                    {/* Photo-centric Card Skeletons */}
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <div key={i} className="rounded-md overflow-hidden border h-full flex flex-col">
+                        <Skeleton className="aspect-square w-full" />
                         <div className="p-3">
-                          <Skeleton className="h-5 w-full mb-2" />
-                          <Skeleton className="h-4 w-full mb-2" />
-                          <Skeleton className="h-4 w-3/4 mb-2" />
-                          <Skeleton className="h-9 w-full mt-1" />
+                          <Skeleton className="h-5 w-3/4 mb-1" />
                         </div>
                       </div>
                     ))}
@@ -91,7 +108,7 @@ export default function Loading() {
           
           {/* Cart Skeleton for Desktop (shown on right side) */}
           <div className="w-full lg:w-1/4 hidden lg:block">
-            <div className="rounded-xl overflow-hidden bg-white shadow-sm border">
+            <div className="rounded-xl overflow-hidden bg-white shadow-sm border sticky top-24">
               <div className="p-4 bg-gray-50 border-b">
                 <Skeleton className="h-6 w-28" />
               </div>

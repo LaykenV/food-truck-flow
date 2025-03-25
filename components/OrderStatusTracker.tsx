@@ -35,6 +35,7 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [menuButtonVisible, setMenuButtonVisible] = useState(false);
+  const [cartDrawerVisible, setCartDrawerVisible] = useState(false);
   
   // Use a ref to track the last selected order ID to prevent unwanted switches
   const userSelectedOrderRef = useRef<string | null>(null);
@@ -386,26 +387,43 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
     );
   };
   
-  // Update position when floating menu button appears/disappears
+  // Update position when floating menu button or shopping cart drawer appears/disappears
   useEffect(() => {
-    const checkForMenuButton = () => {
+    const checkForElements = () => {
       // Look for the floating menu button using the specific class name
       const menuButton = document.querySelector('.floating-menu-button');
-      const isVisible = !!menuButton && 
+      const menuButtonIsVisible = !!menuButton && 
         window.getComputedStyle(menuButton).visibility !== 'hidden' && 
         window.getComputedStyle(menuButton).opacity !== '0';
       
-      if (isVisible !== menuButtonVisible) {
-        setMenuButtonVisible(isVisible);
+      // Look for the shopping cart drawer - only consider it on mobile
+      const isMobile = window.innerWidth < 1024; // lg breakpoint in Tailwind is typically 1024px
+      const cartDrawer = document.querySelector('.shopping-cart-drawer');
+      const cartDrawerIsVisible = isMobile && !!cartDrawer && 
+        window.getComputedStyle(cartDrawer).visibility !== 'hidden' && 
+        window.getComputedStyle(cartDrawer).opacity !== '0';
+      
+      if (menuButtonIsVisible !== menuButtonVisible) {
+        setMenuButtonVisible(menuButtonIsVisible);
+      }
+      
+      if (cartDrawerIsVisible !== cartDrawerVisible) {
+        setCartDrawerVisible(cartDrawerIsVisible);
       }
     };
 
-    // Check more frequently to ensure we don't miss the menu button
-    const intervalId = setInterval(checkForMenuButton, 300);
+    // Check more frequently to ensure we don't miss elements
+    const intervalId = setInterval(checkForElements, 300);
+
+    // Also check when window is resized
+    const handleResize = () => {
+      checkForElements();
+    };
+    window.addEventListener('resize', handleResize);
 
     // Set up an observer to detect when elements are added/removed
     const observer = new MutationObserver(() => {
-      checkForMenuButton();
+      checkForElements();
     });
 
     // Start observing the body for DOM changes
@@ -417,13 +435,14 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
     });
 
     // Check initially
-    setTimeout(checkForMenuButton, 100);
+    setTimeout(checkForElements, 100);
 
     return () => {
       clearInterval(intervalId);
+      window.removeEventListener('resize', handleResize);
       observer.disconnect();
     };
-  }, [menuButtonVisible]);
+  }, [menuButtonVisible, cartDrawerVisible]);
   
   // If there's no active order or we're still loading initially, don't render anything
   if (!currentOrderId || (loading && !orderStatus) || isDismissed) {
@@ -497,10 +516,12 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
       "sm:right-6",
       "md:right-8",
       isMinimized ? "w-14 h-14" : "w-full max-w-xs",
-      // Adjust position based on whether the menu button is visible
+      // Adjust position based on what's visible
       menuButtonVisible ? 
         "bottom-20 sm:bottom-24 md:bottom-24" : 
-        "bottom-4 sm:bottom-6 md:bottom-8",
+        cartDrawerVisible ?
+          "bottom-16 sm:bottom-16 md:bottom-16 lg:bottom-4" : // Higher adjustment for cart drawer on mobile/tablet only
+          "bottom-4 sm:bottom-6 md:bottom-8",
       "right-4"
     )}>
       {isMinimized ? (

@@ -3,6 +3,7 @@ import { getMenuItems } from '@/lib/getMenuItems';
 import { notFound } from 'next/navigation';
 import { MenuDisplay } from '@/components/MenuDisplay';
 import { Cart } from '@/components/Cart';
+import { ShoppingCartDrawer } from '@/components/ShoppingCartDrawer';
 import { Utensils } from 'lucide-react';
 
 export default async function FoodTruckMenuPage({
@@ -38,7 +39,7 @@ export default async function FoodTruckMenuPage({
       {/* Spacer for navbar */}
       <div className="h-16"></div>
       
-      <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="container mx-auto px-4 py-6 md:py-8 pb-20 lg:pb-8">
         {/* Menu Header with Primary Color */}
         <div className="mb-6 md:mb-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-2" style={headerStyle}>
@@ -50,20 +51,13 @@ export default async function FoodTruckMenuPage({
         </div>
         
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Cart Component for Mobile (shown above menu) */}
-          <div className="w-full lg:hidden mb-6">
-            <div 
-              className="rounded-xl overflow-hidden" 
-              style={{ 
-                boxShadow: `0 4px 20px rgba(0, 0, 0, 0.1)`,
-                border: `1px solid rgba(${parseInt(primaryColor.slice(1, 3), 16)}, ${parseInt(primaryColor.slice(3, 5), 16)}, ${parseInt(primaryColor.slice(5, 7), 16)}, 0.1)`
-              }}
-            >
-              <div className="p-4 border-b" style={{ backgroundColor: `${primaryColor}10` }}>
-                <h2 className="text-xl font-bold" style={{ color: primaryColor }}>Your Order</h2>
-              </div>
-              <Cart foodTruckId={foodTruck.id} primaryColor={primaryColor} secondaryColor={secondaryColor} />
-            </div>
+          {/* ShoppingCartDrawer for Mobile */}
+          <div className="lg:hidden">
+            <ShoppingCartDrawer 
+              foodTruckId={foodTruck.id} 
+              primaryColor={primaryColor} 
+              secondaryColor={secondaryColor} 
+            />
           </div>
           
           {/* Menu Display Component with Primary & Secondary Colors */}

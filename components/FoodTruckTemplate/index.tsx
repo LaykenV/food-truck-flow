@@ -39,7 +39,9 @@ export type FoodTruckConfig = {
       day: string;
       location?: string;
       address?: string;
-      hours?: string;
+      openTime?: string;
+      closeTime?: string;
+      isClosed?: boolean;
       coordinates?: {
         lat: number;
         lng: number;

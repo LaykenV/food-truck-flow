@@ -21,11 +21,6 @@ import {
   Building,
   Link as LinkIcon,
   Share2,
-  Calendar,
-  Plus,
-  Trash2,
-  MapPin,
-  Clock
 } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
@@ -307,7 +302,8 @@ export function UnifiedConfigForm({
                              (prevDayIndex === 6 && currentDayIndex === 0); // Sunday to Monday
         const isSameLocation = day.location === prevDay.location && 
                               day.address === prevDay.address &&
-                              day.hours === prevDay.hours;
+                              day.openTime === prevDay.openTime &&
+                              day.closeTime === prevDay.closeTime;
         
         if (isConsecutive && isSameLocation) {
           currentGroup.push(day);
@@ -332,33 +328,29 @@ export function UnifiedConfigForm({
     // Initialize selectedDays with the current day to fix checkbox behavior
     setSelectedDays(day ? [day.day] : []);
     
-    // Parse hours for time values if available
-    if (day && day.hours) {
+    // Set time values from openTime and closeTime if available
+    if (day && day.openTime && day.closeTime) {
       try {
-        const hoursParts = day.hours.split(' - ');
-        if (hoursParts.length === 2) {
-          const startParts = hoursParts[0].split(' ');
-          const endParts = hoursParts[1].split(' ');
-          
-          if (startParts.length === 2 && endParts.length === 2) {
-            const [startTime, startAmPm] = startParts;
-            const [endTime, endAmPm] = endParts;
-            
-            const [startHour, startMinute] = startTime.split(':');
-            const [endHour, endMinute] = endTime.split(':');
-            
-            setTimeValues({
-              startHour,
-              startMinute,
-              startAmPm,
-              endHour,
-              endMinute,
-              endAmPm
-            });
-          }
-        }
+        // Parse openTime (24h format)
+        let [openHour, openMinute] = day.openTime.split(':').map(Number);
+        const openAmPm = openHour >= 12 ? 'PM' : 'AM';
+        openHour = openHour % 12 || 12; // Convert 24h to 12h format
+        
+        // Parse closeTime (24h format)
+        let [closeHour, closeMinute] = day.closeTime.split(':').map(Number);
+        const closeAmPm = closeHour >= 12 ? 'PM' : 'AM';
+        closeHour = closeHour % 12 || 12; // Convert 24h to 12h format
+        
+        setTimeValues({
+          startHour: openHour.toString(),
+          startMinute: openMinute.toString().padStart(2, '0'),
+          startAmPm: openAmPm,
+          endHour: closeHour.toString(),
+          endMinute: closeMinute.toString().padStart(2, '0'),
+          endAmPm: closeAmPm
+        });
       } catch (error) {
-        console.error('Error parsing hours:', error);
+        console.error('Error parsing time values:', error);
       }
     }
   };
@@ -370,15 +362,32 @@ export function UnifiedConfigForm({
       return;
     }
 
-    // Format the hours string
-    const hoursString = `${timeValues.startHour}:${timeValues.startMinute} ${timeValues.startAmPm} - ${timeValues.endHour}:${timeValues.endMinute} ${timeValues.endAmPm}`;
+    // Convert times to 24-hour format for storage
+    const startHour = parseInt(timeValues.startHour);
+    const startMinute = parseInt(timeValues.startMinute);
+    const endHour = parseInt(timeValues.endHour);
+    const endMinute = parseInt(timeValues.endMinute);
+    
+    // Convert to 24-hour format
+    const openHour24 = timeValues.startAmPm === 'AM' 
+      ? (startHour === 12 ? 0 : startHour) 
+      : (startHour === 12 ? 12 : startHour + 12);
+      
+    const closeHour24 = timeValues.endAmPm === 'AM' 
+      ? (endHour === 12 ? 0 : endHour) 
+      : (endHour === 12 ? 12 : endHour + 12);
+      
+    // Format as HH:MM strings
+    const openTime = `${openHour24.toString().padStart(2, '0')}:${timeValues.startMinute.padStart(2, '0')}`;
+    const closeTime = `${closeHour24.toString().padStart(2, '0')}:${timeValues.endMinute.padStart(2, '0')}`;
 
     // Create new days
     const newDays = selectedDays.map(day => ({
       day,
       location: selectedScheduleDay?.day.location || '',
       address: selectedScheduleDay?.day.address || '',
-      hours: hoursString
+      openTime,
+      closeTime
     }));
 
     // Add new days to the schedule
@@ -506,10 +515,6 @@ export function UnifiedConfigForm({
               <TabsTrigger value="about" className="flex items-center gap-1 whitespace-nowrap">
                 <Info className="h-4 w-4" />
                 <span>About</span>
-              </TabsTrigger>
-              <TabsTrigger value="schedule" className="flex items-center gap-1 whitespace-nowrap">
-                <Calendar className="h-4 w-4" />
-                <span>Schedule</span>
               </TabsTrigger>
               <TabsTrigger value="contact" className="flex items-center gap-1 whitespace-nowrap">
                 <Phone className="h-4 w-4" />
@@ -750,202 +755,6 @@ export function UnifiedConfigForm({
                   <p className="text-xs text-gray-500 mt-1">
                     Upload an image for your about section (recommended: square format)
                   </p>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="schedule" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">Schedule</h3>
-                </div>
-                
-                <div>
-                  <Label htmlFor="scheduleTitle">Schedule Section Title</Label>
-                  <Input
-                    id="scheduleTitle"
-                    name="scheduleTitle"
-                    value={formValues.scheduleTitle}
-                    onChange={handleInputChange}
-                    placeholder="Title for your schedule section"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="scheduleDescription">Schedule Description</Label>
-                  <Textarea
-                    id="scheduleDescription"
-                    name="scheduleDescription"
-                    value={formValues.scheduleDescription}
-                    onChange={handleInputChange}
-                    placeholder="Description for your schedule section"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <Label>Weekly Schedule</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        setSelectedScheduleDay({
-                          index: formValues.scheduleDays.length,
-                          day: {
-                            day: 'Monday',
-                            location: '',
-                            address: '',
-                            hours: ''
-                          }
-                        });
-                      }}
-                      className="flex items-center gap-1"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Day
-                    </Button>
-                  </div>
-                  
-                  {formValues.scheduleDays.length === 0 ? (
-                    <div className="text-center py-8 border border-dashed rounded-md">
-                      <p className="text-muted-foreground">No schedule days added yet.</p>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => {
-                          setSelectedScheduleDay({
-                            index: formValues.scheduleDays.length,
-                            day: {
-                              day: 'Monday',
-                              location: '',
-                              address: '',
-                              hours: ''
-                            }
-                          });
-                        }}
-                        className="mt-2"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Your First Day
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                      {/* Calendar-like view of the week */}
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="grid grid-cols-7 gap-1 mb-4">
-                          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
-                            <div key={day} className="text-center text-sm font-medium text-gray-500">
-                              {day}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
-                            const hasSchedule = formValues.scheduleDays.some(d => d.day === day);
-                            return (
-                              <div 
-                                key={day} 
-                                className={`h-8 rounded-md flex items-center justify-center text-xs ${
-                                  hasSchedule 
-                                    ? 'font-medium cursor-pointer hover:bg-opacity-30' 
-                                    : 'bg-gray-100 text-gray-400'
-                                }`}
-                                style={hasSchedule ? {
-                                  backgroundColor: `${formValues.primaryColor}33`,
-                                  color: formValues.primaryColor
-                                } : {}}
-                                onClick={() => {
-                                  if (hasSchedule) {
-                                    const index = formValues.scheduleDays.findIndex(d => d.day === day);
-                                    handleOpenScheduleModal(index);
-                                  } else {
-                                    // Add a new day for this day of week
-                                    const newIndex = formValues.scheduleDays.length;
-                                    setFormValues(prev => ({
-                                      ...prev,
-                                      scheduleDays: [
-                                        ...prev.scheduleDays,
-                                        {
-                                          day,
-                                          location: '',
-                                          address: '',
-                                          hours: ''
-                                        }
-                                      ]
-                                    }));
-                                    setTimeout(() => {
-                                      handleOpenScheduleModal(newIndex);
-                                    }, 100);
-                                  }
-                                }}
-                              >
-                                {hasSchedule ? '✓' : '+'}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      
-                      {/* Grouped schedule cards */}
-                      <div className="space-y-4 mt-4">
-                        <h4 className="font-medium text-sm text-gray-500">Schedule Details</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {groupedScheduleDays.map((group, groupIndex) => {
-                            const firstDay = group[0];
-                            const lastDay = group[group.length - 1];
-                            const dayRange = group.length === 1 
-                              ? firstDay.day 
-                              : `${firstDay.day} - ${lastDay.day}`;
-                              
-                            return (
-                              <Card 
-                                key={groupIndex} 
-                                className="border-l-4 hover:shadow-md transition-shadow cursor-pointer"
-                                style={{ borderLeftColor: formValues.primaryColor || '#FF6B35' }}
-                                onClick={() => handleOpenScheduleModal(formValues.scheduleDays.indexOf(firstDay))}
-                              >
-                                <CardContent className="p-4">
-                                  <div className="flex flex-col">
-                                    <div className="flex items-center mb-2">
-                                      <Calendar className="h-4 w-4 mr-2" style={{ color: formValues.primaryColor }} />
-                                      <h3 className="font-bold text-sm">{dayRange}</h3>
-                                    </div>
-                                    
-                                    {firstDay.location && (
-                                      <p className="font-medium text-sm">{firstDay.location}</p>
-                                    )}
-                                    
-                                    {firstDay.address && (
-                                      <div className="flex items-start mt-1">
-                                        <MapPin className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
-                                        <p className="text-gray-600 text-xs">{firstDay.address}</p>
-                                      </div>
-                                    )}
-                                    
-                                    {firstDay.hours && (
-                                      <div className="flex items-start mt-1">
-                                        <Clock className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
-                                        <p className="text-gray-600 text-xs">{firstDay.hours}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -1248,13 +1057,30 @@ export function UnifiedConfigForm({
                   type="button" 
                   onClick={() => {
                     if (selectedScheduleDay) {
-                      // Format the hours string
-                      const hoursString = `${timeValues.startHour}:${timeValues.startMinute} ${timeValues.startAmPm} - ${timeValues.endHour}:${timeValues.endMinute} ${timeValues.endAmPm}`;
+                      // Convert times to 24-hour format for storage
+                      const startHour = parseInt(timeValues.startHour);
+                      const startMinute = parseInt(timeValues.startMinute);
+                      const endHour = parseInt(timeValues.endHour);
+                      const endMinute = parseInt(timeValues.endMinute);
                       
-                      // Update the day with the new hours
+                      // Convert to 24-hour format
+                      const openHour24 = timeValues.startAmPm === 'AM' 
+                        ? (startHour === 12 ? 0 : startHour) 
+                        : (startHour === 12 ? 12 : startHour + 12);
+                        
+                      const closeHour24 = timeValues.endAmPm === 'AM' 
+                        ? (endHour === 12 ? 0 : endHour) 
+                        : (endHour === 12 ? 12 : endHour + 12);
+                        
+                      // Format as HH:MM strings
+                      const openTime = `${openHour24.toString().padStart(2, '0')}:${timeValues.startMinute.padStart(2, '0')}`;
+                      const closeTime = `${closeHour24.toString().padStart(2, '0')}:${timeValues.endMinute.padStart(2, '0')}`;
+                      
+                      // Update the day with the new time values
                       const updatedDay = {
                         ...selectedScheduleDay.day,
-                        hours: hoursString
+                        openTime,
+                        closeTime
                       };
                       
                       handleSaveScheduleDay(updatedDay);

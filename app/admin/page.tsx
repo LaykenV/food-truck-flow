@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity, LucideArrowUpRight, LucideCalendar } from "lucide-react";
+import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity, LucideArrowUpRight, LucideCalendar, LucideX, LucideRefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cookies } from "next/headers";
@@ -12,8 +12,31 @@ import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChecklistClient } from "./checklist-client";
-import { DashboardSchedule } from "./dashboard-schedule";
-import { updateSchedule } from "./actions";
+import { Separator } from "@/components/ui/separator";
+import { revalidatePath } from "next/cache";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { isScheduledOpenServer, getTodayScheduleServer } from "@/lib/schedule-utils-server";
+import { FormattedTimeDisplay } from "./formatted-time-display";
+import { TimeAvailabilityDisplay } from "./time-availability-display";
+import { StatusIndicator } from "./status-indicator";
+import { reopenToday, resetOutdatedClosures } from "./actions";
+import { CloseForTodayDialog } from "./close-for-today-dialog";
+
+// Add type definition for schedule day
+interface ScheduleDay {
+  day: string;
+  location?: string;
+  address?: string;
+  hours?: string;
+  openTime?: string;
+  closeTime?: string;
+  isClosed?: boolean;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  closureTimestamp?: string;
+}
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -25,6 +48,11 @@ export default async function AdminDashboard() {
     .select('*')
     .eq('user_id', user?.id)
     .single();
+  
+  // Automatically reset any outdated closures
+  if (foodTruck) {
+    await resetOutdatedClosures(foodTruck);
+  }
   
   // Fetch menu items to check if any exist
   const { data: menuItems } = await supabase
@@ -131,6 +159,15 @@ export default async function AdminDashboard() {
   // Get schedule data from configuration
   const scheduleData = foodTruck?.configuration?.schedule?.days || [];
   
+  // Get today's day of the week
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  
+  // Find today's schedule
+  const todaySchedule = scheduleData.find((day: ScheduleDay) => day.day === today);
+  
+  // Check if currently within operating hours
+  const isCurrentlyOpen = isScheduledOpenServer(todaySchedule);
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -195,21 +232,84 @@ export default async function AdminDashboard() {
         </Card>
       </div>
       
-      {/* Weekly Schedule */}
+      {/* Daily Schedule */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Weekly Schedule</CardTitle>
-            <CardDescription>Manage your food truck's weekly locations</CardDescription>
+            <CardTitle>Today's Schedule</CardTitle>
+            <CardDescription>Your location and hours for {today}</CardDescription>
           </div>
           <LucideCalendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <DashboardSchedule 
-            initialSchedule={scheduleData} 
-            onUpdateSchedule={updateSchedule} 
-            primaryColor={foodTruck?.configuration?.primaryColor || '#FF6B35'}
-          />
+          {todaySchedule ? (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium">{todaySchedule.location || 'No location set'}</h3>
+                  {todaySchedule.address && (
+                    <p className="text-sm text-muted-foreground">{todaySchedule.address}</p>
+                  )}
+                  {todaySchedule.openTime && todaySchedule.closeTime && (
+                    <p className="text-sm font-medium mt-1">Hours: <FormattedTimeDisplay 
+                      openTime={todaySchedule.openTime} 
+                      closeTime={todaySchedule.closeTime}
+                    /></p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end">
+                  <StatusIndicator 
+                    isCurrentlyOpen={isCurrentlyOpen} 
+                    isClosed={todaySchedule.isClosed}
+                    closureTimestamp={todaySchedule.closureTimestamp}
+                  />
+                  <TimeAvailabilityDisplay 
+                    isCurrentlyOpen={isCurrentlyOpen}
+                    todaySchedule={todaySchedule}
+                  />
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Add Close/Reopen Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                {todaySchedule.isClosed ? (
+                  <form action={reopenToday}>
+                    <Button className="w-full" variant="outline">
+                      <LucideRefreshCw className="w-4 h-4 mr-2" />
+                      Reopen for Today
+                    </Button>
+                  </form>
+                ) : isCurrentlyOpen ? (
+                  <CloseForTodayDialog />
+                ) : null}
+                
+                <Link href="/admin/schedule">
+                  <Button className="w-full sm:w-auto" variant={todaySchedule.isClosed || isCurrentlyOpen ? "outline" : "default"}>
+                    Manage Schedule
+                    <LucideArrowUpRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center bg-amber-100 text-amber-800 px-4 py-3 rounded-md">
+                <div className="w-2 h-2 rounded-full mr-2 bg-amber-500"></div>
+                <p className="text-sm">You don't have a schedule set for today ({today})</p>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Set up your schedule to let customers know where to find you.
+              </div>
+              <Link href="/admin/schedule">
+                <Button className="w-full sm:w-auto">
+                  Manage Schedule
+                  <LucideArrowUpRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
       

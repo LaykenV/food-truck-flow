@@ -128,7 +128,7 @@ export default function FloatingMenuButton({
             }}
           >
             <Menu size={18} />
-            <span>View Menu</span>
+            <span>Start Order</span>
           </Button>
         </Link>
       ) : (
@@ -143,7 +143,7 @@ export default function FloatingMenuButton({
           onClick={handleButtonClick}
         >
           <Menu size={18} />
-          <span>View Menu</span>
+          <span>Start Order</span>
         </Button>
       )}
     </div>

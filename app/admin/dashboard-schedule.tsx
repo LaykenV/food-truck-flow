@@ -8,14 +8,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock, MapPin, Plus, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Edit, Trash2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { Switch } from '../../components/ui/switch';
+import { formatTimeRange } from '@/lib/schedule-utils';
 
 interface ScheduleDay {
   day: string;
   location?: string;
   address?: string;
   hours?: string;
+  openTime?: string; // Format: "HH:MM" in 24h format 
+  closeTime?: string; // Format: "HH:MM" in 24h format
+  isClosed?: boolean; // Override to mark as closed regardless of time
+  closureTimestamp?: string; // Timestamp when isClosed was set to true
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 interface DashboardScheduleProps {
@@ -60,7 +70,9 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryCo
                              (prevDayIndex === 6 && currentDayIndex === 0); // Sunday to Monday
         const isSameLocation = day.location === prevDay.location && 
                               day.address === prevDay.address &&
-                              day.hours === prevDay.hours;
+                              day.openTime === prevDay.openTime &&
+                              day.closeTime === prevDay.closeTime &&
+                              day.isClosed === prevDay.isClosed;
         
         if (isConsecutive && isSameLocation) {
           currentGroup.push(day);
@@ -86,7 +98,9 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryCo
       day: daysOfWeek.find(day => !scheduledDaysMap.has(day)) || 'Monday',
       location: '',
       address: '',
-      hours: '11:00 AM - 2:00 PM'
+      openTime: '11:00',
+      closeTime: '14:00',
+      isClosed: false // Always false by default
     });
     setEditingIndex(null);
     setIsEditing(true);
@@ -142,9 +156,14 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryCo
     }
   };
 
-  const handleInputChange = (field: keyof ScheduleDay, value: string) => {
+  const handleInputChange = (field: keyof ScheduleDay, value: string | boolean) => {
     if (!editingDay) return;
-    setEditingDay({ ...editingDay, [field]: value });
+    // Always set isClosed to false regardless of attempted changes
+    if (field === 'isClosed') {
+      setEditingDay({ ...editingDay, isClosed: false });
+    } else {
+      setEditingDay({ ...editingDay, [field]: value });
+    }
   };
 
   const today = format(new Date(), 'EEEE');
@@ -157,7 +176,13 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryCo
           <h2 className="text-lg font-semibold">Weekly Schedule</h2>
           <p className="text-sm text-muted-foreground">
             {todaySchedule 
-              ? `Today (${today}): ${todaySchedule.location} - ${todaySchedule.hours}` 
+              ? todaySchedule.isClosed
+                ? `Today (${today}): ${todaySchedule.location} - Manually Closed`
+                : `Today (${today}): ${todaySchedule.location} - ${
+                    (todaySchedule.openTime && todaySchedule.closeTime) 
+                      ? formatTimeRange(todaySchedule.openTime, todaySchedule.closeTime)
+                      : 'No hours set'
+                  }`
               : `No schedule for today (${today})`}
           </p>
         </div>
@@ -198,20 +223,29 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryCo
                       </div>
                       
                       <div className="space-y-1 mt-1">
-                        {firstDay.location && (
-                          <p className="text-sm font-medium">{firstDay.location}</p>
-                        )}
-                        {firstDay.address && (
-                          <div className="flex items-start">
-                            <MapPin className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-gray-600">{firstDay.address}</p>
+                        {firstDay.isClosed ? (
+                          <div className="flex items-center text-destructive">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            <p className="text-xs font-medium">Closed</p>
                           </div>
-                        )}
-                        {firstDay.hours && (
-                          <div className="flex items-start">
-                            <Clock className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-gray-600">{firstDay.hours}</p>
-                          </div>
+                        ) : (
+                          <>
+                            {firstDay.location && (
+                              <p className="text-sm font-medium">{firstDay.location}</p>
+                            )}
+                            {firstDay.address && (
+                              <div className="flex items-start">
+                                <MapPin className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
+                                <p className="text-xs text-gray-600">{firstDay.address}</p>
+                              </div>
+                            )}
+                            {(firstDay.openTime && firstDay.closeTime) && (
+                              <div className="flex items-start">
+                                <Clock className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
+                                <p className="text-xs text-gray-600">{formatTimeRange(firstDay.openTime, firstDay.closeTime)}</p>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -253,20 +287,29 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryCo
                   </div>
                   
                   <div className="space-y-2">
-                    {firstDay.location && (
-                      <p className="font-medium">{firstDay.location}</p>
-                    )}
-                    {firstDay.address && (
-                      <div className="flex items-start">
-                        <MapPin className="h-4 w-4 text-gray-400 mr-1 mt-1 flex-shrink-0" />
-                        <p className="text-sm text-gray-600">{firstDay.address}</p>
+                    {firstDay.isClosed ? (
+                      <div className="flex items-center text-destructive">
+                        <XCircle className="h-4 w-4 mr-1" />
+                        <p className="text-sm font-medium">Closed</p>
                       </div>
-                    )}
-                    {firstDay.hours && (
-                      <div className="flex items-start">
-                        <Clock className="h-4 w-4 text-gray-400 mr-1 mt-1 flex-shrink-0" />
-                        <p className="text-sm text-gray-600">{firstDay.hours}</p>
-                      </div>
+                    ) : (
+                      <>
+                        {firstDay.location && (
+                          <p className="font-medium">{firstDay.location}</p>
+                        )}
+                        {firstDay.address && (
+                          <div className="flex items-start">
+                            <MapPin className="h-4 w-4 text-gray-400 mr-1 mt-1 flex-shrink-0" />
+                            <p className="text-sm text-gray-600">{firstDay.address}</p>
+                          </div>
+                        )}
+                        {(firstDay.openTime && firstDay.closeTime) && (
+                          <div className="flex items-start">
+                            <Clock className="h-4 w-4 text-gray-400 mr-1 mt-1 flex-shrink-0" />
+                            <p className="text-sm text-gray-600">{formatTimeRange(firstDay.openTime, firstDay.closeTime)}</p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -321,14 +364,26 @@ export function DashboardSchedule({ initialSchedule, onUpdateSchedule, primaryCo
               />
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor="hours">Hours</Label>
-              <Input
-                id="hours"
-                value={editingDay?.hours || ''}
-                onChange={(e) => handleInputChange('hours', e.target.value)}
-                placeholder="11:00 AM - 2:00 PM"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="openTime">Open Time</Label>
+                <Input
+                  id="openTime"
+                  type="time"
+                  value={editingDay?.openTime || ''}
+                  onChange={(e) => handleInputChange('openTime', e.target.value)}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="closeTime">Close Time</Label>
+                <Input
+                  id="closeTime"
+                  type="time"
+                  value={editingDay?.closeTime || ''}
+                  onChange={(e) => handleInputChange('closeTime', e.target.value)}
+                />
+              </div>
             </div>
           </div>
           
