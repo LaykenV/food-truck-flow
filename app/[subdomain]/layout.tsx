@@ -71,10 +71,14 @@ export default async function FoodTruckLayout({
       <div className="min-h-screen flex flex-col">
         <FoodTruckNavbar config={config} subdomain={subdomain} displayMode="live" />
         <main className="flex-grow">
-          {/* Order Status Tracker is now fixed and doesn't need a container */}
-          <OrderStatusTrackerWrapper />
           {children}
         </main>
+        
+        {/* Order Status Tracker */}
+        <OrderStatusTrackerWrapper
+          primaryColor={config.primaryColor}
+          secondaryColor={config.secondaryColor}
+        />
       </div>
       <Toaster />
     </CartProvider>

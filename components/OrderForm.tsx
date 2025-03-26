@@ -21,6 +21,7 @@ interface OrderFormProps {
   onSuccess?: () => void;
   primaryColor?: string;
   secondaryColor?: string;
+  closingTime?: string | null;
 }
 
 interface ActiveOrder {
@@ -40,7 +41,8 @@ export function OrderForm({
   subdomain, 
   onSuccess, 
   primaryColor = '#FF6B35', 
-  secondaryColor = '#2EC4B6'
+  secondaryColor = '#2EC4B6',
+  closingTime
 }: OrderFormProps) {
   const { items, totalPrice, clearCart } = useCart();
   const router = useRouter();
@@ -248,8 +250,9 @@ export function OrderForm({
           </Label>
           <PickupTimeSelector 
             onChange={setPickupInfo}
-            className="pt-1"
+            closingTime={closingTime || undefined}
             primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
           />
         </div>
         

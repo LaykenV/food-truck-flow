@@ -1,11 +1,11 @@
 import { getFoodTruckData } from '@/lib/fetch-food-truck';
 import { notFound } from 'next/navigation';
-import { Cart } from '@/components/Cart';
-import { OrderForm } from '@/components/OrderForm';
 import { ShoppingCartDrawer } from '@/components/ShoppingCartDrawer';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { isScheduledOpenServer, getTodayScheduleServer } from "@/lib/schedule-utils-server";
+import { OpenStatusProvider } from './open-status-provider';
+import { ClientOrderForm } from './client-order-form';
 
 export default async function FoodTruckOrderPage({
   params
@@ -23,13 +23,17 @@ export default async function FoodTruckOrderPage({
     notFound();
   }
   
+  // Check if the food truck is currently open
+  const scheduleData = foodTruck.configuration?.schedule?.days || [];
+  const todaySchedule = getTodayScheduleServer(scheduleData);
+  const isCurrentlyOpen = isScheduledOpenServer(todaySchedule);
+  
   // Extract configuration data
   const config = foodTruck.configuration || {};
   const primaryColor = config.primaryColor || '#FF6B35';
   const secondaryColor = config.secondaryColor || '#2EC4B6';
   
   // Create dynamic styles for the page
-  const sectionBgStyle = { backgroundColor: `${secondaryColor}10` };
   const linkStyle = { color: primaryColor };
   const iconBgStyle = { backgroundColor: `${secondaryColor}25` };
   const iconStyle = { color: secondaryColor };
@@ -59,117 +63,58 @@ export default async function FoodTruckOrderPage({
               <ShoppingBag className="h-5 w-5" style={iconStyle} />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold" style={headingStyle}>
-              Complete Your <span style={accentStyle}>Order</span>
+              Complete Your Order
             </h1>
           </div>
         </div>
       </div>
       
-      {/* ShoppingCartDrawer for Mobile */}
-      <div className="lg:hidden">
-        <ShoppingCartDrawer 
-          foodTruckId={foodTruck.id} 
-          primaryColor={primaryColor} 
-          secondaryColor={secondaryColor} 
-        />
-      </div>
+      {/* ShoppingCartDrawer for Mobile when open */}
+      {isCurrentlyOpen && (
+        <div className="lg:hidden">
+          <ShoppingCartDrawer 
+            foodTruckId={foodTruck.id} 
+            primaryColor={primaryColor} 
+            secondaryColor={secondaryColor} 
+          />
+        </div>
+      )}
       
       {/* Order Content */}
       <div className="container mx-auto px-4 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Order Form */}
-          <div>
-            <div 
-              className="rounded-xl overflow-hidden shadow-md"
-              style={{ 
-                boxShadow: `0 4px 20px rgba(0, 0, 0, 0.08)`,
-                border: `1px solid rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.2)`
-              }}
-            >
-              <div className="p-6 border-b" style={sectionBgStyle}>
-                <h2 className="text-xl font-bold" style={headingStyle}>Delivery Information</h2>
-              </div>
-              <div className="p-6">
-                <OrderForm 
-                  foodTruckId={foodTruck.id} 
-                  subdomain={subdomain}
-                  primaryColor={primaryColor}
-                  secondaryColor={secondaryColor}
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Order Summary - Hidden on mobile (since we use drawer) */}
-          <div className="hidden lg:block">
-            <div 
-              className="rounded-xl overflow-hidden shadow-md"
-              style={{ 
-                boxShadow: `0 4px 20px rgba(0, 0, 0, 0.08)`,
-                border: `1px solid rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.2)`
-              }}
-            >
-              <div className="p-6 border-b" style={sectionBgStyle}>
-                <h2 className="text-xl font-bold" style={headingStyle}>Order Summary</h2>
-              </div>
-              <div className="p-0">
-                <Cart 
-                  foodTruckId={foodTruck.id} 
-                  primaryColor={primaryColor}
-                  secondaryColor={secondaryColor}
-                  hideCheckoutButton={true}
-                />
-              </div>
-            </div>
-            
-            {/* Additional Information */}
-            <div 
-              className="mt-6 rounded-xl overflow-hidden shadow-md"
-              style={{ backgroundColor: `${secondaryColor}08` }}
-            >
-              <div className="p-6">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <span style={iconStyle}>●</span>
-                  <span style={headingStyle}>Need Help?</span>
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  If you have any questions about your order, please contact us:
-                </p>
-                <p className="text-gray-600">
-                  {config.contact?.phone && (
-                    <span className="block">Phone: <span style={{ color: secondaryColor }}>{config.contact.phone}</span></span>
-                  )}
-                  {config.contact?.email && (
-                    <span className="block">Email: <span style={{ color: secondaryColor }}>{config.contact.email}</span></span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Need Help Section - Mobile Only */}
-          <div className="lg:hidden">
-            <div 
-              className="mt-6 rounded-xl overflow-hidden shadow-md"
-              style={{ backgroundColor: `${secondaryColor}08` }}
-            >
-              <div className="p-6">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <span style={iconStyle}>●</span>
-                  <span style={headingStyle}>Need Help?</span>
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  If you have any questions about your order, please contact us:
-                </p>
-                <p className="text-gray-600">
-                  {config.contact?.phone && (
-                    <span className="block">Phone: <span style={{ color: secondaryColor }}>{config.contact.phone}</span></span>
-                  )}
-                  {config.contact?.email && (
-                    <span className="block">Email: <span style={{ color: secondaryColor }}>{config.contact.email}</span></span>
-                  )}
-                </p>
-              </div>
+        <OpenStatusProvider 
+          initialStatus={isCurrentlyOpen} 
+          initialSchedule={todaySchedule} 
+          foodTruckId={foodTruck.id}
+        >
+          <ClientOrderForm 
+            foodTruck={foodTruck} 
+            subdomain={subdomain}
+          />
+        </OpenStatusProvider>
+        
+        {/* Need Help Section */}
+        <div className="mt-8">
+          <div 
+            className="rounded-xl overflow-hidden shadow-md"
+            style={{ backgroundColor: `${secondaryColor}08` }}
+          >
+            <div className="p-6">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <span style={iconStyle}>●</span>
+                <span style={headingStyle}>Need Help?</span>
+              </h3>
+              <p className="text-gray-600 mb-4">
+                If you have any questions about your order, please contact us:
+              </p>
+              <p className="text-gray-600">
+                {config.contact?.phone && (
+                  <span className="block">Phone: <span style={{ color: secondaryColor }}>{config.contact.phone}</span></span>
+                )}
+                {config.contact?.email && (
+                  <span className="block">Email: <span style={{ color: secondaryColor }}>{config.contact.email}</span></span>
+                )}
+              </p>
             </div>
           </div>
         </div>

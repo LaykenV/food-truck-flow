@@ -13,6 +13,8 @@ import { format } from 'date-fns';
 
 interface OrderStatusTrackerProps {
   subdomain: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 interface ActiveOrder {
@@ -26,7 +28,11 @@ interface OrderDetails {
   is_asap: boolean;
 }
 
-export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
+export function OrderStatusTracker({ 
+  subdomain,
+  primaryColor = '#FF6B35',
+  secondaryColor = '#2EC4B6' 
+}: OrderStatusTrackerProps) {
   const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [orderStatus, setOrderStatus] = useState<string | null>(null);
@@ -450,29 +456,36 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
   }
   
   // Get the status icon based on the current status
-  const getStatusIcon = () => {
+  const getStatusIcon = (whiteVersion = false) => {
+    const iconColor = whiteVersion ? 'white' : secondaryColor;
+    
     if (loading) {
       return (
-        <div className="animate-spin h-5 w-5 border-2 border-orange-500 border-t-transparent rounded-full" />
+        <div className="animate-spin h-5 w-5 border-2 rounded-full" 
+          style={{ 
+            borderColor: whiteVersion ? 'rgba(255, 255, 255, 0.3)' : `${secondaryColor}30`,
+            borderTopColor: iconColor
+          }} 
+        />
       );
     }
     
     switch (orderStatus) {
       case 'preparing':
-        return <ChefHat className="h-5 w-5" />;
+        return <ChefHat className="h-5 w-5" style={{ color: iconColor }} />;
       case 'ready':
-        return <Package className="h-5 w-5" />;
+        return <Package className="h-5 w-5" style={{ color: iconColor }} />;
       case 'completed':
-        return <CheckCircle className="h-5 w-5" />;
+        return <CheckCircle className="h-5 w-5" style={{ color: iconColor }} />;
       default:
-        return <Clock className="h-5 w-5" />;
+        return <Clock className="h-5 w-5" style={{ color: iconColor }} />;
     }
   };
   
   // Get the status text based on the current status
   const getStatusText = () => {
     if (loading && currentOrderId) {
-      return 'Loading order status...';
+      return 'Updating order status...';
     }
     
     switch (orderStatus) {
@@ -490,18 +503,47 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
   // Get the status color based on the current status
   const getStatusColor = () => {
     if (loading) {
-      return 'bg-gray-100 text-gray-800';
+      return {
+        className: 'bg-gray-50 text-gray-500',
+        style: { 
+          borderColor: `${secondaryColor}30`,
+          color: secondaryColor
+        }
+      };
     }
     
     switch (orderStatus) {
       case 'preparing':
-        return 'bg-blue-100 text-blue-800';
+        return {
+          className: '',
+          style: {
+            backgroundColor: `${primaryColor}15`,
+            color: primaryColor,
+            borderColor: `${primaryColor}30`
+          }
+        };
       case 'ready':
-        return 'bg-green-100 text-green-800';
+        return {
+          className: '',
+          style: {
+            backgroundColor: `${secondaryColor}15`,
+            color: secondaryColor,
+            borderColor: `${secondaryColor}30`
+          }
+        };
       case 'completed':
-        return 'bg-gray-100 text-gray-800';
+        return {
+          className: 'bg-gray-100',
+          style: {
+            color: 'rgba(75, 85, 99, 1)',
+            borderColor: 'rgba(229, 231, 235, 1)'
+          }
+        };
       default:
-        return 'bg-gray-100 text-gray-800';
+        return {
+          className: 'bg-gray-100 text-gray-800',
+          style: {}
+        };
     }
   };
 
@@ -510,41 +552,66 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
     setIsMinimized(!isMinimized);
   };
   
+  // Create dynamic styles based on primary and secondary colors
+  const cardBgStyle = { 
+    backgroundColor: 'white',  // Solid white background instead of transparent
+    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)'
+  };
+  const buttonGradientStyle = { 
+    background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+    boxShadow: `0 4px 12px rgba(0, 0, 0, 0.2)`
+  };
+  const linkStyle = { color: primaryColor };
+  const borderStyle = { borderColor: `${primaryColor}30` };
+  
   return (
     <div className={cn(
       "fixed z-50 transition-all duration-500 ease-in-out",
       "sm:right-6",
       "md:right-8",
-      isMinimized ? "w-14 h-14" : "w-full max-w-xs",
+      isMinimized ? "w-14 h-14 scale-100" : "w-full max-w-xs scale-100",
       // Adjust position based on what's visible
       menuButtonVisible ? 
         "bottom-20 sm:bottom-24 md:bottom-24" : 
         cartDrawerVisible ?
           "bottom-16 sm:bottom-16 md:bottom-16 lg:bottom-4" : // Higher adjustment for cart drawer on mobile/tablet only
           "bottom-4 sm:bottom-6 md:bottom-8",
-      "right-4"
+      "right-4",
+      "transform transition-all duration-300"
     )}>
       {isMinimized ? (
         <Button 
           onClick={toggleMinimize}
           className={cn(
-            "w-14 h-14 rounded-full shadow-lg bg-orange-500 hover:bg-orange-600 text-white p-0 flex items-center justify-center",
-            orderDetails?.pickup_time && !orderDetails.is_asap && isPickupApproaching(orderDetails.pickup_time) && "animate-pulse"
+            "w-14 h-14 rounded-full shadow-lg text-white p-0 flex items-center justify-center",
+            orderDetails?.pickup_time && !orderDetails.is_asap && isPickupApproaching(orderDetails.pickup_time) && "animate-pulse",
+            "transform transition-all duration-300 hover:scale-105"
           )}
+          style={buttonGradientStyle}
+          onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.05)'}
+          onMouseOut={(e) => e.currentTarget.style.filter = ''}
         >
-          {getStatusIcon()}
+          {getStatusIcon(true)}
         </Button>
       ) : (
         <Card className={cn(
-          "border-orange-200 bg-orange-50 shadow-lg",
+          "shadow-lg transform transition-all duration-300",
           orderDetails?.pickup_time && !orderDetails.is_asap && isPickupApproaching(orderDetails.pickup_time) && "border-amber-300"
-        )}>
-          <CardHeader className="pb-2 pt-3 px-4">
+        )}
+        style={{
+          ...cardBgStyle,
+          borderColor: `${primaryColor}30`
+        }}>
+          <CardHeader className="pb-2 pt-3 px-4" style={{ borderBottomColor: `${primaryColor}20` }}>
             <CardTitle className="text-sm font-medium flex items-center justify-between">
-              <span>Order Status</span>
+              <span style={{ color: primaryColor }}>Order Status</span>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className={getStatusColor()}>
-                  {orderStatus}
+                <Badge 
+                  variant="outline" 
+                  className={getStatusColor().className}
+                  style={getStatusColor().style}
+                >
+                  {loading ? "Loading" : orderStatus}
                 </Badge>
                 <Button 
                   variant="ghost" 
@@ -569,14 +636,17 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
           </CardHeader>
           <CardContent className="pb-4 px-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-white rounded-full">
+              <div className="p-2 rounded-full" style={{ 
+                background: `linear-gradient(135deg, ${secondaryColor}15 0%, ${secondaryColor}25 100%)`
+              }}>
                 {getStatusIcon()}
               </div>
               <div>
                 <p className="text-sm font-medium">{getStatusText()}</p>
                 <Link 
                   href={`/${subdomain}/order-confirmation?id=${currentOrderId}`}
-                  className="text-xs text-orange-600 hover:text-orange-700"
+                  className="text-xs hover:underline"
+                  style={linkStyle}
                 >
                   View details
                 </Link>
@@ -585,9 +655,9 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
             
             {/* Pickup Time Information */}
             {orderDetails && (
-              <div className="mt-3 pt-3 border-t border-orange-200">
+              <div className="mt-3 pt-3 border-t" style={borderStyle}>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
+                  <Clock className="h-4 w-4" style={{ color: secondaryColor }} />
                   <div>
                     <p className="text-xs font-medium text-gray-700">
                       {orderDetails.is_asap 
@@ -599,12 +669,17 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
                     </p>
                     {orderDetails.pickup_time && !orderDetails.is_asap && orderStatus !== 'completed' && (
                       <div className="flex items-center gap-1 mt-0.5">
-                        <Timer className="h-3 w-3 text-amber-600" />
+                        <Timer className="h-3 w-3" style={{ color: secondaryColor }} />
                         <PickupCountdown pickupTime={orderDetails.pickup_time} />
                         {isPickupApproaching(orderDetails.pickup_time) && (
                           <Badge 
                             variant="outline" 
-                            className="ml-1 py-0 h-4 text-[10px] bg-amber-50 text-amber-700 border-amber-200"
+                            className="ml-1 py-0 h-4 text-[10px]"
+                            style={{ 
+                              backgroundColor: `${secondaryColor}15`,
+                              color: secondaryColor,
+                              borderColor: `${secondaryColor}30`
+                            }}
                           >
                             Soon
                           </Badge>
@@ -617,15 +692,19 @@ export function OrderStatusTracker({ subdomain }: OrderStatusTrackerProps) {
             )}
             
             {activeOrders.length > 1 && (
-              <div className="mt-3 pt-3 border-t border-orange-200">
+              <div className="mt-3 pt-3 border-t" style={borderStyle}>
                 <p className="text-xs text-gray-600 mb-1">You have {activeOrders.length} active orders</p>
                 <div className="flex gap-1 overflow-x-auto pb-1">
                   {activeOrders.map((order) => (
                     <Button
                       key={order.id}
-                      variant={order.id === currentOrderId ? "secondary" : "outline"}
+                      variant={order.id === currentOrderId ? "default" : "outline"}
                       size="sm"
                       className="text-xs py-0 h-6"
+                      style={order.id === currentOrderId ? 
+                        { backgroundColor: secondaryColor, color: 'white', borderColor: 'transparent' } : 
+                        { borderColor: `${secondaryColor}30`, color: secondaryColor }
+                      }
                       onClick={() => switchToOrder(order.id)}
                     >
                       Order #{order.id.substring(0, 4)}

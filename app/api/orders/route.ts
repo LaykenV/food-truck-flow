@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { isScheduledOpenServer, getTodayScheduleServer } from "@/lib/schedule-utils-server";
 
 /**
  * POST /api/orders
@@ -61,6 +62,32 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+    
+    // Fetch the food truck data
+    const { data: foodTruck } = await supabase
+      .from('FoodTrucks')
+      .select('configuration')
+      .eq('id', food_truck_id)
+      .single();
+    
+    if (!foodTruck) {
+      return NextResponse.json(
+        { error: 'Food truck not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Check if the food truck is currently open
+    const scheduleData = foodTruck.configuration?.schedule?.days || [];
+    const todaySchedule = getTodayScheduleServer(scheduleData);
+    const isCurrentlyOpen = isScheduledOpenServer(todaySchedule);
+    
+    if (!isCurrentlyOpen) {
+      return NextResponse.json(
+        { error: 'Food truck is currently closed. Orders cannot be placed at this time.' },
+        { status: 400 }
+      );
     }
     
     // TODO: In the future, get the food truck's Stripe API key and process payment

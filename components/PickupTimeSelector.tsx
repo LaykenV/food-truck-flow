@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, addMinutes, isBefore, parseISO } from 'date-fns';
+import { format, addMinutes, isBefore, parseISO, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export interface PickupTimeInfo {
@@ -30,29 +30,48 @@ export function PickupTimeSelector({
   const [isAsap, setIsAsap] = useState(true);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [timeOptions, setTimeOptions] = useState<Date[]>([]);
+  const [isCloseToClosing, setIsCloseToClosing] = useState(false);
+  
+  // Calculate minutes until closing
+  useEffect(() => {
+    if (!closingTime) return;
+    
+    const checkClosingTime = () => {
+      const now = new Date();
+      const close = parseISO(closingTime);
+      const minutesToClose = differenceInMinutes(close, now);
+      
+      // If less than 30 minutes to closing, force ASAP only
+      if (minutesToClose <= 30 && minutesToClose > 15) {
+        setIsCloseToClosing(true);
+        setIsAsap(true);
+      }
+    };
+    
+    checkClosingTime();
+    // Run this check every minute to update the UI if needed
+    const interval = setInterval(checkClosingTime, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [closingTime]);
   
   // Generate time options in 5-minute intervals
   useEffect(() => {
     const options: Date[] = [];
     const now = new Date();
-    const close = closingTime ? parseISO(closingTime) : addMinutes(now, 120); // Default to 2 hours from now
     
-    // Start with the next 5-minute interval
-    let currentTime = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      now.getHours(),
-      Math.ceil(now.getMinutes() / 5) * 5
-    );
-    
-    // Add 15 minutes to the current time for the first option (minimum preparation time)
-    currentTime = addMinutes(currentTime, 15);
-    
-    // Generate options until closing time or for 2 hours
-    while (isBefore(currentTime, close) && options.length < 24) {
-      options.push(new Date(currentTime));
-      currentTime = addMinutes(currentTime, 5);
+    if (!closingTime) {
+      // Default to 2 hours from now if no closing time
+      const defaultClose = addMinutes(now, 120);
+      generateTimeOptions(now, defaultClose, options);
+    } else {
+      const close = parseISO(closingTime);
+      
+      // Stop offering pickup times 30 minutes before closing
+      const lastPickupTime = addMinutes(close, -30);
+      
+      if (isBefore(now, lastPickupTime)) {
+        generateTimeOptions(now, lastPickupTime, options);
+      }
     }
     
     setTimeOptions(options);
@@ -63,8 +82,34 @@ export function PickupTimeSelector({
     }
   }, [closingTime, selectedTime]);
   
+  // Helper function to generate time options
+  const generateTimeOptions = (start: Date, end: Date, options: Date[]) => {
+    // Start with the next 5-minute interval
+    let currentTime = new Date(
+      start.getFullYear(),
+      start.getMonth(),
+      start.getDate(),
+      start.getHours(),
+      Math.ceil(start.getMinutes() / 5) * 5
+    );
+    
+    // Add 15 minutes to the current time for the first option (minimum preparation time)
+    currentTime = addMinutes(currentTime, 15);
+    
+    // Generate options until closing time or for 2 hours
+    while (isBefore(currentTime, end) && options.length < 24) {
+      options.push(new Date(currentTime));
+      currentTime = addMinutes(currentTime, 5);
+    }
+  };
+  
   // Handle ASAP selection
   const handleAsapChange = (value: string) => {
+    // If we're close to closing time, force ASAP
+    if (isCloseToClosing && value !== 'asap') {
+      return;
+    }
+    
     const asap = value === 'asap';
     setIsAsap(asap);
     onChange({ 
@@ -128,13 +173,26 @@ export function PickupTimeSelector({
           </Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="specific" id="specific" style={radioStyle} />
+          <RadioGroupItem 
+            value="specific" 
+            id="specific" 
+            style={radioStyle} 
+            disabled={isCloseToClosing || timeOptions.length === 0}
+          />
           <Label 
             htmlFor="specific" 
-            className="cursor-pointer transition-colors"
-            style={!isAsap ? activeRadioLabelStyle : inactiveRadioLabelStyle}
+            className={cn(
+              "transition-colors", 
+              isCloseToClosing ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            )}
+            style={!isAsap && !isCloseToClosing ? activeRadioLabelStyle : inactiveRadioLabelStyle}
           >
             Choose a specific time
+            {isCloseToClosing && (
+              <span className="block text-xs text-amber-600 mt-0.5">
+                Only ASAP orders available before closing
+              </span>
+            )}
           </Label>
         </div>
       </RadioGroup>
@@ -163,6 +221,11 @@ export function PickupTimeSelector({
                   {format(time, 'h:mm a')}
                 </SelectItem>
               ))}
+              {timeOptions.length === 0 && (
+                <div className="p-2 text-center text-sm text-muted-foreground">
+                  No available pickup times
+                </div>
+              )}
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">

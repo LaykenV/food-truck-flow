@@ -71,7 +71,15 @@ function checkIfOpenBasedOnHours(scheduleDay: ScheduleDay): boolean {
         closeTime.setDate(closeTime.getDate() + 1);
       }
       
-      return now >= openTime && now <= closeTime;
+      // Check if we're within 15 minutes of closing - if so, don't allow new orders
+      const fifteenMinutesBeforeClose = new Date(closeTime);
+      fifteenMinutesBeforeClose.setMinutes(fifteenMinutesBeforeClose.getMinutes() - 15);
+      
+      if (now >= fifteenMinutesBeforeClose) {
+        return false;
+      }
+      
+      return now >= openTime && now < closeTime;
     } catch (error) {
       console.error('Error parsing structured hours:', error);
       // Fall back to string parsing if structured time fails
@@ -109,7 +117,15 @@ function checkIfOpenBasedOnHours(scheduleDay: ScheduleDay): boolean {
         endTime.setDate(endTime.getDate() + 1);
       }
       
-      return now >= startTime && now <= endTime;
+      // Check if we're within 15 minutes of closing
+      const fifteenMinutesBeforeClose = new Date(endTime);
+      fifteenMinutesBeforeClose.setMinutes(fifteenMinutesBeforeClose.getMinutes() - 15);
+      
+      if (now >= fifteenMinutesBeforeClose) {
+        return false;
+      }
+      
+      return now >= startTime && now < endTime;
     } catch (error) {
       console.error('Error parsing hours:', error);
     }
