@@ -106,25 +106,33 @@ function getDefaultConfig() {
           day: 'Monday',
           location: 'Downtown',
           address: '123 Main St',
-          hours: '11:00 AM - 2:00 PM'
+          hours: '11:00 AM - 2:00 PM',
+          openTime: '11:00',
+          closeTime: '14:00'
         },
         {
           day: 'Wednesday',
           location: 'Business District',
           address: '456 Market Ave',
-          hours: '11:00 AM - 2:00 PM'
+          hours: '11:00 AM - 2:00 PM',
+          openTime: '11:00',
+          closeTime: '14:00'
         },
         {
           day: 'Friday',
           location: 'Food Truck Friday',
           address: '789 Park Blvd',
-          hours: '5:00 PM - 9:00 PM'
+          hours: '5:00 PM - 9:00 PM',
+          openTime: '17:00',
+          closeTime: '21:00'
         },
         {
           day: 'Saturday',
           location: 'Farmers Market',
           address: '321 Harvest Lane',
-          hours: '9:00 AM - 1:00 PM'
+          hours: '9:00 AM - 1:00 PM',
+          openTime: '09:00',
+          closeTime: '13:00'
         }
       ]
     }

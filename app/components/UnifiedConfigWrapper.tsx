@@ -86,7 +86,36 @@ export function UnifiedConfigWrapper({
         schedule: {
           title: newConfig.schedule?.title || 'Weekly Schedule',
           description: newConfig.schedule?.description || 'Find us at these locations throughout the week',
-          days: newConfig.schedule?.days || []
+          days: newConfig.schedule?.days || [
+            {
+              day: "Monday",
+              location: "Downtown",
+              address: "123 Main St",
+              openTime: "11:00",
+              closeTime: "14:00"
+            },
+            {
+              day: "Wednesday",
+              location: "Business District",
+              address: "456 Market Ave",
+              openTime: "11:00",
+              closeTime: "14:00"
+            },
+            {
+              day: "Friday",
+              location: "Food Truck Friday",
+              address: "789 Park Blvd",
+              openTime: "17:00",
+              closeTime: "21:00"
+            },
+            {
+              day: "Saturday",
+              location: "Farmers Market",
+              address: "321 Harvest Lane",
+              openTime: "09:00",
+              closeTime: "13:00"
+            }
+          ]
         }
       };
       

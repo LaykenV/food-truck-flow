@@ -9,12 +9,14 @@ import { Save, Edit, Trash2, Plus, Calendar, MapPin, Clock, XCircle } from 'luci
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import FoodTruckSchedule from '@/components/FoodTruckTemplate/FoodTruckSchedule';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { formatTimeRange } from '@/lib/schedule-utils';
+import type { AddressAutofillRetrieveResponse } from '@mapbox/search-js-core';
+import AddressAutofillInput from '@/components/AddressAutofillInput';
+import { ScheduleCard, ScheduleDayGroup } from '@/components/ui/schedule-card';
 
 interface ScheduleDay {
   day: string;
@@ -142,8 +144,30 @@ export function ScheduleClient({
     setEditingDay({ ...editingDay, [field]: value });
   };
 
+  // Handle address selection from Mapbox AddressAutofill
+  const handleAddressRetrieve = (res: AddressAutofillRetrieveResponse) => {
+    if (!editingDay || !res.features || res.features.length === 0) return;
+    
+    const feature = res.features[0];
+    const coordinates = feature.geometry.coordinates;
+    
+    // Mapbox returns coordinates as [longitude, latitude]
+    const longitude = coordinates[0];
+    const latitude = coordinates[1];
+    
+    // Update the editing day with address and coordinates
+    setEditingDay({
+      ...editingDay,
+      address: feature.properties.place_name,
+      coordinates: {
+        lat: latitude,
+        lng: longitude
+      }
+    });
+  };
+
   // Group consecutive days at the same location
-  const groupedScheduleDays = (() => {
+  const groupedScheduleDays: ScheduleDayGroup[] = (() => {
     const days = [...schedule];
     
     // Sort days by day of week
@@ -152,7 +176,7 @@ export function ScheduleClient({
     });
     
     // Group consecutive days at the same location
-    const groups: ScheduleDay[][] = [];
+    const groups: ScheduleDayGroup[] = [];
     let currentGroup: ScheduleDay[] = [];
     
     days.forEach((day, index) => {
@@ -175,14 +199,32 @@ export function ScheduleClient({
         if (isConsecutive && isSameLocation) {
           currentGroup.push(day);
         } else {
-          groups.push([...currentGroup]);
+          const firstDay = currentGroup[0];
+          const lastDay = currentGroup[currentGroup.length - 1];
+          const dayRange = currentGroup.length === 1 
+            ? firstDay.day 
+            : `${firstDay.day} - ${lastDay.day}`;
+            
+          groups.push({
+            days: [...currentGroup],
+            dayRange
+          });
           currentGroup = [day];
         }
       }
     });
     
     if (currentGroup.length > 0) {
-      groups.push(currentGroup);
+      const firstDay = currentGroup[0];
+      const lastDay = currentGroup[currentGroup.length - 1];
+      const dayRange = currentGroup.length === 1 
+        ? firstDay.day 
+        : `${firstDay.day} - ${lastDay.day}`;
+        
+      groups.push({
+        days: [...currentGroup],
+        dayRange
+      });
     }
     
     return groups;
@@ -275,67 +317,118 @@ export function ScheduleClient({
           </Button>
         </div>
 
+        {/* Inline Edit Form - Only show when editing */}
+        {isEditing && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">{editingIndex !== null ? 'Edit Schedule' : 'Add Schedule'}</h3>
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid gap-4 py-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="day">Day</Label>
+                    <Select
+                      value={editingDay?.day || ''}
+                      onValueChange={(value) => handleInputChange('day', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select day" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {daysOfWeek.map((day) => (
+                          <SelectItem key={day} value={day}>{day}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={editingDay?.location || ''}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      placeholder="Downtown, Food Truck Park, etc."
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="address">Address</Label>
+                    <AddressAutofillInput
+                      id="address"
+                      value={editingDay?.address || ''}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      onRetrieve={handleAddressRetrieve}
+                      placeholder="Enter address"
+                    />
+                    {editingDay?.coordinates && (
+                      <p className="text-xs text-muted-foreground">
+                        Coordinates saved: {editingDay.coordinates.lat.toFixed(6)}, {editingDay.coordinates.lng.toFixed(6)}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="openTime">Open Time</Label>
+                      <Input
+                        id="openTime"
+                        type="time"
+                        value={editingDay?.openTime || ''}
+                        onChange={(e) => handleInputChange('openTime', e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="closeTime">Close Time</Label>
+                      <Input
+                        id="closeTime"
+                        type="time"
+                        value={editingDay?.closeTime || ''}
+                        onChange={(e) => handleInputChange('closeTime', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                  <Button onClick={handleSaveDay} disabled={isLoading}>
+                    {isLoading ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Mobile view - horizontal scrolling */}
         <div className="md:hidden">
           <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex space-x-4 p-1">
-              {groupedScheduleDays.map((group, groupIndex) => {
-                const firstDay = group[0];
-                const lastDay = group[group.length - 1];
-                const dayRange = group.length === 1 
-                  ? firstDay.day 
-                  : `${firstDay.day} - ${lastDay.day}`;
-                  
-                return (
-                  <Card key={groupIndex} className="min-w-[260px] border-l-4" style={{ borderLeftColor: primaryColor }}>
-                    <CardContent className="p-4">
-                      <div className="flex flex-col">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2" style={{ color: primaryColor }} />
-                            <h3 className="font-medium text-sm">{dayRange}</h3>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Button variant="ghost" size="icon" onClick={() => handleEditDay(group, groupIndex)} className="h-6 w-6">
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteDay(group)} className="h-6 w-6 text-destructive">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-1 mt-1">
-                          {firstDay.isClosed ? (
-                            <div className="flex items-center text-destructive">
-                              <XCircle className="h-3 w-3 mr-1" />
-                              <p className="text-xs font-medium">Closed</p>
-                            </div>
-                          ) : (
-                            <>
-                              {firstDay.location && (
-                                <p className="text-sm font-medium">{firstDay.location}</p>
-                              )}
-                              {firstDay.address && (
-                                <div className="flex items-start">
-                                  <MapPin className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
-                                  <p className="text-xs text-gray-600">{firstDay.address}</p>
-                                </div>
-                              )}
-                              {(firstDay.openTime && firstDay.closeTime) && (
-                                <div className="flex items-start">
-                                  <Clock className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
-                                  <p className="text-xs text-gray-600">{formatTimeRange(firstDay.openTime, firstDay.closeTime)}</p>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            <div className="flex space-x-3 p-1">
+              {groupedScheduleDays.map((group, groupIndex) => (
+                <div key={groupIndex} className="relative min-w-[260px]">
+                  <ScheduleCard 
+                    group={group}
+                    primaryColor={primaryColor}
+                    secondaryColor={primaryColor}
+                    className="border-l-4"
+                  />
+                  <div className="absolute top-2 right-2 flex space-x-1 z-10">
+                    <Button variant="ghost" size="icon" onClick={() => handleEditDay(group.days, groupIndex)} className="h-6 w-6 bg-background/80 backdrop-blur-sm">
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteDay(group.days)} className="h-6 w-6 text-destructive bg-background/80 backdrop-blur-sm">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
@@ -343,142 +436,26 @@ export function ScheduleClient({
 
         {/* Desktop view - grid layout */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {groupedScheduleDays.map((group, groupIndex) => {
-            const firstDay = group[0];
-            const lastDay = group[group.length - 1];
-            const dayRange = group.length === 1 
-              ? firstDay.day 
-              : `${firstDay.day} - ${lastDay.day}`;
-              
-            return (
-              <Card key={groupIndex} className="border-l-4" style={{ borderLeftColor: primaryColor }}>
-                <CardContent className="p-4">
-                  <div className="flex flex-col">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <Calendar className="h-5 w-5 mr-2" style={{ color: primaryColor }} />
-                        <h3 className="font-medium">{dayRange}</h3>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditDay(group, groupIndex)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteDay(group)} className="text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {firstDay.isClosed ? (
-                        <div className="flex items-center text-destructive">
-                          <XCircle className="h-4 w-4 mr-1" />
-                          <p className="text-sm font-medium">Closed</p>
-                        </div>
-                      ) : (
-                        <>
-                          {firstDay.location && (
-                            <p className="font-medium">{firstDay.location}</p>
-                          )}
-                          {firstDay.address && (
-                            <div className="flex items-start">
-                              <MapPin className="h-4 w-4 text-gray-400 mr-1 mt-1 flex-shrink-0" />
-                              <p className="text-sm text-gray-600">{firstDay.address}</p>
-                            </div>
-                          )}
-                          {(firstDay.openTime && firstDay.closeTime) && (
-                            <div className="flex items-start">
-                              <Clock className="h-4 w-4 text-gray-400 mr-1 mt-1 flex-shrink-0" />
-                              <p className="text-sm text-gray-600">{formatTimeRange(firstDay.openTime, firstDay.closeTime)}</p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {groupedScheduleDays.map((group, groupIndex) => (
+            <div key={groupIndex} className="relative">
+              <ScheduleCard 
+                group={group}
+                primaryColor={primaryColor}
+                secondaryColor={primaryColor}
+                className="border-l-4"
+              />
+              <div className="absolute top-3 right-3 flex space-x-1 z-10">
+                <Button variant="ghost" size="icon" onClick={() => handleEditDay(group.days, groupIndex)} className="bg-background/80 backdrop-blur-sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDeleteDay(group.days)} className="text-destructive bg-background/80 backdrop-blur-sm">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      
-      {/* Edit/Add Schedule Dialog */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{editingIndex !== null ? 'Edit Schedule' : 'Add Schedule'}</DialogTitle>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="day">Day</Label>
-              <Select
-                value={editingDay?.day || ''}
-                onValueChange={(value) => handleInputChange('day', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {daysOfWeek.map((day) => (
-                    <SelectItem key={day} value={day}>{day}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={editingDay?.location || ''}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                placeholder="Downtown, Food Truck Park, etc."
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                value={editingDay?.address || ''}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="123 Main St, City, State"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="openTime">Open Time</Label>
-                <Input
-                  id="openTime"
-                  type="time"
-                  value={editingDay?.openTime || ''}
-                  onChange={(e) => handleInputChange('openTime', e.target.value)}
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="closeTime">Close Time</Label>
-                <Input
-                  id="closeTime"
-                  type="time"
-                  value={editingDay?.closeTime || ''}
-                  onChange={(e) => handleInputChange('closeTime', e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-            <Button onClick={handleSaveDay} disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 } 

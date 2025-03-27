@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import { useCart } from '@/lib/cartContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { MinusCircle, PlusCircle, ShoppingCart, Trash2, MessageCircle, Edit } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 interface CartProps {
   onCheckout?: () => void;
@@ -52,12 +54,14 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
   
   if (foodTruckItems.length === 0) {
     return (
-      <Card className="w-full border-0 shadow-none">
-        <CardContent className="p-4">
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <ShoppingCart className="h-12 w-12 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Your cart is empty</p>
-            <p className="text-sm text-muted-foreground mt-1">
+      <Card className="w-full border rounded-xl shadow-sm overflow-hidden">
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="rounded-full bg-muted/30 p-4 mb-4">
+              <ShoppingCart className="h-10 w-10" style={{ color: primaryColor }} />
+            </div>
+            <p className="font-medium text-lg mb-2">Your cart is empty</p>
+            <p className="text-sm text-muted-foreground max-w-xs">
               Add items from the menu to get started
             </p>
           </div>
@@ -67,124 +71,160 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
   }
   
   return (
-    <Card className="w-full border-0 shadow-none">
-      <CardContent className="grid gap-4 p-4">
-        {foodTruckItems.map((item) => (
-          <div key={item.id} className="flex flex-col border-b pb-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="grid gap-1">
-                <div className="font-medium">{item.name}</div>
-                <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                >
-                  <MinusCircle className="h-4 w-4" />
-                  <span className="sr-only">Decrease quantity</span>
-                </Button>
-                <span className="w-4 text-center">{item.quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  <span className="sr-only">Increase quantity</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7 ml-2"
-                  onClick={() => removeItem(item.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Remove item</span>
-                </Button>
-              </div>
-            </div>
-            
-            {/* Notes section */}
-            {editingNotes === item.id ? (
-              <div className="mt-2">
-                <Textarea
-                  placeholder="Add special instructions..."
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  className="text-sm min-h-[80px]"
-                />
-                <div className="flex justify-end mt-1 space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setEditingNotes(null)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleSaveNotes(item.id)}
+    <Card className="w-full border rounded-xl shadow-sm overflow-hidden">
+      <CardContent className="p-4 sm:p-5">
+        <div className="grid gap-5">
+          {foodTruckItems.map((item) => (
+            <div key={item.id} className="flex flex-col border-b pb-5">
+              <div className="flex items-start gap-3">
+                {/* Item image */}
+                <div className="relative flex-shrink-0">
+                  <div className="h-16 w-16 rounded-lg overflow-hidden bg-muted">
+                    {(item.image || item.image_url) ? (
+                      <Image 
+                        src={item.image || item.image_url || ''}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-muted/40">
+                        <div style={{ color: primaryColor }}>🍽️</div>
+                      </div>
+                    )}
+                  </div>
+                  <Badge 
+                    className="absolute -top-2 -right-2 flex items-center justify-center h-6 min-w-6 rounded-full" 
                     style={{ backgroundColor: primaryColor }}
                   >
-                    Save
+                    {item.quantity}
+                  </Badge>
+                </div>
+                
+                {/* Item details */}
+                <div className="flex-1 grid gap-1">
+                  <div className="font-semibold">{item.name}</div>
+                  <div className="text-sm font-medium" style={{ color: primaryColor }}>{formatCurrency(item.price)}</div>
+                </div>
+                
+                {/* Controls */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full border-2"
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    style={{ borderColor: primaryColor }}
+                  >
+                    <MinusCircle className="h-4 w-4" style={{ color: primaryColor }} />
+                    <span className="sr-only">Decrease quantity</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full border-2"
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    style={{ borderColor: primaryColor }}
+                  >
+                    <PlusCircle className="h-4 w-4" style={{ color: primaryColor }} />
+                    <span className="sr-only">Increase quantity</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full ml-1"
+                    onClick={() => removeItem(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <span className="sr-only">Remove item</span>
                   </Button>
                 </div>
               </div>
-            ) : (
-              <div className="mt-2">
-                {item.notes ? (
-                  <div className="text-sm text-muted-foreground flex justify-between items-start">
-                    <div className="flex items-start gap-1">
-                      <MessageCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
-                      <span className="italic">{item.notes}</span>
+              
+              {/* Notes section */}
+              {editingNotes === item.id ? (
+                <div className="mt-3 ml-19 pl-0 sm:ml-19">
+                  <Textarea
+                    placeholder="Add special instructions..."
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    className="text-sm min-h-[80px] border-2 focus-visible:ring-offset-0 focus-visible:ring-0"
+                    style={{ borderColor: `${primaryColor}30` }}
+                  />
+                  <div className="flex justify-end mt-2 space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setEditingNotes(null)}
+                      className="rounded-full"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleSaveNotes(item.id)}
+                      className="rounded-full"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 pl-19 ml-0 sm:ml-19">
+                  {item.notes ? (
+                    <div className="text-sm text-muted-foreground flex justify-between items-start bg-muted/20 p-2 rounded-lg">
+                      <div className="flex items-start gap-1.5">
+                        <MessageCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: primaryColor }} />
+                        <span className="italic text-sm">{item.notes}</span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 px-2 hover:bg-muted/30"
+                        onClick={() => handleEditNotes(item.id, item.notes)}
+                      >
+                        <Edit className="h-3 w-3 mr-1" style={{ color: primaryColor }} />
+                        <span style={{ color: primaryColor }}>Edit</span>
+                      </Button>
                     </div>
+                  ) : (
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="h-6 px-2"
-                      onClick={() => handleEditNotes(item.id, item.notes)}
+                      className="text-xs text-muted-foreground flex items-center hover:bg-muted/20 rounded-full px-3"
+                      onClick={() => handleEditNotes(item.id)}
                     >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
+                      <MessageCircle className="h-3.5 w-3.5 mr-1.5" style={{ color: primaryColor }} />
+                      Add special instructions
                     </Button>
-                  </div>
-                ) : (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs text-muted-foreground flex items-center"
-                    onClick={() => handleEditNotes(item.id)}
-                  >
-                    <MessageCircle className="h-3 w-3 mr-1" style={{ color: primaryColor }} />
-                    Add special instructions
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-        <Separator />
-        <div className="flex items-center justify-between font-medium">
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        <Separator className="my-4" />
+        
+        <div className="flex items-center justify-between font-medium text-lg py-2">
           <div>Total</div>
-          <div style={{ color: primaryColor }}>{formatCurrency(totalPrice)}</div>
+          <div className="font-bold" style={{ color: primaryColor }}>{formatCurrency(totalPrice)}</div>
         </div>
       </CardContent>
+      
       {!hideCheckoutButton && (
         <CardFooter className="p-4 pt-0">
           <Button 
-            className="w-full py-6 font-medium text-white transition-all hover:scale-105 active:scale-100"
+            className="w-full py-6 font-medium text-white rounded-full transition-all hover:opacity-90 active:scale-98 text-lg"
             onClick={handleCheckout}
             style={{ 
               background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
-              boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)'
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
             }}
             disabled={foodTruckItems.length === 0}
           >
-            Checkout
+            Checkout ({totalItems} {totalItems === 1 ? 'item' : 'items'})
           </Button>
         </CardFooter>
       )}

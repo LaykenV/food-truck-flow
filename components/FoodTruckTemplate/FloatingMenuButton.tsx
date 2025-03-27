@@ -22,6 +22,11 @@ export default function FloatingMenuButton({
   secondaryColor = '#2EC4B6',
   hasOrderTracker = false
 }: FloatingMenuButtonProps) {
+  // Early return for preview mode - don't render the component at all
+  if (displayMode === 'preview') {
+    return null;
+  }
+
   const [visible, setVisible] = useState(false);
   const [animationState, setAnimationState] = useState<'hidden' | 'entering' | 'visible'>('hidden');
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -52,50 +57,16 @@ export default function FloatingMenuButton({
       }
     };
     
-    // Set up the right scroll event listener based on display mode
-    if (displayMode === 'preview') {
-      const mobileContainer = document.getElementById('preview-scroll-container');
-      const desktopContainer = document.getElementById('desktop-preview-scroll-container');
-      
-      if (mobileContainer) {
-        mobileContainer.addEventListener('scroll', handleScroll);
-      }
-      
-      if (desktopContainer) {
-        desktopContainer.addEventListener('scroll', handleScroll);
-      }
-    } else {
-      window.addEventListener('scroll', handleScroll);
-    }
+    // Only set up window scroll event listener since we removed preview mode
+    window.addEventListener('scroll', handleScroll);
     
     // Initial check
     setTimeout(handleScroll, 200);
     
     return () => {
-      if (displayMode === 'preview') {
-        const mobileContainer = document.getElementById('preview-scroll-container');
-        const desktopContainer = document.getElementById('desktop-preview-scroll-container');
-        
-        if (mobileContainer) {
-          mobileContainer.removeEventListener('scroll', handleScroll);
-        }
-        
-        if (desktopContainer) {
-          desktopContainer.removeEventListener('scroll', handleScroll);
-        }
-      } else {
-        window.removeEventListener('scroll', handleScroll);
-      }
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [displayMode, visible]);
-  
-  // Handle button click in preview mode
-  const handleButtonClick = (e: React.MouseEvent) => {
-    if (displayMode === 'preview') {
-      e.preventDefault();
-      // Maybe show a toast: "This button is disabled in preview mode"
-    }
-  };
+  }, [visible]);
   
   if (!visible) {
     return null;
@@ -116,22 +87,7 @@ export default function FloatingMenuButton({
         visibility: !visible ? 'hidden' : 'visible'
       }}
     >
-      {displayMode === 'live' ? (
-        <Link href={`/${subdomain}/menu`}>
-          <Button
-            size="lg"
-            className="rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 hover:scale-105 transition-transform"
-            style={{ 
-              backgroundColor: primaryColor,
-              color: 'white',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)'
-            }}
-          >
-            <Menu size={18} />
-            <span>Start Order</span>
-          </Button>
-        </Link>
-      ) : (
+      <Link href={`/${subdomain}/menu`}>
         <Button
           size="lg"
           className="rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 hover:scale-105 transition-transform"
@@ -140,12 +96,11 @@ export default function FloatingMenuButton({
             color: 'white',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)'
           }}
-          onClick={handleButtonClick}
         >
           <Menu size={18} />
           <span>Start Order</span>
         </Button>
-      )}
+      </Link>
     </div>
   );
 } 
