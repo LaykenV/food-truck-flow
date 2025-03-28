@@ -99,7 +99,7 @@ interface AuthFormProps {
 function SignInForm({ message, onClose }: AuthFormProps) {
   return (
     <>
-      <form className="space-y-4">
+      <form className="space-y-4" action={signInAction}>
         <div>
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
@@ -136,7 +136,6 @@ function SignInForm({ message, onClose }: AuthFormProps) {
         <div>
           <SubmitButton 
             pendingText="Signing In..." 
-            formAction={signInAction}
             className="w-full"
           >
             Sign in
@@ -154,7 +153,7 @@ function SignInForm({ message, onClose }: AuthFormProps) {
 function SignUpForm({ message, onClose }: AuthFormProps) {
   return (
     <>
-      <form className="space-y-4">
+      <form className="space-y-4" action={signUpAction}>
         <div>
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
@@ -182,7 +181,6 @@ function SignUpForm({ message, onClose }: AuthFormProps) {
         
         <div>
           <SubmitButton 
-            formAction={signUpAction} 
             pendingText="Signing up..."
             className="w-full"
           >

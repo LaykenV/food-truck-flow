@@ -1,110 +1,37 @@
 'use client';
 
-import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
-
-// Default configuration for the live preview
-const defaultConfig: FoodTruckConfig = {
-  hero: {
-    image: "/images/placeholder-hero.jpg",
-    title: "Delicious Food Truck",
-    subtitle: "Serving the best street food in town"
-  },
-  logo: "/images/placeholder-logo.jpg",
-  name: "Food Truck Name",
-  tagline: "Tasty meals on wheels",
-  primaryColor: "#FF6B35", // Vibrant orange
-  secondaryColor: "#4CB944", // Fresh green
-  heroFont: "#FFFFFF", // White for hero text
-  about: {
-    title: "About Our Food Truck",
-    content: "Tell your story here...",
-    image: "/images/placeholder-about.jpg"
-  },
-  contact: {
-    email: "",
-    phone: ""
-  },
-  socials: {
-    twitter: "",
-    instagram: "",
-    facebook: ""
-  },
-  schedule: {
-    title: "Find Our Truck",
-    description: "Check out our weekly schedule and locations",
-    days: [
-      {
-        day: "Monday",
-        location: "Downtown",
-        address: "123 Main St",
-        openTime: "11:00",
-        closeTime: "14:00"
-      },
-      {
-        day: "Wednesday",
-        location: "Business District",
-        address: "456 Market Ave",
-        openTime: "11:00",
-        closeTime: "14:00"
-      },
-      {
-        day: "Friday",
-        location: "Food Truck Friday",
-        address: "789 Park Blvd",
-        openTime: "17:00",
-        closeTime: "21:00"
-      },
-      {
-        day: "Saturday",
-        location: "Farmers Market",
-        address: "321 Harvest Lane",
-        openTime: "09:00",
-        closeTime: "13:00"
-      }
-    ]
-  }
-};
+import { getDefaultConfig } from '@/utils/config-utils';
 
 // Define the type for our config
 export type Config = FoodTruckConfig;
 
-// Define the mode for the provider
-export type ConfigMode = 'admin' | 'client';
-
 // Create the context
-type UnifiedConfigContextType = {
+type ConfigContextType = {
   config: Config;
   setConfig: (config: Config) => void;
   saveConfig?: () => Promise<boolean>;
   isSaving?: boolean;
-  jsonError?: string;
-  setJsonError?: (error: string) => void;
-  mode: ConfigMode;
-  updateConfig?: (partialConfig: Partial<Config>) => void;
 };
 
-const UnifiedConfigContext = createContext<UnifiedConfigContextType | undefined>(undefined);
+const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 // Provider component
-interface UnifiedConfigProviderProps {
+interface ConfigProviderProps {
   children: ReactNode;
   initialConfig?: FoodTruckConfig;
   onSave?: (config: FoodTruckConfig) => Promise<void>;
-  mode: ConfigMode;
 }
 
-export function UnifiedConfigProvider({ 
+export function ConfigProvider({ 
   children, 
   initialConfig, 
-  onSave,
-  mode 
-}: UnifiedConfigProviderProps) {
+  onSave
+}: ConfigProviderProps) {
   // Start with provided initialConfig or default config to avoid hydration mismatch
-  const [config, setConfigState] = useState<Config>(initialConfig || defaultConfig);
-  const [jsonError, setJsonError] = useState('');
+  const [config, setConfigState] = useState<Config>(initialConfig || getDefaultConfig());
   const [isSaving, setIsSaving] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Update config when initialConfig changes
   useEffect(() => {
@@ -119,26 +46,9 @@ export function UnifiedConfigProvider({
     }
   }, [initialConfig]);
 
-  // Load config from localStorage only on client side after initial render
-  // Only if in client mode and initialConfig is not provided
-  useEffect(() => {
-    if (typeof window !== 'undefined' && mode === 'client' && !initialConfig) {
-      try {
-        const savedConfig = localStorage.getItem('foodTruckConfig');
-        if (savedConfig) {
-          const parsedConfig = JSON.parse(savedConfig);
-          setConfigState(parsedConfig);
-        }
-      } catch (error) {
-        console.error('Error loading config from localStorage:', error);
-      }
-    }
-    setIsInitialized(true);
-  }, [initialConfig, mode]);
-
-  // Function to save the configuration (admin mode)
+  // Function to save the configuration
   const saveConfig = async () => {
-    if (mode !== 'admin' || !onSave) return false;
+    if (!onSave) return false;
     
     setIsSaving(true);
     try {
@@ -152,89 +62,41 @@ export function UnifiedConfigProvider({
     }
   };
 
-  // Set config function that handles both modes
-  const setConfig = (newConfig: Config) => {
-    setConfigState(newConfig);
-    
-    // In client mode, save to localStorage
-    if (mode === 'client' && isInitialized && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('foodTruckConfig', JSON.stringify(newConfig));
-      } catch (error) {
-        console.error('Failed to save config to localStorage:', error);
-      }
-    }
-  };
-
-  // Function to update partial config (useful for real-time updates)
-  const updateConfig = (partialConfig: Partial<Config>) => {
+  // Memoized setConfig function to prevent unnecessary re-renders
+  const setConfig = useCallback((newConfig: Config) => {
     setConfigState(prevConfig => {
-      const updatedConfig = { ...prevConfig, ...partialConfig };
-      
-      // In client mode, save to localStorage
-      if (mode === 'client' && isInitialized && typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('foodTruckConfig', JSON.stringify(updatedConfig));
-        } catch (error) {
-          console.error('Failed to save config to localStorage:', error);
-        }
+      // Perform a deep comparison to avoid unnecessary state updates
+      if (JSON.stringify(prevConfig) === JSON.stringify(newConfig)) {
+        return prevConfig;
       }
-      
-      return updatedConfig;
+      return newConfig;
     });
-  };
+  }, []);
 
-  // Create context value based on mode
-  const contextValue: UnifiedConfigContextType = {
+  // Create context value
+  const contextValue: ConfigContextType = {
     config,
     setConfig,
-    updateConfig,
-    mode,
-    ...(mode === 'admin' ? { saveConfig, isSaving } : {}),
-    ...(mode === 'client' ? { jsonError, setJsonError } : {})
+    saveConfig,
+    isSaving
   };
 
   return (
-    <UnifiedConfigContext.Provider value={contextValue}>
+    <ConfigContext.Provider value={contextValue}>
       {children}
-    </UnifiedConfigContext.Provider>
+    </ConfigContext.Provider>
   );
 }
 
-// Hook to use the unified config context
-export function useUnifiedConfig() {
-  const context = useContext(UnifiedConfigContext);
+// Hook to use the config context
+export function useConfig() {
+  const context = useContext(ConfigContext);
   if (context === undefined) {
-    throw new Error('useUnifiedConfig must be used within a UnifiedConfigProvider');
+    throw new Error('useConfig must be used within a ConfigProvider');
   }
   return context;
 }
 
-// Backward compatibility hooks
-export function useConfig() {
-  const context = useUnifiedConfig();
-  if (context.mode !== 'client') {
-    console.warn('useConfig is being used with a provider in admin mode. This may cause unexpected behavior.');
-  }
-  return {
-    config: context.config,
-    setConfig: context.setConfig,
-    updateConfig: context.updateConfig,
-    jsonError: context.jsonError || '',
-    setJsonError: context.setJsonError || (() => {})
-  };
-}
-
-export function useAdminConfig() {
-  const context = useUnifiedConfig();
-  if (context.mode !== 'admin') {
-    console.warn('useAdminConfig is being used with a provider in client mode. This may cause unexpected behavior.');
-  }
-  return {
-    config: context.config,
-    setConfig: context.setConfig,
-    updateConfig: context.updateConfig,
-    saveConfig: context.saveConfig || (async () => false),
-    isSaving: context.isSaving || false
-  };
-} 
+// For backward compatibility - can be removed later
+export { ConfigProvider as UnifiedConfigProvider, useConfig as useUnifiedConfig };
+export const useAdminConfig = useConfig; 

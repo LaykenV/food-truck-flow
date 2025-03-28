@@ -4,6 +4,7 @@ import { encodedRedirect } from "@/utils/utils";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getDefaultConfig } from "@/utils/config-utils";
 
 export const signInWithOAuthAction = async (provider: "google" | "facebook") => {
   const supabase = await createClient();
@@ -29,7 +30,6 @@ export const signInWithOAuthAction = async (provider: "google" | "facebook") => 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
-  const configString = formData.get("config")?.toString();
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
@@ -56,9 +56,7 @@ export const signUpAction = async (formData: FormData) => {
   
   // If sign-up is successful and we have a user, create a food truck for them
   if (data && data.user) {
-    // Parse the config if it exists
-    const config = configString ? JSON.parse(configString) : null;
-    await createFoodTruckForUser(data.user.id, config);
+    await createFoodTruckForUser(data.user.id);
   }
   
   return encodedRedirect(
@@ -71,7 +69,6 @@ export const signUpAction = async (formData: FormData) => {
 export const signInAction = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const configString = formData.get("config")?.toString();
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -85,9 +82,7 @@ export const signInAction = async (formData: FormData) => {
 
   // If sign-in is successful, check if the user has a food truck and create one if not
   if (data && data.user) {
-    // Parse the config if it exists
-    const config = configString ? JSON.parse(configString) : null;
-    await createFoodTruckForUser(data.user.id, config);
+    await createFoodTruckForUser(data.user.id);
   }
 
   return redirect("/admin");
@@ -184,14 +179,12 @@ export const handleAuthCallback = async () => {
   
   // Create a food truck for the user if they don't have one
   if (session.user) {
-    // For OAuth, we don't have access to the config from the landing page
-    // So we'll use the default config
     await createFoodTruckForUser(session.user.id);
   }
 };
 
 // Function to create a food truck for a user
-export const createFoodTruckForUser = async (userId: string, userConfig?: any) => {
+export const createFoodTruckForUser = async (userId: string) => {
   const supabase = await createClient();
   
   // Check if user already has a food truck
@@ -210,66 +203,8 @@ export const createFoodTruckForUser = async (userId: string, userConfig?: any) =
     return { data: existingFoodTrucks[0], created: false };
   }
   
-  // Default configuration from ConfigProvider.tsx
-  const defaultConfig = {
-    hero: {
-      image: "",
-      title: "Delicious Food Truck",
-      subtitle: "Serving the best street food in town"
-    },
-    logo: "",
-    name: "Food Truck Name",
-    tagline: "Tasty meals on wheels",
-    primaryColor: "#FF6B35", // Vibrant orange
-    secondaryColor: "#4CB944", // Fresh green
-    about: {
-      image: "",
-      title: "Our Story",
-      content: "Share your food truck's journey here..."
-    },
-    contact: {
-      email: "",
-      phone: "",
-      address: ""
-    },
-    socials: {
-      twitter: "",
-      instagram: ""
-    },
-    schedule: {
-      title: "Weekly Schedule",
-      description: "Find us at these locations throughout the week",
-      days: [
-        {
-          day: "Monday",
-          location: "Downtown",
-          address: "123 Main St",
-          hours: "11:00 AM - 2:00 PM"
-        },
-        {
-          day: "Wednesday",
-          location: "Business District",
-          address: "456 Market Ave",
-          hours: "11:00 AM - 2:00 PM"
-        },
-        {
-          day: "Friday",
-          location: "Food Truck Friday",
-          address: "789 Park Blvd",
-          hours: "5:00 PM - 9:00 PM"
-        },
-        {
-          day: "Saturday",
-          location: "Farmers Market",
-          address: "321 Harvest Lane",
-          hours: "9:00 AM - 1:00 PM"
-        }
-      ]
-    }
-  };
-  
-  // Use the user's config if provided, otherwise use the default config
-  const configuration = userConfig || defaultConfig;
+  // Get default configuration
+  const configuration = getDefaultConfig();
   
   // Generate a unique subdomain based on a timestamp
   const timestamp = Date.now().toString(36);

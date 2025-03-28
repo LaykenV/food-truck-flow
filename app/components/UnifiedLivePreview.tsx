@@ -1,38 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FoodTruckConfig } from '../../components/FoodTruckTemplate';
 import { Card, CardContent } from '@/components/ui/card';
 import FoodTruckTemplate from '../../components/FoodTruckTemplate';
-import FoodTruckNavbar from '../../components/FoodTruckTemplate/FoodTruckNavbar';
-import FoodTruckFooter from '../../components/FoodTruckTemplate/FoodTruckFooter';
-import { useConfig } from './UnifiedConfigProvider';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Smartphone, Monitor } from 'lucide-react';
 import { AuthModalsWithConfig } from '@/components/auth-modals-with-config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Define the type for the preview mode
-export type PreviewMode = 'admin' | 'client';
-
-// Props for the UnifiedLivePreview
-interface UnifiedLivePreviewProps {
-  mode: PreviewMode;
-  config?: FoodTruckConfig;
+// Props for the LivePreview
+interface LivePreviewProps {
+  config: FoodTruckConfig;
+  showSignUpButton?: boolean;
 }
 
 export function UnifiedLivePreview({ 
-  mode = 'client',
-  config: propConfig 
-}: UnifiedLivePreviewProps) {
-  const { config: contextConfig, setConfig } = useConfig();
+  config,
+  showSignUpButton = false
+}: LivePreviewProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   
-  // Determine which config to use
-  const configToUse = propConfig || contextConfig;
-
+  // Create a unique key for the template that changes when config changes
+  // This forces a re-render of the template component when config changes
+  const templateKey = useMemo(() => JSON.stringify(config), [config]);
+  
   // Set mounted state and detect mobile device on client-side only
   useEffect(() => {
     setIsMounted(true);
@@ -60,13 +54,6 @@ export function UnifiedLivePreview({
     };
   }, [viewMode]);
 
-  // Update the config in the ConfigProvider when it changes (admin mode only)
-  useEffect(() => {
-    if (isMounted && propConfig && mode === 'admin') {
-      setConfig(propConfig);
-    }
-  }, [propConfig, setConfig, isMounted, mode]);
-
   // Return a placeholder during server-side rendering
   if (!isMounted) {
     return (
@@ -89,8 +76,8 @@ export function UnifiedLivePreview({
     );
   }
 
-  // Determine the subdomain based on mode
-  const subdomain = mode === 'admin' ? 'admin-preview' : 'preview';
+  // Use a consistent preview subdomain
+  const subdomain = 'preview';
 
   // Mobile preview component
   const MobilePreview = () => (
@@ -172,7 +159,8 @@ export function UnifiedLivePreview({
           <div className="flex flex-col" style={{ minHeight: '600px' }}>
             <main className="flex-grow">
               <FoodTruckTemplate 
-                config={configToUse} 
+                key={`mobile-${templateKey}`}
+                config={config} 
                 displayMode="preview" 
                 subdomain={subdomain}
                 forceViewMode="mobile"
@@ -208,7 +196,8 @@ export function UnifiedLivePreview({
           <div className="flex flex-col" style={{ minHeight: '600px' }}>
             <main className="flex-grow">
               <FoodTruckTemplate 
-                config={configToUse} 
+                key={`desktop-${templateKey}`}
+                config={config} 
                 displayMode="preview" 
                 subdomain={subdomain}
                 forceViewMode="desktop"
@@ -249,15 +238,15 @@ export function UnifiedLivePreview({
           {/* Force mobile view on mobile devices, otherwise use selected view */}
           {isMobileDevice || viewMode === 'mobile' ? <MobilePreview /> : <DesktopPreview />}
           
-          {/* CTA Button - Only show in client mode */}
-          {mode === 'client' && (
+          {/* CTA Button - Only show if requested */}
+          {showSignUpButton && (
             <div className="p-4 flex justify-center">
               <AuthModalsWithConfig 
                 initialView="sign-up" 
                 trigger={
                   <Button 
                     className="w-full max-w-xs flex items-center justify-center gap-2 text-white"
-                    style={{ backgroundColor: configToUse.primaryColor }}
+                    style={{ backgroundColor: config.primaryColor }}
                   >
                     Sign Up With This Configuration
                     <ArrowUpRight className="h-4 w-4" />
@@ -272,11 +261,8 @@ export function UnifiedLivePreview({
   );
 }
 
-// Backward compatibility components
-export function LivePreview() {
-  return <UnifiedLivePreview mode="client" />;
-}
-
+// For backward compatibility
+export { UnifiedLivePreview as LivePreview };
 export function AdminLivePreview({ config }: { config: FoodTruckConfig }) {
-  return <UnifiedLivePreview mode="admin" config={config} />;
+  return <UnifiedLivePreview config={config} />;
 } 

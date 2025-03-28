@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { AdminConfigClient } from '@/app/admin/config/client';
+import { getDefaultConfig } from '@/utils/config-utils';
 
 export default async function ConfigPage() {
   const supabase = await createClient();
@@ -70,112 +71,46 @@ export default async function ConfigPage() {
   );
 }
 
-// Get default configuration for new food trucks
-function getDefaultConfig() {
-  return {
-    name: 'Food Truck Name',
-    tagline: 'Tasty meals on wheels',
-    logo: '',
-    primaryColor: '#FF6B35',
-    secondaryColor: '#4CB944',
-    heroFont: '#FFFFFF',
-    hero: {
-      image: '/images/placeholder-hero.jpg',
-      title: 'Delicious Food Truck',
-      subtitle: 'Serving the best street food in town'
-    },
-    about: {
-      title: 'About Our Food Truck',
-      content: 'Tell your story here...',
-      image: ''
-    },
-    contact: {
-      email: '',
-      phone: ''
-    },
-    socials: {
-      twitter: '',
-      instagram: '',
-      facebook: ''
-    },
-    schedule: {
-      title: 'Weekly Schedule',
-      description: 'Find us at these locations throughout the week',
-      days: [
-        {
-          day: 'Monday',
-          location: 'Downtown',
-          address: '123 Main St',
-          hours: '11:00 AM - 2:00 PM',
-          openTime: '11:00',
-          closeTime: '14:00'
-        },
-        {
-          day: 'Wednesday',
-          location: 'Business District',
-          address: '456 Market Ave',
-          hours: '11:00 AM - 2:00 PM',
-          openTime: '11:00',
-          closeTime: '14:00'
-        },
-        {
-          day: 'Friday',
-          location: 'Food Truck Friday',
-          address: '789 Park Blvd',
-          hours: '5:00 PM - 9:00 PM',
-          openTime: '17:00',
-          closeTime: '21:00'
-        },
-        {
-          day: 'Saturday',
-          location: 'Farmers Market',
-          address: '321 Harvest Lane',
-          hours: '9:00 AM - 1:00 PM',
-          openTime: '09:00',
-          closeTime: '13:00'
-        }
-      ]
-    }
-  };
-}
-
 // Helper function to map database configuration to FoodTruckConfig format
 function mapDatabaseConfigToFoodTruckConfig(dbConfig: any) {
+  // Detect legacy format and migrate it
+  const defaultConfig = getDefaultConfig();
+  
   // Check for legacy social property and migrate it
   if (dbConfig.social && !dbConfig.socials) {
     dbConfig.socials = dbConfig.social;
   }
   
   return {
-    name: dbConfig.truckName || dbConfig.name || 'Food Truck Name',
-    tagline: dbConfig.tagline || 'Tasty meals on wheels',
-    logo: dbConfig.logo || '',
-    primaryColor: dbConfig.primaryColor || '#FF6B35',
-    secondaryColor: dbConfig.secondaryColor || '#4CB944',
-    heroFont: dbConfig.heroFont || '#FFFFFF',
+    name: dbConfig.truckName || dbConfig.name || defaultConfig.name,
+    tagline: dbConfig.tagline || defaultConfig.tagline,
+    logo: dbConfig.logo || defaultConfig.logo,
+    primaryColor: dbConfig.primaryColor || defaultConfig.primaryColor,
+    secondaryColor: dbConfig.secondaryColor || defaultConfig.secondaryColor,
+    heroFont: dbConfig.heroFont || defaultConfig.heroFont,
     hero: {
-      image: dbConfig.heroImage || dbConfig.hero?.image || '/images/placeholder-hero.jpg',
-      title: dbConfig.heroTitle || dbConfig.hero?.title || 'Delicious Food Truck',
-      subtitle: dbConfig.heroSubtitle || dbConfig.hero?.subtitle || 'Serving the best street food in town'
+      image: dbConfig.heroImage || dbConfig.hero?.image || defaultConfig.hero?.image,
+      title: dbConfig.heroTitle || dbConfig.hero?.title || defaultConfig.hero?.title,
+      subtitle: dbConfig.heroSubtitle || dbConfig.hero?.subtitle || defaultConfig.hero?.subtitle
     },
     about: {
-      title: dbConfig.aboutTitle || dbConfig.about?.title || 'About Our Food Truck',
-      content: dbConfig.aboutContent || dbConfig.about?.content || dbConfig.description || 'Tell your story here...',
-      image: dbConfig.aboutImage || dbConfig.about?.image || ''
+      title: dbConfig.aboutTitle || dbConfig.about?.title || defaultConfig.about?.title,
+      content: dbConfig.aboutContent || dbConfig.about?.content || dbConfig.description || defaultConfig.about?.content,
+      image: dbConfig.aboutImage || dbConfig.about?.image || defaultConfig.about?.image
     },
     contact: {
-      email: dbConfig.contactEmail || dbConfig.contact?.email || '',
-      phone: dbConfig.contactPhone || dbConfig.contact?.phone || ''
+      email: dbConfig.contactEmail || dbConfig.contact?.email || defaultConfig.contact?.email,
+      phone: dbConfig.contactPhone || dbConfig.contact?.phone || defaultConfig.contact?.phone
     },
     socials: {
-      twitter: dbConfig.socialTwitter || dbConfig.socials?.twitter || '',
-      instagram: dbConfig.socialInstagram || dbConfig.socials?.instagram || '',
-      facebook: dbConfig.socialFacebook || dbConfig.socials?.facebook || ''
+      twitter: dbConfig.socialTwitter || dbConfig.socials?.twitter || defaultConfig.socials?.twitter,
+      instagram: dbConfig.socialInstagram || dbConfig.socials?.instagram || defaultConfig.socials?.instagram,
+      facebook: dbConfig.socialFacebook || dbConfig.socials?.facebook || defaultConfig.socials?.facebook
     },
     schedule: {
-      title: dbConfig.scheduleTitle || dbConfig.schedule?.title || 'Weekly Schedule',
-      description: dbConfig.scheduleDescription || dbConfig.schedule?.description || 'Find us at these locations throughout the week',
-      days: dbConfig.scheduleDays || dbConfig.schedule?.days || []
+      title: dbConfig.scheduleTitle || dbConfig.schedule?.title || defaultConfig.schedule?.title,
+      description: dbConfig.scheduleDescription || dbConfig.schedule?.description || defaultConfig.schedule?.description,
+      days: dbConfig.scheduleDays || dbConfig.schedule?.days || defaultConfig.schedule?.days
     }
   };
 } 

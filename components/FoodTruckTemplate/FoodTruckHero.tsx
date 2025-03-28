@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { DisplayMode } from '.';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface FoodTruckHeroProps {
   config: {
@@ -63,53 +63,64 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
   }, []);
 
   return (
-    <section className={`relative min-h-[100vh] flex items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={heroImage}
-          alt={heroTitle}
-          fill
-          className="object-cover"
-          sizes="100vw"
-          priority
-        />
-        <div 
-          className="absolute inset-0" 
-          style={{ 
-            background: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.4))` 
-          }}
-        />
-      </div>
-
-      {/* Hero Content */}
-      <div className="container relative z-10 mx-auto px-4 py-20 mt-16">
-        <div className="max-w-3xl">
-          <h1 
-            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
-            style={{ color: heroFont }}
-          >
-            {heroTitle}
-          </h1>
+    <>
+      {/* Mobile hero (image only) - visible on small screens only */}
+      <section className={`md:hidden ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
+        <div className="relative w-full h-[50vh]">
+          <Image
+            src={heroImage}
+            alt={heroTitle}
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            priority
+          />
           <div 
-            className="w-24 h-2 mb-6"
+            className="absolute inset-0" 
+            style={{ 
+              background: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.4))` 
+            }}
+          />
+          
+          {/* Mobile title overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
+            <h1 
+              className="text-3xl font-bold leading-tight"
+              style={{ color: heroFont }}
+            >
+              {heroTitle}
+            </h1>
+          </div>
+
+          {/* Top accent line */}
+          <div 
+            className="absolute top-0 left-0 right-0 h-2 z-10"
+            style={{ 
+              background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+            }}
+          ></div>
+        </div>
+
+        {/* Mobile content section */}
+        <div className="px-4 py-8 bg-white">
+          <div 
+            className="w-20 h-2 mb-4"
             style={{ 
               background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
             }}
           ></div>
           <p 
-            className="text-xl md:text-2xl mb-8"
-            style={{ color: heroFont }}
+            className="text-xl mb-6 text-gray-800"
           >
             {heroSubtitle}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-3">
             {displayMode === 'live' ? (
               <>
                 <Button
                   asChild
                   size="lg"
-                  className="group"
+                  className="group w-full"
                   id="hero-menu-button"
                   style={{ 
                     backgroundColor: primaryColor,
@@ -124,7 +135,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                 <Button
                   size="lg"
                   variant="outline"
-                  className="group border-2 hover:text-white"
+                  className="group border-2 hover:text-white w-full"
                   style={{ 
                     borderColor: secondaryColor,
                     color: secondaryColor,
@@ -142,7 +153,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
               <>
                 <Button
                   size="lg"
-                  className="group"
+                  className="group w-full"
                   id="hero-menu-button"
                   style={{ 
                     backgroundColor: primaryColor,
@@ -156,7 +167,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                 <Button
                   size="lg"
                   variant="outline"
-                  className="group border-2 hover:text-white"
+                  className="group border-2 hover:text-white w-full"
                   style={{ 
                     borderColor: secondaryColor,
                     color: secondaryColor,
@@ -173,15 +184,129 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
             )}
           </div>
         </div>
-      </div>
+      </section>
       
-      {/* Bottom accent line */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 h-2 z-10"
-        style={{ 
-          background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
-        }}
-      ></div>
-    </section>
+      {/* Desktop hero (full screen) - hidden on small screens */}
+      <section className={`hidden md:flex relative min-h-[100vh] items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={heroImage}
+            alt={heroTitle}
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+          />
+          <div 
+            className="absolute inset-0" 
+            style={{ 
+              background: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.4))` 
+            }}
+          />
+        </div>
+
+        {/* Hero Content */}
+        <div className="container relative z-10 mx-auto px-4 py-20 mt-16">
+          <div className="max-w-3xl">
+            <h1 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
+              style={{ color: heroFont }}
+            >
+              {heroTitle}
+            </h1>
+            <div 
+              className="w-24 h-2 mb-6"
+              style={{ 
+                background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+              }}
+            ></div>
+            <p 
+              className="text-xl md:text-2xl mb-8"
+              style={{ color: heroFont }}
+            >
+              {heroSubtitle}
+            </p>
+            <div className="flex flex-row gap-4">
+              {displayMode === 'live' ? (
+                <>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="group"
+                    id="hero-menu-button"
+                    style={{ 
+                      backgroundColor: primaryColor,
+                      color: 'white'
+                    }}
+                  >
+                    <Link href={`/${subdomain}/menu`} prefetch={true}>
+                      Start Order
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="group border-2 hover:text-white"
+                    style={{ 
+                      borderColor: secondaryColor,
+                      color: secondaryColor,
+                      backgroundColor: 'transparent',
+                      "&:hover": {
+                        backgroundColor: secondaryColor
+                      }
+                    } as React.CSSProperties}
+                    onClick={handleSmoothScroll}
+                  >
+                    Find Us
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    className="group"
+                    id="hero-menu-button"
+                    style={{ 
+                      backgroundColor: primaryColor,
+                      color: 'white'
+                    }}
+                    onClick={handleButtonClick}
+                  >
+                    Start Order
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="group border-2 hover:text-white"
+                    style={{ 
+                      borderColor: secondaryColor,
+                      color: secondaryColor,
+                      backgroundColor: 'transparent',
+                      "&:hover": {
+                        backgroundColor: secondaryColor
+                      }
+                    } as React.CSSProperties}
+                    onClick={handleSmoothScroll}
+                  >
+                    Find Us
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Bottom accent line */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-2 z-10"
+          style={{ 
+            background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+          }}
+        ></div>
+      </section>
+    </>
   );
 } 

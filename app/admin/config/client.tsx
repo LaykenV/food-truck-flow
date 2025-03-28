@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AdminConfigWrapper } from '@/app/components/UnifiedConfigWrapper';
 import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
-import { UnifiedConfigProvider } from '@/app/components/UnifiedConfigProvider';
+import { ConfigProvider } from '@/app/components/UnifiedConfigProvider';
 import { toast } from 'sonner';
 import { saveConfiguration, subscribeToConfigChanges } from '@/utils/config-utils';
 
@@ -49,46 +49,9 @@ export function AdminConfigClient({ initialConfig, userId }: AdminConfigClientPr
 
     setIsLoading(true);
     
-    // Ensure all config properties are properly set with defaults if missing
-    const completeConfig: FoodTruckConfig = {
-      name: newConfig.name || '',
-      tagline: newConfig.tagline || '',
-      logo: newConfig.logo || '',
-      primaryColor: newConfig.primaryColor || '#FF6B35',
-      secondaryColor: newConfig.secondaryColor || '#4CB944',
-      heroFont: newConfig.heroFont || '#FFFFFF',
-      hero: {
-        image: newConfig.hero?.image || '',
-        title: newConfig.hero?.title || '',
-        subtitle: newConfig.hero?.subtitle || ''
-      },
-      about: {
-        title: newConfig.about?.title || '',
-        content: newConfig.about?.content || '',
-        image: newConfig.about?.image || ''
-      },
-      contact: {
-        email: newConfig.contact?.email || '',
-        phone: newConfig.contact?.phone || ''
-      },
-      socials: {
-        twitter: newConfig.socials?.twitter || '',
-        instagram: newConfig.socials?.instagram || '',
-        facebook: newConfig.socials?.facebook || ''
-      },
-      schedule: {
-        title: newConfig.schedule?.title || 'Weekly Schedule',
-        description: newConfig.schedule?.description || 'Find us at these locations throughout the week',
-        days: newConfig.schedule?.days || []
-      }
-    };
-    
-    // Optimistic update - update the UI immediately
-    setConfig(completeConfig);
-    
     try {
       // Save the configuration using the utility function
-      const { timestamp } = await saveConfiguration(userId, completeConfig);
+      const { timestamp } = await saveConfiguration(userId, newConfig);
       
       // Update last saved timestamp
       setLastSaved(timestamp);
@@ -96,16 +59,13 @@ export function AdminConfigClient({ initialConfig, userId }: AdminConfigClientPr
     } catch (error) {
       console.error('Error saving configuration:', error);
       toast.error(error instanceof Error ? error.message : 'Error saving configuration. Please try again.');
-      
-      // Revert to the previous config if the update fails
-      setConfig(config);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <UnifiedConfigProvider initialConfig={config} mode="admin" onSave={handleSaveConfig}>
+    <ConfigProvider initialConfig={config} onSave={handleSaveConfig}>
       <AdminConfigWrapper 
         initialConfig={config} 
         onSave={handleSaveConfig} 
@@ -113,6 +73,6 @@ export function AdminConfigClient({ initialConfig, userId }: AdminConfigClientPr
         lastSaved={lastSaved}
         userId={userId}
       />
-    </UnifiedConfigProvider>
+    </ConfigProvider>
   );
 } 

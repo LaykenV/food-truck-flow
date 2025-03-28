@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signInAction, signUpAction, signInWithOAuthAction } from "@/app/actions";
+import { signInAction, signUpAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import Link from "next/link";
-import { useConfig } from "@/app/components/UnifiedConfigProvider";
 
 interface AuthModalsWithConfigProps {
   initialView?: "sign-in" | "sign-up";
@@ -29,7 +27,6 @@ interface AuthModalsWithConfigProps {
 export function AuthModalsWithConfig({ initialView = "sign-in", trigger, message }: AuthModalsWithConfigProps) {
   const [view, setView] = useState<"sign-in" | "sign-up">(initialView);
   const [open, setOpen] = useState(false);
-  const { config } = useConfig();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -57,9 +54,9 @@ export function AuthModalsWithConfig({ initialView = "sign-in", trigger, message
         
         <div className="px-1 py-4">
           {view === "sign-in" ? (
-            <SignInForm message={message} onClose={() => setOpen(false)} config={config} />
+            <SignInForm message={message} onClose={() => setOpen(false)} />
           ) : (
-            <SignUpForm message={message} onClose={() => setOpen(false)} config={config} />
+            <SignUpForm message={message} onClose={() => setOpen(false)} />
           )}
           
           <div className="mt-6 text-center text-sm">
@@ -96,21 +93,12 @@ export function AuthModalsWithConfig({ initialView = "sign-in", trigger, message
 interface AuthFormProps {
   message?: Message;
   onClose: () => void;
-  config: any;
 }
 
-function SignInForm({ message, onClose, config }: AuthFormProps) {
+function SignInForm({ message, onClose }: AuthFormProps) {
   return (
     <>
-      <form className="space-y-4" action={async (formData) => {
-        // Create a new FormData object with the config
-        const newFormData = new FormData();
-        newFormData.append('email', formData.get('email') as string);
-        newFormData.append('password', formData.get('password') as string);
-        newFormData.append('config', JSON.stringify(config));
-        
-        await signInAction(newFormData);
-      }}>
+      <form className="space-y-4" action={signInAction}>
         <div>
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
@@ -161,18 +149,10 @@ function SignInForm({ message, onClose, config }: AuthFormProps) {
   );
 }
 
-function SignUpForm({ message, onClose, config }: AuthFormProps) {
+function SignUpForm({ message, onClose }: AuthFormProps) {
   return (
     <>
-      <form className="space-y-4" action={async (formData) => {
-        // Create a new FormData object with the config
-        const newFormData = new FormData();
-        newFormData.append('email', formData.get('email') as string);
-        newFormData.append('password', formData.get('password') as string);
-        newFormData.append('config', JSON.stringify(config));
-        
-        await signUpAction(newFormData);
-      }}>
+      <form className="space-y-4" action={signUpAction}>
         <div>
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input

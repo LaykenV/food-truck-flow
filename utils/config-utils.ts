@@ -3,6 +3,74 @@ import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { toast } from 'sonner';
 
 /**
+ * Get the default configuration for a new food truck
+ * This is the central location for default configuration values
+ */
+export function getDefaultConfig(): FoodTruckConfig {
+  return {
+    name: 'Food Truck Name',
+    tagline: 'Tasty meals on wheels',
+    logo: '',
+    primaryColor: '#FF6B35',
+    secondaryColor: '#4CB944',
+    heroFont: '#FFFFFF',
+    hero: {
+      image: '/images/placeholder-hero.jpg',
+      title: 'Delicious Food Truck',
+      subtitle: 'Serving the best street food in town'
+    },
+    about: {
+      title: 'About Our Food Truck',
+      content: 'Tell your story here...',
+      image: ''
+    },
+    contact: {
+      email: '',
+      phone: ''
+    },
+    socials: {
+      twitter: '',
+      instagram: '',
+      facebook: ''
+    },
+    schedule: {
+      title: 'Weekly Schedule',
+      description: 'Find us at these locations throughout the week',
+      days: [
+        {
+          day: 'Monday',
+          location: 'Downtown',
+          address: '123 Main St',
+          openTime: '11:00',
+          closeTime: '14:00'
+        },
+        {
+          day: 'Wednesday',
+          location: 'Business District',
+          address: '456 Market Ave',
+          openTime: '11:00',
+          closeTime: '14:00'
+        },
+        {
+          day: 'Friday',
+          location: 'Food Truck Friday',
+          address: '789 Park Blvd',
+          openTime: '17:00',
+          closeTime: '21:00'
+        },
+        {
+          day: 'Saturday',
+          location: 'Farmers Market',
+          address: '321 Harvest Lane',
+          openTime: '09:00',
+          closeTime: '13:00'
+        }
+      ]
+    }
+  };
+}
+
+/**
  * Save the food truck configuration to Supabase
  * @param userId The user ID
  * @param config The food truck configuration

@@ -1,21 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { UnifiedConfigForm } from './UnifiedConfigForm';
-import { UnifiedLivePreview } from './UnifiedLivePreview';
+import { AdminLivePreview } from './UnifiedLivePreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Smartphone } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { toast } from 'sonner';
-import { useUnifiedConfig, useConfig } from './UnifiedConfigProvider';
+import { useConfig } from './UnifiedConfigProvider';
 
-// Define the type for the wrapper mode
-export type WrapperMode = 'admin' | 'client';
-
-// Props for the UnifiedConfigWrapper
-interface UnifiedConfigWrapperProps {
-  mode: WrapperMode;
+// Props for the ConfigWrapper
+interface ConfigWrapperProps {
   initialConfig?: FoodTruckConfig;
   onSave?: (config: FoodTruckConfig) => Promise<void>;
   isSaving?: boolean;
@@ -23,41 +19,50 @@ interface UnifiedConfigWrapperProps {
   userId?: string;
 }
 
-export function UnifiedConfigWrapper({ 
-  mode,
+export function ConfigWrapper({ 
   initialConfig, 
   onSave, 
   isSaving = false, 
   lastSaved = null,
   userId 
-}: UnifiedConfigWrapperProps) {
-  const context = useUnifiedConfig();
-  const { setConfig } = useConfig();
+}: ConfigWrapperProps) {
+  const { config: contextConfig, setConfig } = useConfig();
+  
+  // Use a more structured approach to state management
   const [localConfig, setLocalConfig] = useState<FoodTruckConfig>(
-    initialConfig || context.config
+    initialConfig || contextConfig
   );
   const [activeTab, setActiveTab] = useState<string>("config");
-
-  // Update local config when initialConfig changes
+  
+  // Update local config when initialConfig changes from parent
   useEffect(() => {
     if (initialConfig) {
       setLocalConfig(initialConfig);
+      // Also update the context config to ensure the preview is updated
       setConfig(initialConfig);
     }
   }, [initialConfig, setConfig]);
 
-  // Handle saving the configuration (admin mode only)
+  // Memoized function to handle config changes from the form
+  const handleConfigUpdate = useCallback((updatedConfig: FoodTruckConfig) => {
+    // Update both local state and context
+    setLocalConfig(updatedConfig);
+    setConfig(updatedConfig);
+  }, [setConfig]);
+
+  // Handle saving the configuration
   const handleSaveConfig = async (newConfig: FoodTruckConfig) => {
-    if (mode !== 'admin' || !onSave) {
-      // In client mode, just update the config
-      setLocalConfig(newConfig);
-      setConfig(newConfig);
-      return;
-    }
+    // First update local and context state for immediate preview
+    handleConfigUpdate(newConfig);
+    
+    // If no onSave provided, we're done (client-side only changes)
+    if (!onSave) return;
 
     try {
       // Ensure we're working with a complete config object
       const completeConfig: FoodTruckConfig = {
+        ...newConfig,
+        // Default values for required fields
         name: newConfig.name || '',
         tagline: newConfig.tagline || '',
         logo: newConfig.logo || '',
@@ -65,92 +70,45 @@ export function UnifiedConfigWrapper({
         secondaryColor: newConfig.secondaryColor || '#4CB944',
         heroFont: newConfig.heroFont || '#FFFFFF',
         hero: {
+          ...newConfig.hero,
           image: newConfig.hero?.image || '',
           title: newConfig.hero?.title || '',
           subtitle: newConfig.hero?.subtitle || ''
         },
         about: {
+          ...newConfig.about,
           title: newConfig.about?.title || '',
           content: newConfig.about?.content || '',
           image: newConfig.about?.image || ''
         },
         contact: {
+          ...newConfig.contact,
           email: newConfig.contact?.email || '',
           phone: newConfig.contact?.phone || ''
         },
         socials: {
+          ...newConfig.socials,
           twitter: newConfig.socials?.twitter || '',
           instagram: newConfig.socials?.instagram || '',
           facebook: newConfig.socials?.facebook || ''
         },
         schedule: {
+          ...newConfig.schedule,
           title: newConfig.schedule?.title || 'Weekly Schedule',
           description: newConfig.schedule?.description || 'Find us at these locations throughout the week',
-          days: newConfig.schedule?.days || [
-            {
-              day: "Monday",
-              location: "Downtown",
-              address: "123 Main St",
-              openTime: "11:00",
-              closeTime: "14:00"
-            },
-            {
-              day: "Wednesday",
-              location: "Business District",
-              address: "456 Market Ave",
-              openTime: "11:00",
-              closeTime: "14:00"
-            },
-            {
-              day: "Friday",
-              location: "Food Truck Friday",
-              address: "789 Park Blvd",
-              openTime: "17:00",
-              closeTime: "21:00"
-            },
-            {
-              day: "Saturday",
-              location: "Farmers Market",
-              address: "321 Harvest Lane",
-              openTime: "09:00",
-              closeTime: "13:00"
-            }
-          ]
+          days: newConfig.schedule?.days || []
         }
       };
       
-      setLocalConfig(completeConfig);
-      setConfig(completeConfig);
+      // Save to backend
       await onSave(completeConfig);
-      // The toast notification will be handled by the parent component
+      
+      // Update state with the complete config after successful save
+      handleConfigUpdate(completeConfig);
     } catch (error) {
       console.error('Error saving configuration:', error);
       toast.error('Failed to save configuration. Please try again.');
     }
-  };
-
-  // Render the appropriate form and preview based on mode
-  const renderForm = () => {
-    return (
-      <UnifiedConfigForm
-        mode={mode}
-        initialConfig={localConfig}
-        onSave={handleSaveConfig}
-        isSaving={isSaving}
-        lastSaved={lastSaved}
-        userId={userId}
-      />
-    );
-  };
-
-  // Render the appropriate preview based on mode
-  const renderPreview = () => {
-    return (
-      <UnifiedLivePreview
-        mode={mode}
-        config={mode === 'admin' ? localConfig : undefined}
-      />
-    );
   };
 
   return (
@@ -175,14 +133,20 @@ export function UnifiedConfigWrapper({
           </TabsList>
           
           <TabsContent value="config" className="space-y-4 pb-8">
-            {renderForm()}
+            <UnifiedConfigForm
+              initialConfig={localConfig}
+              onSave={handleSaveConfig}
+              isSaving={isSaving}
+              lastSaved={lastSaved}
+              userId={userId}
+            />
           </TabsContent>
           
           <TabsContent value="preview" className="space-y-4 pb-8">
             <h2 className="text-xl font-bold text-gray-900 text-center mb-4">
               Preview Your Food Truck Website
             </h2>
-            {renderPreview()}
+            <AdminLivePreview config={localConfig} />
           </TabsContent>
         </Tabs>
       </div>
@@ -191,7 +155,13 @@ export function UnifiedConfigWrapper({
       <div className="hidden md:flex md:flex-col md:gap-8">
         {/* Config Form Section */}
         <div className="w-full">
-          {renderForm()}
+          <UnifiedConfigForm
+            initialConfig={localConfig}
+            onSave={handleSaveConfig}
+            isSaving={isSaving}
+            lastSaved={lastSaved}
+            userId={userId}
+          />
         </div>
         
         {/* Preview Section - Full Width */}
@@ -201,7 +171,7 @@ export function UnifiedConfigWrapper({
               Preview Your Food Truck Website
             </h2>
             <div className="flex justify-center w-full">
-              {renderPreview()}
+              <AdminLivePreview config={localConfig} />
             </div>
           </Card>
         </div>
@@ -211,10 +181,10 @@ export function UnifiedConfigWrapper({
 }
 
 // Backward compatibility components
-export function AdminConfigWrapper(props: Omit<UnifiedConfigWrapperProps, 'mode'>) {
-  return <UnifiedConfigWrapper mode="admin" {...props} />;
+export { ConfigWrapper as UnifiedConfigWrapper };
+export function AdminConfigWrapper(props: ConfigWrapperProps) {
+  return <ConfigWrapper {...props} />;
 }
-
 export function ClientWrapper() {
-  return <UnifiedConfigWrapper mode="client" />;
+  return <ConfigWrapper />;
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,13 +13,9 @@ import {
   ImageIcon, 
   Palette, 
   Layout, 
-  Type, 
   Info, 
   Phone, 
   Save, 
-  RefreshCw,
-  Building,
-  Link as LinkIcon,
   Share2,
 } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -27,15 +23,11 @@ import { CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from 'sonner';
 import { ConfigHistoryDrawer } from './ConfigHistoryDrawer';
 import { useConfig } from './UnifiedConfigProvider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-
-// Define the type for the form mode
-export type FormMode = 'admin' | 'client';
+import { uploadImage } from '@/utils/storage-utils';
+import { createFilePreview, revokeFilePreview, isBlobUrl } from '@/utils/file-utils';
 
 // Props for the UnifiedConfigForm
 interface UnifiedConfigFormProps {
-  mode: FormMode;
   initialConfig?: FoodTruckConfig;
   onSave?: (config: FoodTruckConfig) => Promise<void>;
   isSaving?: boolean;
@@ -43,8 +35,14 @@ interface UnifiedConfigFormProps {
   userId?: string;
 }
 
+// Type for image files that are staged for upload
+interface StagedImage {
+  file: File;
+  previewUrl: string;
+  fieldName: string;
+}
+
 export function UnifiedConfigForm({ 
-  mode = 'client',
   initialConfig, 
   onSave, 
   isSaving = false, 
@@ -72,24 +70,14 @@ export function UnifiedConfigForm({
     socialTwitter: configToUse.socials?.twitter || '',
     socialInstagram: configToUse.socials?.instagram || '',
     socialFacebook: configToUse.socials?.facebook || '',
-    scheduleTitle: configToUse.schedule?.title || 'Weekly Schedule',
-    scheduleDescription: configToUse.schedule?.description || 'Find us at these locations throughout the week',
-    scheduleDays: configToUse.schedule?.days || [],
   });
 
+  // Store staged image files that will be uploaded on form submit
+  const [stagedImages, setStagedImages] = useState<StagedImage[]>([]);
+  
   const [activeTab, setActiveTab] = useState<string>("branding");
   const [statusMessage, setStatusMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedScheduleDay, setSelectedScheduleDay] = useState<{index: number, day: any} | null>(null);
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [timeValues, setTimeValues] = useState({
-    startHour: "11",
-    startMinute: "00",
-    startAmPm: "AM",
-    endHour: "2",
-    endMinute: "00",
-    endAmPm: "PM"
-  });
 
   // Update form values when initialConfig changes
   useEffect(() => {
@@ -112,12 +100,50 @@ export function UnifiedConfigForm({
         socialTwitter: initialConfig.socials?.twitter || '',
         socialInstagram: initialConfig.socials?.instagram || '',
         socialFacebook: initialConfig.socials?.facebook || '',
-        scheduleTitle: initialConfig.schedule?.title || 'Weekly Schedule',
-        scheduleDescription: initialConfig.schedule?.description || 'Find us at these locations throughout the week',
-        scheduleDays: initialConfig.schedule?.days || [],
       });
+      
+      // Clear any staged images when initialConfig changes
+      setStagedImages([]);
     }
   }, [initialConfig]);
+
+  // Cleanup previews when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup any blob URLs when component unmounts
+      stagedImages.forEach(staged => {
+        if (staged.previewUrl && staged.previewUrl.startsWith('blob:')) {
+          revokeFilePreview(staged.previewUrl);
+        }
+      });
+    };
+  }, [stagedImages]);
+
+  // Clean up old preview URLs and update the form when uploading images
+  const cleanupPreviews = (updatedConfig: FoodTruckConfig) => {
+    // For each staged image, check if the preview URL is different from the new URL
+    stagedImages.forEach(staged => {
+      let newUrl: string | undefined;
+      
+      // Get the new URL from the updated config
+      switch (staged.fieldName) {
+        case 'logo':
+          newUrl = updatedConfig.logo;
+          break;
+        case 'heroImage':
+          newUrl = updatedConfig.hero?.image;
+          break;
+        case 'aboutImage':
+          newUrl = updatedConfig.about?.image;
+          break;
+      }
+      
+      // If the preview URL is a blob URL and different from the new URL, revoke it
+      if (isBlobUrl(staged.previewUrl) && staged.previewUrl !== newUrl) {
+        revokeFilePreview(staged.previewUrl);
+      }
+    });
+  };
 
   // Create a new config object from form values
   const createConfigFromFormValues = (): FoodTruckConfig => {
@@ -148,47 +174,121 @@ export function UnifiedConfigForm({
         facebook: formValues.socialFacebook
       },
       schedule: {
-        title: formValues.scheduleTitle,
-        description: formValues.scheduleDescription,
-        days: formValues.scheduleDays
+        title: configToUse.schedule?.title || 'Weekly Schedule',
+        description: configToUse.schedule?.description || 'Find us at these locations throughout the week',
+        days: configToUse.schedule?.days || []
       }
     };
   };
 
+  // Upload any staged images and update config with their URLs
+  const uploadStagedImages = async (): Promise<FoodTruckConfig> => {
+    const newConfig = createConfigFromFormValues();
+    
+    if (stagedImages.length === 0 || !userId) {
+      return newConfig;
+    }
+    
+    // Show loading toast for uploads
+    const loadingToastId = toast.loading(`Uploading ${stagedImages.length} image(s)...`);
+    
+    try {
+      // Process each staged image
+      for (const stagedImage of stagedImages) {
+        // Determine which bucket to use
+        let bucket = '';
+        switch(stagedImage.fieldName) {
+          case 'logo':
+            bucket = 'logo-images';
+            break;
+          case 'heroImage':
+            bucket = 'hero-images';
+            break;
+          case 'aboutImage':
+            bucket = 'about-images';
+            break;
+          default:
+            continue; // Skip unknown field names
+        }
+        
+        // Upload the image
+        const imageUrl = await uploadImage(stagedImage.file, bucket, userId);
+        
+        if (!imageUrl) {
+          console.error(`Failed to upload ${stagedImage.fieldName} image`);
+          continue;
+        }
+        
+        // Update the config with the new URL
+        switch(stagedImage.fieldName) {
+          case 'logo':
+            newConfig.logo = imageUrl;
+            break;
+          case 'heroImage':
+            if (newConfig.hero) newConfig.hero.image = imageUrl;
+            break;
+          case 'aboutImage':
+            if (newConfig.about) newConfig.about.image = imageUrl;
+            break;
+        }
+      }
+      
+      // Clean up preview URLs
+      cleanupPreviews(newConfig);
+      
+      // Clear staged images
+      setStagedImages([]);
+      
+      // Also update form values with the new URLs for proper state sync
+      setFormValues(prev => ({
+        ...prev,
+        logo: newConfig.logo || prev.logo,
+        heroImage: newConfig.hero?.image || prev.heroImage,
+        aboutImage: newConfig.about?.image || prev.aboutImage
+      }));
+      
+      toast.success('Images uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast.error('Failed to upload one or more images');
+    } finally {
+      toast.dismiss(loadingToastId);
+    }
+    
+    return newConfig;
+  };
+
   // Handle form submission to update config
   const handleSubmitChanges = async () => {
-    if (mode === 'admin' && onSave) {
-      // Admin mode - use the provided onSave function
-      try {
-        setIsSubmitting(true);
-        const newConfig = createConfigFromFormValues();
-        await onSave(newConfig);
-        // The toast notification will be handled by the parent component
-      } catch (error) {
-        console.error('Error saving changes:', error);
-        toast.error('Error saving changes. Please try again.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      // Client mode - use the context's setConfig function
-      setIsSubmitting(true);
-      setStatusMessage('');
+    setIsSubmitting(true);
+    
+    try {
+      // First upload any staged images
+      const updatedConfig = await uploadStagedImages();
       
-      try {
-        const newConfig = createConfigFromFormValues();
-        setContextConfig(newConfig);
+      if (onSave) {
+        // Admin mode - use the provided onSave function
+        await onSave(updatedConfig);
+        // The parent component will handle the success toast
+      } else {
+        // Client mode - use the context's setConfig function
+        setContextConfig(updatedConfig);
         setStatusMessage('success');
+        
+        // Update the context config to trigger a preview update
+        setContextConfig(updatedConfig);
         
         // Clear status message after 3 seconds
         setTimeout(() => {
           setStatusMessage('');
         }, 3000);
-      } catch (error) {
-        setStatusMessage('error');
-      } finally {
-        setIsSubmitting(false);
       }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      toast.error('Error saving changes. Please try again.');
+      setStatusMessage('error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -203,20 +303,30 @@ export function UnifiedConfigForm({
     }));
   };
 
-  // Handle file uploads
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+  // Handle file selection with preview
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setFormValues(prev => ({
-          ...prev,
-          [fieldName]: base64String
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    
+    // Create a preview URL
+    const previewUrl = createFilePreview(file);
+    
+    // Update form values with the preview URL for immediate display
+    setFormValues(prev => ({
+      ...prev,
+      [fieldName]: previewUrl
+    }));
+    
+    // Stage the image for upload during form submission
+    setStagedImages(prev => {
+      // Remove any existing staged image for this field
+      const filtered = prev.filter(img => img.fieldName !== fieldName);
+      // Add the new staged image
+      return [...filtered, { file, previewUrl, fieldName }];
+    });
+    
+    // Notify the user that the image will be uploaded when they save
+    toast.info(`Image selected. It will be uploaded when you save changes.`);
   };
 
   // Format the last saved date (admin mode only)
@@ -266,181 +376,10 @@ export function UnifiedConfigForm({
       socialTwitter: config.socials?.twitter || '',
       socialInstagram: config.socials?.instagram || '',
       socialFacebook: config.socials?.facebook || '',
-      scheduleTitle: config.schedule?.title || 'Weekly Schedule',
-      scheduleDescription: config.schedule?.description || 'Find us at these locations throughout the week',
-      scheduleDays: config.schedule?.days || [],
     };
     
     setFormValues(updatedFormValues);
     toast.info('Restored configuration from history. Click Save to apply changes.');
-  };
-
-  // Group consecutive days at the same location
-  const groupedScheduleDays = useMemo(() => {
-    const days = [...formValues.scheduleDays];
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    
-    // Sort days by day of week
-    days.sort((a, b) => {
-      return daysOfWeek.indexOf(a.day) - daysOfWeek.indexOf(b.day);
-    });
-    
-    // Group consecutive days at the same location
-    const groups: any[] = [];
-    let currentGroup: any[] = [];
-    
-    days.forEach((day, index) => {
-      if (index === 0) {
-        currentGroup.push(day);
-      } else {
-        const prevDay = days[index - 1];
-        const prevDayIndex = daysOfWeek.indexOf(prevDay.day);
-        const currentDayIndex = daysOfWeek.indexOf(day.day);
-        
-        // Check if days are consecutive and at the same location
-        const isConsecutive = (currentDayIndex === prevDayIndex + 1) || 
-                             (prevDayIndex === 6 && currentDayIndex === 0); // Sunday to Monday
-        const isSameLocation = day.location === prevDay.location && 
-                              day.address === prevDay.address &&
-                              day.openTime === prevDay.openTime &&
-                              day.closeTime === prevDay.closeTime;
-        
-        if (isConsecutive && isSameLocation) {
-          currentGroup.push(day);
-        } else {
-          groups.push([...currentGroup]);
-          currentGroup = [day];
-        }
-      }
-    });
-    
-    if (currentGroup.length > 0) {
-      groups.push(currentGroup);
-    }
-    
-    return groups;
-  }, [formValues.scheduleDays]);
-
-  // Handle opening the schedule day modal
-  const handleOpenScheduleModal = (index: number) => {
-    const day = formValues.scheduleDays[index];
-    setSelectedScheduleDay({ index, day });
-    // Initialize selectedDays with the current day to fix checkbox behavior
-    setSelectedDays(day ? [day.day] : []);
-    
-    // Set time values from openTime and closeTime if available
-    if (day && day.openTime && day.closeTime) {
-      try {
-        // Parse openTime (24h format)
-        let [openHour, openMinute] = day.openTime.split(':').map(Number);
-        const openAmPm = openHour >= 12 ? 'PM' : 'AM';
-        openHour = openHour % 12 || 12; // Convert 24h to 12h format
-        
-        // Parse closeTime (24h format)
-        let [closeHour, closeMinute] = day.closeTime.split(':').map(Number);
-        const closeAmPm = closeHour >= 12 ? 'PM' : 'AM';
-        closeHour = closeHour % 12 || 12; // Convert 24h to 12h format
-        
-        setTimeValues({
-          startHour: openHour.toString(),
-          startMinute: openMinute.toString().padStart(2, '0'),
-          startAmPm: openAmPm,
-          endHour: closeHour.toString(),
-          endMinute: closeMinute.toString().padStart(2, '0'),
-          endAmPm: closeAmPm
-        });
-      } catch (error) {
-        console.error('Error parsing time values:', error);
-      }
-    }
-  };
-
-  // Handle adding multiple schedule days
-  const handleAddMultipleScheduleDays = () => {
-    if (selectedDays.length === 0) {
-      toast.error("Please select at least one day of the week");
-      return;
-    }
-
-    // Convert times to 24-hour format for storage
-    const startHour = parseInt(timeValues.startHour);
-    const startMinute = parseInt(timeValues.startMinute);
-    const endHour = parseInt(timeValues.endHour);
-    const endMinute = parseInt(timeValues.endMinute);
-    
-    // Convert to 24-hour format
-    const openHour24 = timeValues.startAmPm === 'AM' 
-      ? (startHour === 12 ? 0 : startHour) 
-      : (startHour === 12 ? 12 : startHour + 12);
-      
-    const closeHour24 = timeValues.endAmPm === 'AM' 
-      ? (endHour === 12 ? 0 : endHour) 
-      : (endHour === 12 ? 12 : endHour + 12);
-      
-    // Format as HH:MM strings
-    const openTime = `${openHour24.toString().padStart(2, '0')}:${timeValues.startMinute.padStart(2, '0')}`;
-    const closeTime = `${closeHour24.toString().padStart(2, '0')}:${timeValues.endMinute.padStart(2, '0')}`;
-
-    // Create new days
-    const newDays = selectedDays.map(day => ({
-      day,
-      location: selectedScheduleDay?.day.location || '',
-      address: selectedScheduleDay?.day.address || '',
-      openTime,
-      closeTime
-    }));
-
-    // Add new days to the schedule
-    setFormValues(prev => ({
-      ...prev,
-      scheduleDays: [...prev.scheduleDays, ...newDays]
-    }));
-
-    // Clear selected days
-    setSelectedDays([]);
-    setSelectedScheduleDay(null);
-  };
-
-  // Toggle day selection
-  const toggleDaySelection = (day: string) => {
-    setSelectedDays(prev => {
-      // If this day is already in the array, remove it
-      if (prev.includes(day)) {
-        return prev.filter(d => d !== day);
-      } 
-      // Otherwise add it to the array
-      return [...prev, day];
-    });
-  };
-
-  // Handle time change
-  const handleTimeChange = (field: string, value: string) => {
-    setTimeValues(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Handle removing a schedule day
-  const handleRemoveScheduleDay = (index: number) => {
-    setFormValues(prev => ({
-      ...prev,
-      scheduleDays: prev.scheduleDays.filter((_, i) => i !== index)
-    }));
-  };
-
-  // Handle saving schedule day from modal
-  const handleSaveScheduleDay = (day: any) => {
-    if (selectedScheduleDay === null) return;
-    
-    setFormValues(prev => ({
-      ...prev,
-      scheduleDays: prev.scheduleDays.map((d, i) => 
-        i === selectedScheduleDay.index ? day : d
-      )
-    }));
-    
-    setSelectedScheduleDay(null);
   };
 
   return (
@@ -449,17 +388,15 @@ export function UnifiedConfigForm({
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <CardTitle className="text-xl">
-              {mode === 'admin' ? 'Food Truck Configuration' : 'Customize Your Food Truck Website'}
+              {onSave ? 'Food Truck Configuration' : 'Customize Your Food Truck Website'}
             </CardTitle>
             <CardDescription>
-              {mode === 'admin' 
-                ? 'Manage the configuration for this food truck website' 
-                : 'Customize the appearance and content of your food truck website'}
+              {onSave ? 'Manage the configuration for this food truck website' : 'Customize the appearance and content of your food truck website'}
             </CardDescription>
           </div>
           
           {/* Admin mode controls */}
-          {mode === 'admin' && (
+          {onSave && (
             <div className="hidden md:flex items-center gap-2 self-end md:self-auto">
               <Button
                 onClick={handleSubmitChanges}
@@ -493,7 +430,7 @@ export function UnifiedConfigForm({
         </div>
         
         {/* Last saved indicator (admin only) */}
-        {mode === 'admin' && lastSaved && (
+        {onSave && lastSaved && (
           <div className="text-xs text-muted-foreground mt-1">
             Last saved: {formatLastSaved()}
           </div>
@@ -573,7 +510,7 @@ export function UnifiedConfigForm({
                       id="logo-upload"
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'logo')}
+                      onChange={(e) => handleFileSelect(e, 'logo')}
                       className="mt-1"
                     />
                     <p className="text-xs text-gray-500 mt-1">
@@ -698,7 +635,7 @@ export function UnifiedConfigForm({
                     id="hero-image-upload"
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleFileUpload(e, 'heroImage')}
+                    onChange={(e) => handleFileSelect(e, 'heroImage')}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Upload a high-quality image for your hero background (recommended: 1920x1080px)
@@ -750,7 +687,7 @@ export function UnifiedConfigForm({
                     id="about-image-upload"
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleFileUpload(e, 'aboutImage')}
+                    onChange={(e) => handleFileSelect(e, 'aboutImage')}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Upload an image for your about section (recommended: square format)
@@ -832,7 +769,7 @@ export function UnifiedConfigForm({
       </CardContent>
       
       {/* Client mode submit button */}
-      {mode === 'client' && (
+      {!onSave && (
         <CardFooter className="flex justify-end border-t pt-4">
           <Button
             onClick={handleSubmitChanges}
@@ -857,7 +794,7 @@ export function UnifiedConfigForm({
       )}
 
       {/* Admin mode mobile submit button */}
-      {mode === 'admin' && (
+      {onSave && (
         <CardFooter className="md:hidden flex justify-end border-t pt-4">
           <Button
             onClick={handleSubmitChanges}
@@ -881,229 +818,34 @@ export function UnifiedConfigForm({
         </CardFooter>
       )}
 
-      {/* Schedule Day Edit Modal */}
-      <Dialog open={selectedScheduleDay !== null} onOpenChange={(open) => !open && setSelectedScheduleDay(null)}>
-        <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Schedule Day</DialogTitle>
-          </DialogHeader>
-          
-          {selectedScheduleDay ? (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label>Select Days</Label>
-                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 mt-2">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                      <div key={day} className="flex flex-col items-center">
-                        <Checkbox 
-                          id={`day-${day}`} 
-                          checked={selectedDays.includes(day)}
-                          onCheckedChange={() => toggleDaySelection(day)}
-                          className="mb-1"
-                        />
-                        <Label 
-                          htmlFor={`day-${day}`} 
-                          className="text-xs cursor-pointer"
-                        >
-                          {day.substring(0, 3)}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Select multiple days to apply the same schedule
-                  </p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="modal-location">Location</Label>
-                  <Input
-                    id="modal-location"
-                    value={selectedScheduleDay.day.location || ''}
-                    onChange={(e) => setSelectedScheduleDay({
-                      ...selectedScheduleDay,
-                      day: { ...selectedScheduleDay.day, location: e.target.value }
-                    })}
-                    placeholder="Downtown, Food Truck Park, etc."
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="modal-address">Address</Label>
-                  <Input
-                    id="modal-address"
-                    value={selectedScheduleDay.day.address || ''}
-                    onChange={(e) => setSelectedScheduleDay({
-                      ...selectedScheduleDay,
-                      day: { ...selectedScheduleDay.day, address: e.target.value }
-                    })}
-                    placeholder="123 Main St, City, State"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label>Hours</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
-                    <div>
-                      <Label className="text-xs">Start Time</Label>
-                      <div className="flex items-center gap-1 mt-1">
-                        <select
-                          value={timeValues.startHour}
-                          onChange={(e) => handleTimeChange('startHour', e.target.value)}
-                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
-                            <option key={hour} value={hour}>{hour}</option>
-                          ))}
-                        </select>
-                        <span>:</span>
-                        <select
-                          value={timeValues.startMinute}
-                          onChange={(e) => handleTimeChange('startMinute', e.target.value)}
-                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {['00', '15', '30', '45'].map(minute => (
-                            <option key={minute} value={minute}>{minute}</option>
-                          ))}
-                        </select>
-                        <select
-                          value={timeValues.startAmPm}
-                          onChange={(e) => handleTimeChange('startAmPm', e.target.value)}
-                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="AM">AM</option>
-                          <option value="PM">PM</option>
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label className="text-xs">End Time</Label>
-                      <div className="flex items-center gap-1 mt-1">
-                        <select
-                          value={timeValues.endHour}
-                          onChange={(e) => handleTimeChange('endHour', e.target.value)}
-                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
-                            <option key={hour} value={hour}>{hour}</option>
-                          ))}
-                        </select>
-                        <span>:</span>
-                        <select
-                          value={timeValues.endMinute}
-                          onChange={(e) => handleTimeChange('endMinute', e.target.value)}
-                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {['00', '15', '30', '45'].map(minute => (
-                            <option key={minute} value={minute}>{minute}</option>
-                          ))}
-                        </select>
-                        <select
-                          value={timeValues.endAmPm}
-                          onChange={(e) => handleTimeChange('endAmPm', e.target.value)}
-                          className="flex h-9 w-full sm:w-16 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="AM">AM</option>
-                          <option value="PM">PM</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-          
-          <DialogFooter className="flex flex-col sm:flex-row justify-between gap-2">
-            <Button 
-              type="button" 
-              variant="destructive" 
-              onClick={() => {
-                if (selectedScheduleDay) {
-                  handleRemoveScheduleDay(selectedScheduleDay.index);
-                  setSelectedScheduleDay(null);
-                }
-              }}
-              className="w-full sm:w-auto"
-            >
-              Delete
-            </Button>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => {
-                  setSelectedScheduleDay(null);
-                  setSelectedDays([]);
-                }}
-                className="w-full sm:w-auto"
-              >
-                Cancel
-              </Button>
-              {selectedDays.length > 0 ? (
-                <Button 
-                  type="button" 
-                  onClick={handleAddMultipleScheduleDays}
-                  className="w-full sm:w-auto"
-                >
-                  Add {selectedDays.length} Day{selectedDays.length > 1 ? 's' : ''}
-                </Button>
+      {/* Status message */}
+      {statusMessage && (
+        <div className="p-4">
+          <Alert variant={statusMessage === 'success' ? 'default' : 'destructive'}>
+            <div className="flex items-center gap-2">
+              {statusMessage === 'success' ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (
-                <Button 
-                  type="button" 
-                  onClick={() => {
-                    if (selectedScheduleDay) {
-                      // Convert times to 24-hour format for storage
-                      const startHour = parseInt(timeValues.startHour);
-                      const startMinute = parseInt(timeValues.startMinute);
-                      const endHour = parseInt(timeValues.endHour);
-                      const endMinute = parseInt(timeValues.endMinute);
-                      
-                      // Convert to 24-hour format
-                      const openHour24 = timeValues.startAmPm === 'AM' 
-                        ? (startHour === 12 ? 0 : startHour) 
-                        : (startHour === 12 ? 12 : startHour + 12);
-                        
-                      const closeHour24 = timeValues.endAmPm === 'AM' 
-                        ? (endHour === 12 ? 0 : endHour) 
-                        : (endHour === 12 ? 12 : endHour + 12);
-                        
-                      // Format as HH:MM strings
-                      const openTime = `${openHour24.toString().padStart(2, '0')}:${timeValues.startMinute.padStart(2, '0')}`;
-                      const closeTime = `${closeHour24.toString().padStart(2, '0')}:${timeValues.endMinute.padStart(2, '0')}`;
-                      
-                      // Update the day with the new time values
-                      const updatedDay = {
-                        ...selectedScheduleDay.day,
-                        openTime,
-                        closeTime
-                      };
-                      
-                      handleSaveScheduleDay(updatedDay);
-                    }
-                  }}
-                  className="w-full sm:w-auto"
-                >
-                  Save
-                </Button>
+                <AlertCircle className="h-4 w-4" />
               )}
+              <AlertDescription>
+                {statusMessage === 'success' 
+                  ? 'Changes applied successfully!' 
+                  : 'Failed to apply changes. Please try again.'}
+              </AlertDescription>
             </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </Alert>
+        </div>
+      )}
     </Card>
   );
 }
 
 // Backward compatibility components
 export function ConfigForm() {
-  return <UnifiedConfigForm mode="client" />;
+  return <UnifiedConfigForm />;
 }
 
 export function AdminConfigForm(props: Omit<UnifiedConfigFormProps, 'mode'>) {
-  return <UnifiedConfigForm mode="admin" {...props} />;
+  return <UnifiedConfigForm {...props} />;
 } 
