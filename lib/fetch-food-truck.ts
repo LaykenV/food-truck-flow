@@ -1,7 +1,11 @@
 import { getFoodTruckByHostname } from './getFoodTruckByHostname';
-import { cache } from 'react';
+import { unstable_cacheTag, unstable_cacheLife } from 'next/cache';
 
-// Use React's cache function to memoize the result
-export const getFoodTruckData = cache(async (subdomain: string, isAdmin = false) => {
+export async function getFoodTruckData(subdomain: string, isAdmin = false) {
+  'use cache';
+  unstable_cacheTag(`foodTruck:${subdomain}`);
+  unstable_cacheLife({ stale: 300, revalidate: 300 });
+  
   return getFoodTruckByHostname(subdomain, isAdmin);
-});
+
+};

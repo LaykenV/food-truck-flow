@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from "@/utils/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 interface ScheduleDay {
   day: string;
@@ -68,7 +68,6 @@ export async function updateSchedule(
   
   // Revalidate the dashboard page and schedule page
   revalidatePath('/admin');
-  revalidatePath('/admin/schedule');
   
   return { success: true, timestamp: new Date() };
 }
@@ -132,6 +131,7 @@ export async function toggleTodayClosed(isClosed: boolean) {
   
   // Revalidate the dashboard page
   revalidatePath('/admin');
+  revalidateTag(`foodTruck:${foodTruck.subdomain}`)
 }
 
 // Server actions for forms

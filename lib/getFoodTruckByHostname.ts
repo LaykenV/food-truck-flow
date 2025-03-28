@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/client';
 
 export async function getFoodTruckByHostname(hostname: string, isAdmin = false) {
   // Extract subdomain from hostname (e.g., "mikes-pizza" from "mikes-pizza.foodtruckflow.com")
@@ -14,20 +14,23 @@ export async function getFoodTruckByHostname(hostname: string, isAdmin = false) 
     }
   }
   
-  const supabase = await createClient();
+  const supabase = createClient();
   
   // Query the FoodTrucks table for the matching subdomain
   let query = supabase
     .from('FoodTrucks')
     .select('id, configuration, subscription_plan, subdomain, custom_domain, published')
     .or(`subdomain.eq."${subdomain}",custom_domain.eq."${hostname}"`)
-    
-  // If not in admin context, only return published food trucks
-  if (!isAdmin) {
-    query = query.eq('published', true);
-  }
   
   const { data, error } = await query.single();
+
+  //if published is false, check if food truck id is the current user's id
+  if (data && !data.published) {
+    const user = await supabase.auth.getUser();
+    if (user.data.user?.id !== data.id) {
+      return null;
+    }
+  }
   
   if (error) {
     console.error('Error fetching food truck:', error);

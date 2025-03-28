@@ -10,7 +10,7 @@ export default async function AdminLayout({
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+  console.log("user", user);
   // Fetch food truck data
   const { data: foodTruck } = await supabase
     .from('FoodTrucks')

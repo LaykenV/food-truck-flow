@@ -201,6 +201,7 @@ export function subscribeToConfigChanges(
     console.error('User ID is required for real-time updates');
     return () => {};
   }
+  console.log('Subscribing to config changes for user:', userId);
 
   const supabase = createClient();
 

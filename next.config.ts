@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   },
   // Enable hostname detection for development
   experimental: {
-    // Add any valid experimental options here if needed
+    useCache: true,
   },
 };
 

@@ -29,18 +29,25 @@ CREATE TABLE Orders (
    - Users add items to their cart using the `CartProvider` context.
    - Cart state is persisted in localStorage.
 
-2. **Order Placement**:
+2. **Real-time Open Status**:
+   - The system uses Supabase Realtime subscriptions to monitor food truck availability.
+   - The `OpenStatusProvider` component subscribes to changes in the food truck's status.
+   - When a food truck owner updates their schedule or status, customers see these changes immediately.
+   - Initial open status is calculated server-side and passed to the client for immediate display.
+   - No polling or periodic API calls are needed, reducing server load and improving responsiveness.
+
+3. **Order Placement**:
    - User fills out the order form with their name and email.
    - The form submits to the `/api/orders` endpoint.
    - The API creates a new order in the database with status 'preparing'.
    - The order ID is stored in a cookie (`activeOrders`) with an expiration time for tracking.
    - A custom event (`orderStatusUpdate`) is triggered to notify the OrderStatusTracker.
 
-3. **Order Confirmation**:
+4. **Order Confirmation**:
    - User is redirected to the order confirmation page.
    - The page displays the order status and updates in real-time using Supabase subscriptions.
 
-4. **Order Status Tracking**:
+5. **Order Status Tracking**:
    - The `OrderStatusTracker` component displays the current order status on all pages.
    - It appears as a floating widget if the user has active orders (stored in cookies).
    - Status updates in real-time using Supabase subscriptions.
@@ -50,7 +57,7 @@ CREATE TABLE Orders (
    - Orders are automatically removed from tracking when they expire (24 hours by default).
    - Completed orders have their expiry time extended to 1 hour from completion.
 
-5. **Order Management**:
+6. **Order Management**:
    - Food truck owners can view and update order status in the admin dashboard.
    - Status updates trigger real-time updates for customers via Supabase subscriptions.
    - Owners can mark orders as "ready" or "completed" with a single click.
@@ -63,19 +70,25 @@ CREATE TABLE Orders (
 
 ### Key Components
 
-1. **OrderForm**:
+1. **OpenStatusProvider**:
+   - Uses Supabase Realtime to monitor food truck availability in real-time
+   - Subscribes to changes in the FoodTrucks table for the specific food truck
+   - Provides open/closed status via React context
+   - Initializes with server-side calculated status for immediate display
+
+2. **OrderForm**:
    - Handles order submission and validation
    - Manages the activeOrders cookie for order tracking
    - Triggers the orderStatusUpdate event
 
-2. **OrderStatusTracker**:
+3. **OrderStatusTracker**:
    - Displays current order status in a floating widget
    - Supports multiple active orders with easy switching
    - Uses Supabase real-time subscriptions for live updates
    - Provides smooth UI transitions with loading states
    - Can be minimized or dismissed by the user
 
-3. **Order Confirmation Page**:
+4. **Order Confirmation Page**:
    - Displays detailed order information
    - Shows real-time status updates
    - Provides navigation back to the menu or home page

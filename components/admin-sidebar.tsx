@@ -90,6 +90,7 @@ export function AdminSidebar({ foodTruckName = "Food Truck" }: AdminSidebarProps
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                   isActive ? "bg-accent text-accent-foreground" : "transparent"
                 )}
+                prefetch={true}
               >
                 <route.icon className="h-4 w-4" />
                 {route.label}

@@ -1,7 +1,11 @@
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/client';
+import { unstable_cacheTag, unstable_cacheLife } from 'next/cache';
 
 export async function getMenuItems(foodTruckId: string) {
-  const supabase = await createClient();
+  'use cache';
+  
+  // Use the client-side Supabase client which doesn't need cookies
+  const supabase = createClient();
   
   const { data, error } = await supabase
     .from('Menus')
@@ -13,6 +17,9 @@ export async function getMenuItems(foodTruckId: string) {
     console.error('Error fetching menu items:', error);
     return [];
   }
+
+  unstable_cacheTag(`menuItems:${foodTruckId}`);
+  unstable_cacheLife({ stale: 300, revalidate: 300 });
   
   return data || [];
 } 

@@ -1,56 +1,24 @@
-import { createClient } from "@/utils/supabase/server";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScheduleClient } from "./client";
-import { LucideCalendar } from "lucide-react";
-import { updateSchedule } from "../actions";
+import { Metadata } from "next"
+import ScheduleClient from "./client"
 
-export default async function SchedulePage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return <div>Not authenticated</div>;
-  }
-  
-  // Fetch food truck data
-  const { data: foodTruck } = await supabase
-    .from('FoodTrucks')
-    .select('*')
-    .eq('user_id', user?.id)
-    .single();
-  
-  if (!foodTruck) {
-    return <div>Food truck not found</div>;
-  }
-  
-  // Extract schedule data from food truck configuration
-  const scheduleData = foodTruck.configuration?.schedule?.days || [];
-  const primaryColor = foodTruck.configuration?.primaryColor || '#FF6B35';
-  
+export const metadata: Metadata = {
+  title: "Schedule Management",
+  description: "Manage your food truck's weekly locations and hours",
+}
+
+export default function SchedulePage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Schedule</h1>
+    <div className="container mx-auto py-6">
+      <div className="flex flex-col gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Schedule Management</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your food truck's weekly locations and hours
+          </p>
+        </div>
       </div>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>Weekly Schedule</CardTitle>
-            <CardDescription>Manage your food truck's weekly locations</CardDescription>
-          </div>
-          <LucideCalendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <ScheduleClient 
-            initialSchedule={scheduleData} 
-            onUpdateSchedule={updateSchedule} 
-            primaryColor={primaryColor}
-            scheduleTitle={foodTruck.configuration?.schedule?.title || 'Weekly Schedule'}
-            scheduleDescription={foodTruck.configuration?.schedule?.description || 'Find us at these locations throughout the week'}
-          />
-        </CardContent>
-      </Card>
+      <ScheduleClient />
     </div>
-  );
+  )
 } 

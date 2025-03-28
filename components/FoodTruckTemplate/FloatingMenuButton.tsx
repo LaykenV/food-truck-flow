@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Menu } from 'lucide-react';
+import { Menu, ArrowRight } from 'lucide-react';
 import { DisplayMode } from './index';
 
 interface FloatingMenuButtonProps {
@@ -33,18 +33,26 @@ export default function FloatingMenuButton({
   
   useEffect(() => {
     const handleScroll = () => {
-      // Find the hero section to determine when it's out of view
-      const heroButton = document.getElementById('hero-menu-button');
+      // Get all hero buttons (both mobile and desktop versions)
+      const heroButtons = document.querySelectorAll('#hero-menu-button');
       
-      if (heroButton) {
-        const rect = heroButton.getBoundingClientRect();
-        // Show the floating button when the hero button is out of the viewport (scrolled up)
-        const shouldBeVisible = rect.bottom < 0;
+      if (heroButtons.length > 0) {
+        // Check if ANY of the hero buttons are out of view
+        let anyButtonOutOfView = false;
         
-        if (shouldBeVisible !== visible) {
-          setVisible(shouldBeVisible);
+        heroButtons.forEach(button => {
+          const rect = button.getBoundingClientRect();
+          // Check if this button is out of viewport
+          if (rect.bottom < 0) {
+            anyButtonOutOfView = true;
+          }
+        });
+        
+        // Only update state if visibility needs to change
+        if (anyButtonOutOfView !== visible) {
+          setVisible(anyButtonOutOfView);
           // Start animation sequence
-          if (shouldBeVisible) {
+          if (anyButtonOutOfView) {
             setAnimationState('entering');
             // After entering animation completes, set to visible state
             setTimeout(() => {
@@ -57,10 +65,10 @@ export default function FloatingMenuButton({
       }
     };
     
-    // Only set up window scroll event listener since we removed preview mode
+    // Set up scroll event listener for all devices
     window.addEventListener('scroll', handleScroll);
     
-    // Initial check
+    // Initial check with a slight delay to ensure DOM is fully loaded
     setTimeout(handleScroll, 200);
     
     return () => {
@@ -77,28 +85,25 @@ export default function FloatingMenuButton({
       ref={buttonRef}
       className={cn(
         "fixed right-4 z-30 transition-all duration-500 ease-out floating-menu-button",
-        hasOrderTracker ? "bottom-4 sm:bottom-4 md:bottom-4" : "bottom-4 sm:bottom-6 md:bottom-8",
+        hasOrderTracker ? "bottom-4" : "bottom-4 sm:bottom-6 md:bottom-8",
         // Animation states
         animationState === 'hidden' && "opacity-0 translate-y-16 scale-75 pointer-events-none",
         animationState === 'entering' && "opacity-100 translate-y-0 scale-110",
         animationState === 'visible' && "opacity-100 translate-y-0 scale-100",
       )}
-      style={{
-        visibility: !visible ? 'hidden' : 'visible'
-      }}
     >
       <Link href={`/${subdomain}/menu`}>
         <Button
           size="lg"
-          className="rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 hover:scale-105 transition-transform"
+          className="group rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 hover:scale-105 transition-transform"
           style={{ 
             backgroundColor: primaryColor,
             color: 'white',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)'
           }}
         >
-          <Menu size={18} />
           <span>Start Order</span>
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>
       </Link>
     </div>
