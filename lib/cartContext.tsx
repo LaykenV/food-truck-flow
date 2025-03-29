@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // Define the menu item type
 export type MenuItem = {
@@ -30,6 +30,8 @@ type CartContextType = {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  isUpdating: boolean;
+  error: string | null;
 };
 
 // Create the cart context with default values
@@ -42,6 +44,8 @@ const CartContext = createContext<CartContextType>({
   clearCart: () => {},
   totalItems: 0,
   totalPrice: 0,
+  isUpdating: false,
+  error: null,
 });
 
 // Custom hook to use the cart context
@@ -51,6 +55,8 @@ export const useCart = () => useContext(CartContext);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   // Initialize cart state from localStorage if available
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Load cart from localStorage on component mount
   useEffect(() => {
@@ -60,14 +66,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems(JSON.parse(savedCart));
       } catch (error) {
         console.error('Failed to parse cart from localStorage:', error);
+        setError('Failed to load your saved cart. Starting with an empty cart.');
       }
     }
   }, []);
   
   // Save cart to localStorage whenever it changes
+  const persistCart = useCallback(async (cartItems: CartItem[]) => {
+    try {
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+      setError(null);
+    } catch (error) {
+      console.error('Failed to save cart to localStorage:', error);
+      setError('Failed to save your cart changes. Please try again.');
+    }
+  }, []);
+  
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
-  }, [items]);
+    persistCart(items);
+  }, [items, persistCart]);
   
   // Calculate total items in cart
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
@@ -75,64 +93,84 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Calculate total price
   const totalPrice = items.reduce((total, item) => total + (item.price * item.quantity), 0);
   
-  // Add an item to the cart
+  // Add an item to the cart with optimistic update
   const addItem = (item: MenuItem) => {
-    // Create a new function to avoid potential state closure issues
+    setIsUpdating(true);
+    
+    // Optimistic update - change the UI immediately
     setItems((prevItems) => {
-      // Make a copy of the previous items array
       const newItems = [...prevItems];
-      
-      // Find the existing item index
-      const existingItemIndex = newItems.findIndex(
-        (cartItem) => cartItem.id === item.id
-      );
+      const existingItemIndex = newItems.findIndex((cartItem) => cartItem.id === item.id);
       
       if (existingItemIndex >= 0) {
-        // Item exists, create a new object with incremented quantity
         newItems[existingItemIndex] = {
           ...newItems[existingItemIndex],
           quantity: newItems[existingItemIndex].quantity + 1,
         };
       } else {
-        // Item doesn't exist, add it with quantity 1
         newItems.push({ ...item, quantity: 1 });
       }
       
       return newItems;
     });
+    
+    // After state update
+    setIsUpdating(false);
   };
   
-  // Remove an item from the cart
+  // Remove an item from the cart with optimistic update
   const removeItem = (itemId: string) => {
+    setIsUpdating(true);
+    
+    // Optimistic update - remove item immediately
+    const itemToRemove = items.find(item => item.id === itemId);
     setItems(prevItems => prevItems.filter(item => item.id !== itemId));
+    
+    // Complete the update
+    setIsUpdating(false);
   };
   
-  // Update quantity of an item
+  // Update quantity of an item with optimistic update
   const updateQuantity = (itemId: string, quantity: number) => {
+    setIsUpdating(true);
+    
     if (quantity <= 0) {
+      // Handle removal through removeItem for consistency
       removeItem(itemId);
       return;
     }
     
+    // Optimistic update - change quantity immediately
     setItems(prevItems => 
       prevItems.map(item => 
         item.id === itemId ? { ...item, quantity } : item
       )
     );
+    
+    // Complete the update
+    setIsUpdating(false);
   };
   
-  // Update notes for an item
+  // Update notes for an item with optimistic update
   const updateItemNotes = (itemId: string, notes: string) => {
+    setIsUpdating(true);
+    
+    // Optimistic update - change notes immediately
     setItems(prevItems => 
       prevItems.map(item => 
         item.id === itemId ? { ...item, notes } : item
       )
     );
+    
+    // Complete the update
+    setIsUpdating(false);
   };
   
   // Clear the cart
   const clearCart = () => {
+    setIsUpdating(true);
     setItems([]);
+    setIsUpdating(false);
   };
   
   return (
@@ -145,6 +183,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearCart,
       totalItems,
       totalPrice,
+      isUpdating,
+      error,
     }}>
       {children}
     </CartContext.Provider>

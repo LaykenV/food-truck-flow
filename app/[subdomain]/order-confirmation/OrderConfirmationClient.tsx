@@ -9,6 +9,10 @@ import Link from 'next/link';
 import { CheckCircle, Clock, ArrowLeft, Home, ChefHat, Package, Timer } from 'lucide-react';
 import { format } from 'date-fns';
 
+// This component has been optimized to use Supabase Realtime subscriptions
+// for order status updates instead of polling. This reduces server load
+// and provides more responsive updates to users.
+
 interface OrderConfirmationClientProps {
   orderId: string | null;
   subdomain: string;
@@ -85,6 +89,7 @@ export function OrderConfirmationClient({
     if (currentSubscription) {
       const supabase = createClient();
       supabase.removeChannel(currentSubscription.channel);
+      console.log('Cleaned up previous subscription before creating new one');
     }
     
     // Set up real-time subscription for order status updates
@@ -103,7 +108,7 @@ export function OrderConfirmationClient({
             setOrderStatus(payload.new.status);
           }
           
-          // Update order details
+          // Update order details and clear loading state
           setOrderDetails(prevDetails => ({
             ...prevDetails,
             status: payload.new.status || prevDetails?.status || '',
@@ -112,6 +117,7 @@ export function OrderConfirmationClient({
             items: payload.new.items || prevDetails?.items,
             total: payload.new.total || prevDetails?.total
           }));
+          setLoading(false);
           
           console.log('Real-time update received for order:', id, 'Status:', payload.new.status);
         }
@@ -133,24 +139,20 @@ export function OrderConfirmationClient({
     
     // Set up subscription
     setupOrderSubscription(orderId);
-    
-    // Refresh order status periodically
-    const refreshInterval = setInterval(() => {
-      fetchOrderDetails(orderId);
-    }, 30000); // Refresh every 30 seconds
-    
-    return () => {
-      clearInterval(refreshInterval);
-    };
   }, [orderId]);
   
   // Clean up subscription when component unmounts
   useEffect(() => {
     return () => {
       if (currentSubscription) {
-        console.log('Cleaning up subscription for order:', currentSubscription.orderId);
-        const supabase = createClient();
-        supabase.removeChannel(currentSubscription.channel);
+        try {
+          console.log('Cleaning up subscription for order:', currentSubscription.orderId);
+          const supabase = createClient();
+          supabase.removeChannel(currentSubscription.channel);
+          // Setting to null not needed as component is unmounting, but good practice
+        } catch (error) {
+          console.error('Error cleaning up subscription:', error);
+        }
       }
     };
   }, [currentSubscription]);

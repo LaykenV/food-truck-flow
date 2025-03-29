@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,6 +13,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+
+// Helper function to generate JSON-LD script tag
+function JsonLdScript({ data }: { data: object }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
 
 interface MenuItemProps {
   item: MenuItemType;
@@ -25,6 +36,13 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const pathname = usePathname();
+  const [currentUrl, setCurrentUrl] = useState('');
+  
+  // Set the current URL safely on the client side
+  useEffect(() => {
+    setCurrentUrl(window.location.origin + pathname);
+  }, [pathname]);
   
   const handleAddToCart = () => {
     // Add the item to cart multiple times based on quantity
@@ -54,6 +72,22 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
     backgroundImage: `linear-gradient(to bottom right, ${primaryColor}, ${secondaryColor})`,
     padding: '2px',
   };
+  
+  // Create Product schema for this menu item - only if dialog is open and we have a URL
+  const productSchema = currentUrl ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": item.name,
+    "description": item.description || '',
+    "image": imageSource || '',
+    "offers": {
+      "@type": "Offer",
+      "price": item.price.toFixed(2),
+      "priceCurrency": "USD",
+      "availability": "http://schema.org/InStock",
+      "url": currentUrl
+    }
+  } : null;
   
   return (
     <>
@@ -190,6 +224,9 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* JSON-LD structured data - only render when dialog is open and schema is available */}
+      {isDialogOpen && productSchema && <JsonLdScript data={productSchema} />}
     </>
   );
 } 

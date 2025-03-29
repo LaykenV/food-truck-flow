@@ -11,6 +11,10 @@ import { cn } from '@/lib/utils';
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { format } from 'date-fns';
 
+// This component has been optimized to use Supabase Realtime subscriptions
+// for order status updates instead of polling. This reduces server load
+// and provides more responsive updates to users.
+
 interface OrderStatusTrackerProps {
   subdomain: string;
   primaryColor?: string;
@@ -126,17 +130,9 @@ export function OrderStatusTracker({
   }, []);
   
   // Refresh order status periodically when visible
-  useEffect(() => {
-    // Only set up refresh if we have an order and the tracker is visible
-    if (currentOrderId && !isMinimized && !isDismissed) {
-      // Refresh order status every 30 seconds when visible
-      const refreshInterval = setInterval(() => {
-        fetchOrderStatus(currentOrderId);
-      }, 30000);
-      
-      return () => clearInterval(refreshInterval);
-    }
-  }, [currentOrderId, isMinimized, isDismissed]);
+  // OPTIMIZATION: Removed polling interval to rely solely on Supabase Realtime subscriptions
+  // This reduces server load and provides immediate updates without unnecessary API calls
+  // Similar to the optimization done in OrderConfirmationClient
   
   // Function to load orders and set up subscriptions
   const loadOrders = () => {
@@ -198,6 +194,7 @@ export function OrderStatusTracker({
     if (currentSubscription) {
       const supabase = createClient();
       supabase.removeChannel(currentSubscription.channel);
+      console.log('Cleaned up previous subscription before creating new one');
     }
     
     // Set up real-time subscription for order status updates
@@ -216,12 +213,15 @@ export function OrderStatusTracker({
             setOrderStatus(payload.new.status);
           }
           
-          // Update order details
+          // Update order details and clear loading state
           setOrderDetails({
             status: payload.new.status || orderDetails?.status || '',
             pickup_time: payload.new.pickup_time !== undefined ? payload.new.pickup_time : orderDetails?.pickup_time || null,
             is_asap: payload.new.is_asap !== undefined ? payload.new.is_asap : orderDetails?.is_asap || false
           });
+          setLoading(false);
+          
+          console.log('Real-time update received for order:', orderId, 'Status:', payload.new.status);
           
           // If the order is completed, update its expiry time to 1 hour from now
           if (payload.new.status === 'completed') {
@@ -229,17 +229,26 @@ export function OrderStatusTracker({
           }
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Subscription status for order ${orderId}:`, status);
+      });
     
     setCurrentSubscription({ channel, orderId });
+    console.log('Subscription set up for order:', orderId);
   };
   
   // Clean up subscription when component unmounts
   useEffect(() => {
     return () => {
       if (currentSubscription) {
-        const supabase = createClient();
-        supabase.removeChannel(currentSubscription.channel);
+        try {
+          console.log('Cleaning up subscription for order:', currentSubscription.orderId);
+          const supabase = createClient();
+          supabase.removeChannel(currentSubscription.channel);
+          // Setting to null not needed as component is unmounting
+        } catch (error) {
+          console.error('Error cleaning up subscription:', error);
+        }
       }
     };
   }, [currentSubscription]);

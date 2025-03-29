@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { MinusCircle, PlusCircle, ShoppingCart, Trash2, MessageCircle, Edit } from 'lucide-react';
+import { MinusCircle, PlusCircle, ShoppingCart, Trash2, MessageCircle, Edit, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +21,7 @@ interface CartProps {
 }
 
 export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', secondaryColor = '#2EC4B6', hideCheckoutButton = false }: CartProps) {
-  const { items, removeItem, updateQuantity, updateItemNotes, totalItems, totalPrice } = useCart();
+  const { items, removeItem, updateQuantity, updateItemNotes, totalItems, totalPrice, isUpdating, error } = useCart();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const router = useRouter();
@@ -72,6 +72,23 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
   
   return (
     <Card className="w-full border rounded-xl shadow-sm overflow-hidden">
+      {/* Error message display */}
+      {error && (
+        <div className="bg-red-50 border-b border-red-200 p-3">
+          <p className="text-sm text-red-600 flex items-center">
+            <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+            {error}
+          </p>
+        </div>
+      )}
+      
+      {/* Loading overlay */}
+      {isUpdating && (
+        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: primaryColor }}></div>
+        </div>
+      )}
+      
       <CardContent className="p-4 sm:p-5">
         <div className="grid gap-5">
           {foodTruckItems.map((item) => (
@@ -115,6 +132,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                     className="h-8 w-8 rounded-full border-2"
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     style={{ borderColor: primaryColor }}
+                    disabled={isUpdating}
                   >
                     <MinusCircle className="h-4 w-4" style={{ color: primaryColor }} />
                     <span className="sr-only">Decrease quantity</span>
@@ -125,6 +143,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                     className="h-8 w-8 rounded-full border-2"
                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
                     style={{ borderColor: primaryColor }}
+                    disabled={isUpdating}
                   >
                     <PlusCircle className="h-4 w-4" style={{ color: primaryColor }} />
                     <span className="sr-only">Increase quantity</span>
@@ -134,6 +153,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                     size="icon"
                     className="h-8 w-8 rounded-full ml-1"
                     onClick={() => removeItem(item.id)}
+                    disabled={isUpdating}
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                     <span className="sr-only">Remove item</span>
@@ -150,6 +170,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                     onChange={(e) => setNoteText(e.target.value)}
                     className="text-sm min-h-[80px] border-2 focus-visible:ring-offset-0 focus-visible:ring-0"
                     style={{ borderColor: `${primaryColor}30` }}
+                    disabled={isUpdating}
                   />
                   <div className="flex justify-end mt-2 space-x-2">
                     <Button 
@@ -157,6 +178,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                       size="sm" 
                       onClick={() => setEditingNotes(null)}
                       className="rounded-full"
+                      disabled={isUpdating}
                     >
                       Cancel
                     </Button>
@@ -165,6 +187,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                       onClick={() => handleSaveNotes(item.id)}
                       className="rounded-full"
                       style={{ backgroundColor: primaryColor }}
+                      disabled={isUpdating}
                     >
                       Save
                     </Button>
@@ -183,6 +206,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                         size="sm" 
                         className="h-6 px-2 hover:bg-muted/30"
                         onClick={() => handleEditNotes(item.id, item.notes)}
+                        disabled={isUpdating}
                       >
                         <Edit className="h-3 w-3 mr-1" style={{ color: primaryColor }} />
                         <span style={{ color: primaryColor }}>Edit</span>
@@ -194,6 +218,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                       size="sm" 
                       className="text-xs text-muted-foreground flex items-center hover:bg-muted/20 rounded-full px-3"
                       onClick={() => handleEditNotes(item.id)}
+                      disabled={isUpdating}
                     >
                       <MessageCircle className="h-3.5 w-3.5 mr-1.5" style={{ color: primaryColor }} />
                       Add special instructions
@@ -222,9 +247,16 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
               background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
               boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
             }}
-            disabled={foodTruckItems.length === 0}
+            disabled={foodTruckItems.length === 0 || isUpdating}
           >
-            Checkout ({totalItems} {totalItems === 1 ? 'item' : 'items'})
+            {isUpdating ? (
+              <span className="flex items-center">
+                <span className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span>
+                Updating...
+              </span>
+            ) : (
+              `Checkout (${totalItems} ${totalItems === 1 ? 'item' : 'items'})`
+            )}
           </Button>
         </CardFooter>
       )}

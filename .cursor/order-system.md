@@ -45,12 +45,16 @@ CREATE TABLE Orders (
 
 4. **Order Confirmation**:
    - User is redirected to the order confirmation page.
-   - The page displays the order status and updates in real-time using Supabase subscriptions.
+   - The `OrderConfirmationClient` component displays the order status and details.
+   - Status updates occur in real-time using Supabase Realtime subscriptions.
+   - The component makes a single initial API call to fetch order details, then relies exclusively on the Realtime subscription for updates.
+   - This optimized approach eliminates polling, reducing server load while maintaining responsiveness.
 
 5. **Order Status Tracking**:
    - The `OrderStatusTracker` component displays the current order status on all pages.
    - It appears as a floating widget if the user has active orders (stored in cookies).
-   - Status updates in real-time using Supabase subscriptions.
+   - Status updates occur in real-time using Supabase Realtime subscriptions.
+   - Like the confirmation page, this component has been optimized to rely solely on Realtime subscriptions rather than using both subscriptions and polling.
    - Users can minimize/maximize the tracker or dismiss it entirely.
    - When multiple orders are active, users can switch between them.
    - The tracker maintains a smooth UI experience with loading states when switching between orders.
@@ -85,13 +89,37 @@ CREATE TABLE Orders (
    - Displays current order status in a floating widget
    - Supports multiple active orders with easy switching
    - Uses Supabase real-time subscriptions for live updates
+   - Optimized to eliminate polling and reduce server load
    - Provides smooth UI transitions with loading states
    - Can be minimized or dismissed by the user
 
 4. **Order Confirmation Page**:
    - Displays detailed order information
-   - Shows real-time status updates
+   - Shows real-time status updates via Supabase Realtime subscriptions
+   - Optimized to make a single initial API call followed by Realtime updates
    - Provides navigation back to the menu or home page
+
+## Performance Optimizations
+
+Our order tracking system has been optimized in several ways:
+
+1. **Realtime-Only Updates**:
+   - Both `OrderConfirmationClient` and `OrderStatusTracker` now rely solely on Supabase Realtime subscriptions.
+   - Eliminated redundant polling mechanisms that made unnecessary API calls every 30 seconds.
+   - This reduces server load while maintaining real-time responsiveness for users.
+
+2. **Efficient Resource Usage**:
+   - Components make a single initial API call to fetch data, then listen for changes.
+   - Supabase Realtime provides push-based updates only when data actually changes.
+   - Subscriptions are properly cleaned up when components unmount to prevent memory leaks.
+
+3. **Error Handling**:
+   - Enhanced error handling for subscription setup and cleanup.
+   - Improved logging for easier debugging of potential issues.
+
+4. **Loading State Management**:
+   - Loading states are properly cleared when receiving Realtime updates.
+   - Provides a smooth user experience even during status transitions.
 
 ## Future Stripe Integration
 
