@@ -46,8 +46,8 @@ template
     optimize everything
 
     //test everything
-    checklist for template
-    combine caching
+    //checklist for template
+    //combine caching
 
     //caching on template
     set up tanstack query shared provider in layout. initial fetch?
@@ -68,20 +68,16 @@ template
     go back through both
 
     final ui check
-
-template
-admin dashboard functionality
-optimize everything
-admin dashboard ui
-landing page
+    
+    landing page
 
 set up stripe for subscriptions
-set up stripe for cart checkout
+set up stripe for cart checkout - coming soon?
 //set up google maps
 photo sizing
 professional photo with gemini
 
-set up domain dns
+set up domain dns - coming soon?
 
 test?
 

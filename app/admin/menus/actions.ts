@@ -23,7 +23,7 @@ export async function addMenuItem(
     // Get the food truck ID for the current user
     const { data: foodTrucks, error: foodTruckError } = await supabase
       .from('FoodTrucks')
-      .select('id')
+      .select('id, subdomain')
       .eq('user_id', user.id)
       .single()
     
@@ -53,7 +53,7 @@ export async function addMenuItem(
     }
     
     // Revalidate the cache tag for this food truck's menu items
-    revalidateTag(`menuItems:${foodTrucks.id}`)
+    revalidateTag(`foodTruck:${foodTrucks.subdomain}`)
     
     return { success: true, data }
   } catch (err: any) {
@@ -83,7 +83,7 @@ export async function updateMenuItem(
     // Get the food truck ID for the current user
     const { data: foodTrucks, error: foodTruckError } = await supabase
       .from('FoodTrucks')
-      .select('id')
+      .select('id, subdomain')
       .eq('user_id', user.id)
       .single()
     
@@ -105,7 +105,7 @@ export async function updateMenuItem(
     if (error) throw error
     
     // Revalidate the cache tag for this food truck's menu items
-    revalidateTag(`menuItems:${foodTrucks.id}`)
+    revalidateTag(`foodTruck:${foodTrucks.subdomain}`)
     
     return { success: true }
   } catch (err: any) {
@@ -126,7 +126,7 @@ export async function deleteMenuItem(id: string) {
     // Get the food truck ID for the current user
     const { data: foodTrucks, error: foodTruckError } = await supabase
       .from('FoodTrucks')
-      .select('id')
+      .select('id, subdomain')
       .eq('user_id', user.id)
       .single()
     
@@ -142,7 +142,7 @@ export async function deleteMenuItem(id: string) {
     if (error) throw error
     
     // Revalidate the cache tag for this food truck's menu items
-    revalidateTag(`menuItems:${foodTrucks.id}`)
+    revalidateTag(`foodTruck:${foodTrucks.subdomain}`)
     
     return { success: true }
   } catch (err: any) {
@@ -163,7 +163,7 @@ export async function getFoodTruckId() {
     // Get the food truck ID for the current user
     const { data: foodTrucks, error: foodTruckError } = await supabase
       .from('FoodTrucks')
-      .select('id')
+      .select('id, subdomain' )
       .eq('user_id', user.id)
       .single()
     

@@ -27,7 +27,7 @@ type Props = {
 
 // Generate page-specific metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { subdomain } = params;
+  const { subdomain } = await params;
   const foodTruck = await getFoodTruckData(subdomain);
   
   if (!foodTruck) {

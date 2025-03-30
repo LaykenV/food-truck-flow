@@ -92,7 +92,7 @@ export default function FloatingMenuButton({
         animationState === 'visible' && "opacity-100 translate-y-0 scale-100",
       )}
     >
-      <Link href={`/${subdomain}/menu`}>
+      <Link href={`/${subdomain}/menu`} prefetch={true}>
         <Button
           size="lg"
           className="group rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 hover:scale-105 transition-transform"
