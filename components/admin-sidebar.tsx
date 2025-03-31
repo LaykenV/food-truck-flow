@@ -3,18 +3,23 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LucideHome, LucideSettings, LucideShoppingCart, LucideBarChart, LucideMenu, LucideCreditCard, LucideLogOut, LucideUser, LucideCalendar } from 'lucide-react'
+import Image from 'next/image'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarTrigger } from '@/components/ui/sidebar'
 import { signOutAction } from '@/app/actions'
+import { useQuery } from '@tanstack/react-query'
+import { getFoodTruck } from '@/app/admin/clientQueries'
 
-interface AdminSidebarProps {
-  foodTruckName?: string
-}
 
-export function AdminSidebar({ foodTruckName = "Food Truck" }: AdminSidebarProps) {
+export function AdminSidebar() {
   const pathname = usePathname()
+
+  const { data: foodTruck, isLoading, error } = useQuery({
+    queryKey: ['foodTruck'],
+    queryFn:  getFoodTruck
+  })
   
   const routes = [
     {
@@ -70,9 +75,30 @@ export function AdminSidebar({ foodTruckName = "Food Truck" }: AdminSidebarProps
       }
     >
       <SidebarHeader className="border-b px-4 py-4">
-        <div className="flex flex-col">
-          <h1 className="text-xl font-bold">FoodTruckFlow</h1>
-          <p className="text-sm text-muted-foreground truncate">{foodTruckName}</p>
+        <div className="flex items-center gap-3">
+          {(isLoading || error || !foodTruck?.configuration?.logo) ? (
+            <div className="h-8 w-8 rounded-full bg-muted" />
+          ) : (
+            <Image 
+              src={foodTruck.configuration.logo} 
+              alt={`${foodTruck.configuration.name ?? 'Food Truck'} Logo`} 
+              width={32}
+              height={32}
+              className="rounded-full object-cover"
+            />
+          )}
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold">FoodTruckFlow</h1>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground truncate">Loading...</p>
+            ) : error ? (
+              <p className="text-sm text-red-500 truncate">Error loading info</p>
+            ) : (
+              <p className="text-sm text-muted-foreground truncate">
+                {foodTruck?.configuration?.name ?? 'Truck Name Not Set'}
+              </p>
+            )}
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">

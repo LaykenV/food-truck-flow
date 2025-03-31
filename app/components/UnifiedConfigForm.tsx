@@ -419,12 +419,10 @@ export function UnifiedConfigForm({
               </Button>
               
               {/* Version history drawer (admin only) */}
-              {userId && (
-                <ConfigHistoryDrawer 
-                  userId={userId} 
-                  onSelectVersion={handleSelectVersion} 
-                />
-              )}
+              <ConfigHistoryDrawer 
+                onSelectVersion={handleSelectVersion} 
+                currentConfig={createConfigFromFormValues()}
+              />
             </div>
           )}
         </div>

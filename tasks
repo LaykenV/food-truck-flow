@@ -50,16 +50,16 @@ template
     //combine caching
 
     //caching on template
-    set up tanstack query shared provider in layout. initial fetch?
-    integrate into schedule
-    integrate into menu
-    make plan
-    integrate into orders
-    integrate into analytics
-    integrate into config
+    //set up tanstack query shared provider in layout. initial fetch?
+    //integrate into schedule
+    //integrate into menu
+    //make plan
+    //integrate into orders
+    //integrate into analytics
+   // integrate into config
     integrate into admin dashboard
-    integrate into settings
-    integrate into account
+    //integrate into settings
+    //integrate into account
 
     order cleanup
 

@@ -53,7 +53,11 @@ export async function addMenuItem(
     }
     
     // Revalidate the cache tag for this food truck's menu items
+    // This is for Next.js server cache invalidation
     revalidateTag(`foodTruck:${foodTrucks.subdomain}`)
+    
+    // Note: React Query cache invalidation happens on the client side
+    // after mutation with queryClient.invalidateQueries({ queryKey: ['menuItems'] })
     
     return { success: true, data }
   } catch (err: any) {
@@ -105,7 +109,11 @@ export async function updateMenuItem(
     if (error) throw error
     
     // Revalidate the cache tag for this food truck's menu items
+    // This is for Next.js server cache invalidation
     revalidateTag(`foodTruck:${foodTrucks.subdomain}`)
+    
+    // Note: React Query cache invalidation happens on the client side
+    // after mutation with queryClient.invalidateQueries({ queryKey: ['menuItems'] })
     
     return { success: true }
   } catch (err: any) {
@@ -142,7 +150,11 @@ export async function deleteMenuItem(id: string) {
     if (error) throw error
     
     // Revalidate the cache tag for this food truck's menu items
+    // This is for Next.js server cache invalidation
     revalidateTag(`foodTruck:${foodTrucks.subdomain}`)
+    
+    // Note: React Query cache invalidation happens on the client side
+    // after mutation with queryClient.invalidateQueries({ queryKey: ['menuItems'] })
     
     return { success: true }
   } catch (err: any) {

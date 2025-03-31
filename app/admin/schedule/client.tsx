@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/utils/supabase/client'
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +17,9 @@ import { formatTimeRange } from '@/lib/schedule-utils';
 import type { AddressAutofillRetrieveResponse } from '@mapbox/search-js-core';
 import AddressAutofillInput from '@/components/AddressAutofillInput';
 import { ScheduleCard, ScheduleDayGroup } from '@/components/ui/schedule-card';
-import { getScheduleData, updateSchedule } from './actions';
+import { updateSchedule } from './actions';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getFoodTruck, getScheduleFromFoodTruck } from '@/app/admin/clientQueries';
 
 interface ScheduleDay {
   day: string;
@@ -34,70 +36,59 @@ interface ScheduleDay {
 }
 
 export default function ScheduleClient() {
-  const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const queryClient = useQueryClient();
   const [editingDay, setEditingDay] = useState<ScheduleDay | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [initializing, setInitializing] = useState(true);
-  const [primaryColor, setPrimaryColor] = useState('#FF6B35');
 
   // Days of the week for display order
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  // Fetch schedule data when component mounts
-  useEffect(() => {
-    const fetchScheduleData = async () => {
-      try {
-        setInitializing(true);
-        const data = await getScheduleData();
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to load schedule data');
-        }
-        
-        setSchedule(data.scheduleData || []);
-        setTitle(data.scheduleTitle || 'Weekly Schedule');
-        setDescription(data.scheduleDescription || 'Find us at these locations throughout the week');
-        setPrimaryColor(data.primaryColor || '#FF6B35');
-      } catch (err: any) {
-        console.error('Error fetching schedule data:', err);
-        setError(err.message || 'An error occurred while loading schedule data');
-        toast.error('Failed to load schedule data');
-      } finally {
-        setInitializing(false);
-        setIsLoading(false);
-      }
-    };
-    
-    fetchScheduleData();
-  }, []);
+  // React Query hook for food truck data
+  const { data: foodTruck, isLoading: isFoodTruckLoading, error: foodTruckError } = useQuery({
+    queryKey: ['foodTruck'],
+    queryFn: getFoodTruck
+  });
+
+  // Extract schedule data from food truck
+  const scheduleData = getScheduleFromFoodTruck(foodTruck);
+  const schedule = scheduleData.days || [];
+  const title = scheduleData.title || 'Weekly Schedule';
+  const description = scheduleData.description || 'Find us at these locations throughout the week';
+  const primaryColor = scheduleData.primaryColor || '#FF6B35';
 
   // Create a map of days that have schedules for quick lookup
-  const scheduledDaysMap = new Map(schedule.map(day => [day.day, day]));
+  const scheduledDaysMap = new Map(schedule.map((day: ScheduleDay) => [day.day, day]));
+
+  // Update schedule mutation
+  const updateScheduleMutation = useMutation({
+    mutationFn: ({
+      scheduleData, 
+      scheduleTitle, 
+      scheduleDescription
+    }: {
+      scheduleData: ScheduleDay[],
+      scheduleTitle?: string,
+      scheduleDescription?: string
+    }) => updateSchedule(scheduleData, scheduleTitle, scheduleDescription),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
+      toast.success('Schedule updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating schedule: ${error.message || 'Unknown error'}`);
+      setError(error.message || 'An unknown error occurred');
+    }
+  });
 
   // Handle saving the schedule metadata (title and description)
   const handleSaveMetadata = async () => {
-    try {
-      setIsSaving(true);
-      const result = await updateSchedule(schedule, title, description);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to update schedule metadata');
-      }
-      
-      toast.success('Schedule metadata updated successfully');
-    } catch (error: any) {
-      console.error('Error updating schedule metadata:', error);
-      setError(error.message || 'Failed to update schedule metadata');
-      toast.error('Failed to update schedule metadata');
-    } finally {
-      setIsSaving(false);
-    }
+    updateScheduleMutation.mutate({
+      scheduleData: schedule,
+      scheduleTitle: title,
+      scheduleDescription: description
+    });
   };
 
   const handleAddDay = () => {
@@ -117,32 +108,20 @@ export default function ScheduleClient() {
     // When editing a group, we edit the first day in the group
     setEditingDay({ ...group[0] });
     // Store the index of the first day in the original schedule
-    const originalIndex = schedule.findIndex(day => day.day === group[0].day);
+    const originalIndex = schedule.findIndex((day: ScheduleDay) => day.day === group[0].day);
     setEditingIndex(originalIndex);
     setIsEditing(true);
   };
 
   const handleDeleteDay = async (group: ScheduleDay[]) => {
     if (confirm('Are you sure you want to delete this schedule?')) {
-      const updatedSchedule = schedule.filter(day => !group.some(groupDay => groupDay.day === day.day));
+      const updatedSchedule = schedule.filter((day: ScheduleDay) => !group.some((groupDay: ScheduleDay) => groupDay.day === day.day));
       
-      try {
-        setIsLoading(true);
-        const result = await updateSchedule(updatedSchedule, title, description);
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to update schedule');
-        }
-        
-        setSchedule(updatedSchedule);
-        toast.success('Schedule item deleted successfully');
-      } catch (error: any) {
-        console.error('Error updating schedule:', error);
-        setError(error.message || 'Failed to update schedule');
-        toast.error('Failed to delete schedule item');
-      } finally {
-        setIsLoading(false);
-      }
+      updateScheduleMutation.mutate({
+        scheduleData: updatedSchedule,
+        scheduleTitle: title,
+        scheduleDescription: description
+      });
     }
   };
 
@@ -160,24 +139,13 @@ export default function ScheduleClient() {
       updatedSchedule = [...schedule, editingDay];
     }
     
-    try {
-      setIsLoading(true);
-      const result = await updateSchedule(updatedSchedule, title, description);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to update schedule');
-      }
-      
-      setSchedule(updatedSchedule);
-      setIsEditing(false);
-      toast.success(editingIndex !== null ? 'Schedule updated successfully' : 'Schedule added successfully');
-    } catch (error: any) {
-      console.error('Error updating schedule:', error);
-      setError(error.message || 'Failed to update schedule');
-      toast.error('Failed to save schedule');
-    } finally {
-      setIsLoading(false);
-    }
+    updateScheduleMutation.mutate({
+      scheduleData: updatedSchedule,
+      scheduleTitle: title,
+      scheduleDescription: description
+    });
+
+    setIsEditing(false);
   };
 
   const handleInputChange = (field: keyof ScheduleDay, value: string | boolean) => {
@@ -220,7 +188,7 @@ export default function ScheduleClient() {
     const groups: ScheduleDayGroup[] = [];
     let currentGroup: ScheduleDay[] = [];
     
-    days.forEach((day, index) => {
+    days.forEach((day: ScheduleDay, index) => {
       if (index === 0) {
         currentGroup.push(day);
       } else {
@@ -272,22 +240,22 @@ export default function ScheduleClient() {
   })();
 
   const today = format(new Date(), 'EEEE');
-  const todaySchedule = schedule.find(day => day.day === today);
+  const todaySchedule = schedule.find((day: ScheduleDay) => day.day === today);
 
   // Show error when no data can be loaded
-  if (!initializing && !schedule && error) {
+  if (!isFoodTruckLoading && foodTruckError) {
     return (
       <div className="space-y-6">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           <p className="font-semibold">Error loading schedule data</p>
-          <p>{error || 'Please try again later.'}</p>
+          <p>{foodTruckError.message || 'Please try again later.'}</p>
         </div>
       </div>
     );
   }
 
   // Show loading spinner while initializing
-  if (initializing) {
+  if (isFoodTruckLoading) {
     return (
       <div className="flex justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -324,7 +292,11 @@ export default function ScheduleClient() {
             <Input
               id="scheduleTitle"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => updateScheduleMutation.mutate({
+                scheduleData: schedule,
+                scheduleTitle: e.target.value,
+                scheduleDescription: description
+              })}
               placeholder="Title for your schedule section"
               className="mt-1"
             />
@@ -335,7 +307,11 @@ export default function ScheduleClient() {
             <Textarea
               id="scheduleDescription"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => updateScheduleMutation.mutate({
+                scheduleData: schedule,
+                scheduleTitle: title,
+                scheduleDescription: e.target.value
+              })}
               placeholder="Description for your schedule section"
               className="mt-1"
             />
@@ -344,10 +320,10 @@ export default function ScheduleClient() {
         <CardFooter className="flex justify-end">
           <Button
             onClick={handleSaveMetadata}
-            disabled={isSaving}
+            disabled={updateScheduleMutation.isPending}
             size="sm"
           >
-            {isSaving ? (
+            {updateScheduleMutation.isPending ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
                 Saving...
@@ -410,7 +386,7 @@ export default function ScheduleClient() {
                           <SelectValue placeholder="Select day" />
                         </SelectTrigger>
                         <SelectContent>
-                          {daysOfWeek.map((day) => (
+                          {daysOfWeek.map((day: string) => (
                             <SelectItem key={day} value={day}>{day}</SelectItem>
                           ))}
                         </SelectContent>
@@ -468,8 +444,8 @@ export default function ScheduleClient() {
                   
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                    <Button onClick={handleSaveDay} disabled={isLoading}>
-                      {isLoading ? (
+                    <Button onClick={handleSaveDay} disabled={updateScheduleMutation.isPending}>
+                      {updateScheduleMutation.isPending ? (
                         <>
                           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
                           Saving...
@@ -484,7 +460,7 @@ export default function ScheduleClient() {
             </Card>
           )}
 
-          {isLoading && !isEditing ? (
+          {isFoodTruckLoading && !isEditing ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>

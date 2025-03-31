@@ -1,9 +1,8 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
-import { AddressAutofill } from '@mapbox/search-js-react';
 import type { AddressAutofillRetrieveResponse } from '@mapbox/search-js-core';
-import React, { useId } from 'react';
+import React, { useId, useEffect, useState } from 'react';
 
 type AddressAutofillInputProps = {
   value: string;
@@ -23,11 +22,34 @@ export default function AddressAutofillInput({
   // Generate a unique ID if one isn't provided
   const uniqueId = useId();
   const inputId = id || `address-${uniqueId}`;
+  const [AddressAutofill, setAddressAutofill] = useState<any>(null);
+  
+  useEffect(() => {
+    // Only import and use the component on the client side
+    import('@mapbox/search-js-react').then((mod) => {
+      setAddressAutofill(mod.AddressAutofill);
+    });
+  }, []);
+  
+  // When component hasn't loaded yet, just show the input
+  if (!AddressAutofill) {
+    return (
+      <div className="relative">
+        <Input
+          id={inputId}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          autoComplete="address-line1"
+          className="w-full"
+        />
+      </div>
+    );
+  }
   
   return (
     <div className="relative">
       {/* Using a wrapper div instead of a form to avoid form nesting issues */}
-      {/* @ts-expect-error - The AddressAutofill component has typing issues with Next.js */}
       <AddressAutofill
         accessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''}
         onRetrieve={onRetrieve}

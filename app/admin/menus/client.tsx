@@ -22,6 +22,8 @@ import { Separator } from '@/components/ui/separator'
 import { PlusCircle, Edit, Trash2, Filter, Plus, X, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import { addMenuItem, updateMenuItem, deleteMenuItem } from './actions'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getMenuItems, getCategories, getFoodTruck } from '@/app/admin/clientQueries'
 
 interface MenuItemType {
   id: string;
@@ -35,12 +37,7 @@ interface MenuItemType {
 
 export default function MenuClient() {
   const supabase = createClient()
-  const [menuItems, setMenuItems] = useState<MenuItemType[]>([])
-  const [categories, setCategories] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [foodTruckId, setFoodTruckId] = useState<string | null>(null)
-  const [initializing, setInitializing] = useState(true)
+  const queryClient = useQueryClient()
   
   // Form states
   const [showMenuForm, setShowMenuForm] = useState(false)
@@ -60,61 +57,95 @@ export default function MenuClient() {
   
   // Filter state
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState('all')
+  const [error, setError] = useState<string | null>(null)
   
   // Delete confirmation
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
 
-  // Form submission loading states
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  // React Query hooks for data fetching
+  const { data: foodTruck, isLoading: isFoodTruckLoading } = useQuery({
+    queryKey: ['foodTruck'],
+    queryFn: getFoodTruck
+  })
 
-  // Get food truck ID on component mount
-  useEffect(() => {
-    const getFoodTruckId = async () => {
-      try {
-        setInitializing(true)
-        // Get the current user's food truck ID
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          throw new Error('Not authenticated')
-        }
-        
-        // Get the food truck ID for the current user
-        const { data: foodTrucks, error: foodTruckError } = await supabase
-          .from('FoodTrucks')
-          .select('id')
-          .eq('user_id', user.id)
-          .single()
-        
-        if (foodTruckError) {
-          throw foodTruckError
-        }
-        
-        if (!foodTrucks) {
-          throw new Error('No food truck found')
-        }
-        
-        setFoodTruckId(foodTrucks.id)
-      } catch (err: any) {
-        console.error('Error getting food truck ID:', err)
-        setError(err.message)
-        toast.error('Failed to load food truck data')
-      } finally {
-        setInitializing(false)
+  const { 
+    data: menuItems = [], 
+    isLoading: isMenuLoading,
+    error: menuError
+  } = useQuery({
+    queryKey: ['menuItems'],
+    queryFn: getMenuItems,
+    enabled: !!foodTruck?.id
+  })
+
+  const { 
+    data: categories = [], 
+    isLoading: isCategoriesLoading
+  } = useQuery({
+    queryKey: ['menuCategories'],
+    queryFn: getCategories,
+    enabled: !!foodTruck?.id
+  })
+
+  // React Query mutations
+  const addMenuItemMutation = useMutation({
+    mutationFn: (menuData: {
+      name: string,
+      description: string,
+      price: number,
+      category: string,
+      image_url: string
+    }) => addMenuItem(menuData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] })
+      queryClient.invalidateQueries({ queryKey: ['menuCategories'] })
+      toast.success('Menu item added successfully')
+      resetForm()
+    },
+    onError: (error: any) => {
+      toast.error(`Error adding menu item: ${error.message || 'Unknown error'}`)
+      setError(error.message || 'An unknown error occurred')
+    }
+  })
+
+  const updateMenuItemMutation = useMutation({
+    mutationFn: ({ id, menuData }: { 
+      id: string, 
+      menuData: {
+        name: string,
+        description: string,
+        price: number,
+        category: string,
+        image_url: string
       }
+    }) => updateMenuItem(id, menuData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] })
+      queryClient.invalidateQueries({ queryKey: ['menuCategories'] })
+      toast.success('Menu item updated successfully')
+      resetForm()
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating menu item: ${error.message || 'Unknown error'}`)
+      setError(error.message || 'An unknown error occurred')
     }
-    
-    getFoodTruckId()
-  }, [])
-  
-  // Fetch menu items and categories when food truck ID is available
-  useEffect(() => {
-    if (foodTruckId) {
-      fetchMenuItems()
-      fetchCategories()
+  })
+
+  const deleteMenuItemMutation = useMutation({
+    mutationFn: (id: string) => deleteMenuItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] })
+      queryClient.invalidateQueries({ queryKey: ['menuCategories'] })
+      toast.success('Menu item deleted successfully')
+      setItemToDelete(null)
+      setShowDeleteDialog(false)
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting menu item: ${error.message || 'Unknown error'}`)
+      setError(error.message || 'An unknown error occurred')
     }
-  }, [foodTruckId])
+  })
 
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,127 +199,11 @@ export default function MenuClient() {
     }
   }
 
-  // Fetch menu items from Supabase
-  const fetchMenuItems = async () => {
-    if (!foodTruckId) return
-    
-    try {
-      setLoading(true)
-      
-      // Fetch menu items for this food truck
-      const { data, error } = await supabase
-        .from('Menus')
-        .select('*')
-        .eq('food_truck_id', foodTruckId)
-        .order('name')
-      
-      if (error) throw error
-      
-      setMenuItems(data || [])
-    } catch (err: any) {
-      console.error('Error fetching menu items:', err)
-      setError(err.message)
-      toast.error('Failed to load menu items')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Extract unique categories from menu items
-  const fetchCategories = async () => {
-    if (!foodTruckId) return
-    
-    try {
-      // Fetch categories for this food truck
-      const { data, error } = await supabase
-        .from('Menus')
-        .select('category')
-        .eq('food_truck_id', foodTruckId)
-        .order('category')
-      
-      if (error) throw error
-      
-      // Extract unique categories
-      const existingCategories = Array.from(new Set(data?.map(item => item.category) || []))
-        .filter(Boolean) as string[];
-      
-      setCategories(existingCategories);
-    } catch (err: any) {
-      console.error('Error fetching categories:', err)
-      toast.error('Failed to load categories')
-    }
-  }
-
   // Add a new menu item
   const handleAddMenuItem = async (e: React.FormEvent) => {
     e.preventDefault()
     
     try {
-      setIsSubmitting(true)
-      // Validate form and food truck ID
-      if (!menuForm.name || !menuForm.price || !menuForm.category) {
-        setError('Name, price, and category are required')
-        return
-      }
-      
-      if (!foodTruckId) {
-        setError('Food truck data not available')
-        return
-      }
-      
-      // Upload image if selected
-      let imageUrl = menuForm.image_url
-      if (selectedFile) {
-        imageUrl = await uploadImage(selectedFile)
-      }
-      
-      // Add the new menu item using server action
-      const result = await addMenuItem({
-        name: menuForm.name,
-        description: menuForm.description,
-        price: parseFloat(menuForm.price),
-        category: menuForm.category,
-        image_url: imageUrl
-      })
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to add menu item')
-      }
-      
-      // Refresh menu items and categories
-      fetchMenuItems()
-      fetchCategories()
-      
-      // Reset form
-      setMenuForm({
-        name: '',
-        description: '',
-        price: '',
-        category: '',
-        image_url: ''
-      })
-      setSelectedFile(null)
-      setPreviewUrl(null)
-      setShowMenuForm(false)
-      toast.success('Menu item added successfully')
-    } catch (err: any) {
-      console.error('Error adding menu item:', err)
-      const errorMessage = err.message || 'An unknown error occurred'
-      setError(errorMessage)
-      toast.error(`Error adding menu item: ${errorMessage}`)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  // Update an existing menu item
-  const handleUpdateMenuItem = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!editingMenuItem) return
-    
-    try {
-      setIsSubmitting(true)
       // Validate form
       if (!menuForm.name || !menuForm.price || !menuForm.category) {
         setError('Name, price, and category are required')
@@ -301,74 +216,69 @@ export default function MenuClient() {
         imageUrl = await uploadImage(selectedFile)
       }
       
-      // Update the menu item using server action
-      const result = await updateMenuItem(
-        editingMenuItem.id,
-        {
+      // Add the new menu item using mutation
+      addMenuItemMutation.mutate({
+        name: menuForm.name,
+        description: menuForm.description,
+        price: parseFloat(menuForm.price),
+        category: menuForm.category,
+        image_url: imageUrl
+      })
+    } catch (err: any) {
+      console.error('Error adding menu item:', err)
+      setError(err.message || 'An unknown error occurred')
+    }
+  }
+
+  // Update an existing menu item
+  const handleUpdateMenuItem = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!editingMenuItem) return
+    
+    try {
+      // Validate form
+      if (!menuForm.name || !menuForm.price || !menuForm.category) {
+        setError('Name, price, and category are required')
+        return
+      }
+      
+      // Upload image if selected
+      let imageUrl = menuForm.image_url
+      if (selectedFile) {
+        imageUrl = await uploadImage(selectedFile)
+      }
+      
+      // Update the menu item using mutation
+      updateMenuItemMutation.mutate({
+        id: editingMenuItem.id,
+        menuData: {
           name: menuForm.name,
           description: menuForm.description,
           price: parseFloat(menuForm.price),
           category: menuForm.category,
           image_url: imageUrl
         }
-      )
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to update menu item')
-      }
-      
-      // Refresh menu items and categories
-      fetchMenuItems()
-      fetchCategories()
-      
-      // Reset form and close dialog
-      setMenuForm({
-        name: '',
-        description: '',
-        price: '',
-        category: '',
-        image_url: ''
       })
-      setSelectedFile(null)
-      setPreviewUrl(null)
-      setEditingMenuItem(null)
-      setShowMenuForm(false)
-      
-      toast.success('Menu item updated successfully')
     } catch (err: any) {
       console.error('Error updating menu item:', err)
       setError(err.message || 'Failed to update menu item')
-      toast.error('Failed to update menu item')
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
-  // Delete a menu item
-  const handleDeleteMenuItem = async () => {
-    if (!itemToDelete) return
-    
-    try {
-      // Delete the menu item using server action
-      const result = await deleteMenuItem(itemToDelete)
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to delete menu item')
-      }
-      
-      // Refresh menu items and categories
-      fetchMenuItems()
-      fetchCategories()
-      toast.success('Menu item deleted successfully')
-      
-      // Reset state
-      setItemToDelete(null)
-      setShowDeleteDialog(false)
-    } catch (err: any) {
-      console.error('Error deleting menu item:', err)
-      setError(err.message)
-      toast.error('Failed to delete menu item')
-    }
+  // Reset form state
+  const resetForm = () => {
+    setMenuForm({
+      name: '',
+      description: '',
+      price: '',
+      category: '',
+      image_url: ''
+    })
+    setSelectedFile(null)
+    setPreviewUrl(null)
+    setEditingMenuItem(null)
+    setShowMenuForm(false)
   }
 
   // Start editing a menu item
@@ -391,28 +301,30 @@ export default function MenuClient() {
     ? menuItems.filter(item => item.category === categoryFilter)
     : menuItems
 
+  // Open delete confirmation dialog
   const confirmDelete = (id: string) => {
     setItemToDelete(id)
     setShowDeleteDialog(true)
   }
 
-  // Show error when food truck ID cannot be retrieved
-  if (!initializing && !foodTruckId) {
+  // Handle delete confirmation
+  const handleDeleteMenuItem = () => {
+    if (!itemToDelete) return
+    deleteMenuItemMutation.mutate(itemToDelete)
+  }
+
+  // Loading state
+  const isLoading = isFoodTruckLoading || isMenuLoading;
+  const isSubmitting = addMenuItemMutation.isPending || updateMenuItemMutation.isPending;
+
+  // Show error when food truck data cannot be retrieved
+  if (!isFoodTruckLoading && !foodTruck) {
     return (
       <div className="space-y-6">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           <p className="font-semibold">No food truck found</p>
           <p>Please complete your profile setup first before managing menu items.</p>
         </div>
-      </div>
-    )
-  }
-
-  // Show loading spinner while initializing
-  if (initializing) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     )
   }
@@ -642,8 +554,12 @@ export default function MenuClient() {
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteMenuItem}>
-              Delete
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteMenuItem}
+              disabled={deleteMenuItemMutation.isPending}
+            >
+              {deleteMenuItemMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -671,7 +587,7 @@ export default function MenuClient() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
@@ -700,7 +616,10 @@ export default function MenuClient() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredMenuItems.map((item) => (
-                <Card key={item.id} className="overflow-hidden">
+                <Card 
+                  key={item.id} 
+                  className="overflow-hidden"
+                >
                   <div className="relative w-full h-48">
                     <Image
                       src={item.image_url || "/placeholder-hero.jpg"}
@@ -736,6 +655,7 @@ export default function MenuClient() {
                       variant="outline" 
                       size="sm"
                       onClick={() => startEditing(item)}
+                      disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
@@ -744,6 +664,7 @@ export default function MenuClient() {
                       variant="destructive" 
                       size="sm"
                       onClick={() => confirmDelete(item.id)}
+                      disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete

@@ -18,6 +18,9 @@ import {
 } from 'chart.js'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
 import { formatCurrency } from '@/lib/utils'
+import { useQuery } from '@tanstack/react-query'
+import { getFoodTruck, getAnalyticsData } from '../clientQueries'
+import { format, subDays } from 'date-fns'
 
 // Register ChartJS components
 ChartJS.register(
@@ -217,14 +220,77 @@ const doughnutOptions = {
   }
 }
 
-export function AnalyticsClient({ data }: { data: AnalyticsData }) {
+export function AnalyticsClient() {
+  // Query for the food truck data
+  const { data: foodTruck, isLoading: isFoodTruckLoading } = useQuery({
+    queryKey: ['foodTruck'],
+    queryFn: getFoodTruck
+  });
+
+  // Query for analytics data, enabled only when foodTruck data is available
+  const { data: analyticsResult, isLoading: isAnalyticsLoading } = useQuery({
+    queryKey: ['analytics'],
+    queryFn: getAnalyticsData,
+    enabled: !!foodTruck
+  });
+
+  // Process analytics data
+  const analyticsData = analyticsResult?.analyticsData || [];
+  const subscriptionPlan = analyticsResult?.subscriptionPlan || 'basic';
+  
+  // Calculate totals
+  const totalOrders = analyticsData?.reduce((sum, day) => sum + (day.orders_placed || 0), 0) || 0;
+  const totalRevenue = analyticsData?.reduce((sum, day) => sum + (day.revenue || 0), 0) || 0;
+  const totalPageViews = analyticsData?.reduce((sum, day) => sum + (day.page_views || 0), 0) || 0;
+  
+  // Generate dates for the last 30 days
+  const last30Days = Array.from({ length: 30 }, (_, i) => {
+    const date = subDays(new Date(), i);
+    return format(date, 'yyyy-MM-dd');
+  }).reverse();
+  
+  // Prepare sales over time data
+  const salesOverTime = last30Days.map(date => {
+    const dayData = analyticsData?.find(d => d.date === date);
+    
+    return {
+      date: format(new Date(date), 'MMM dd'),
+      orders: dayData?.orders_placed || 0,
+      revenue: dayData?.revenue || 0
+    };
+  });
+  
+  // Mock popular items (would come from a real analytics service in production)
+  const popularItems = Array(5).fill(0).map((_, index) => ({
+    name: `Menu Item ${index + 1}`,
+    count: Math.floor(Math.random() * 20) + 5 // Random count between 5-25
+  }));
+  
+  // Mock traffic sources data (would come from a real analytics service in production)
+  const trafficSources = [
+    { source: 'Direct', count: Math.floor(totalPageViews * 0.4) },
+    { source: 'Social Media', count: Math.floor(totalPageViews * 0.3) },
+    { source: 'Search', count: Math.floor(totalPageViews * 0.2) },
+    { source: 'Referral', count: Math.floor(totalPageViews * 0.1) }
+  ].filter(source => source.count > 0);
+
+  // Loading state
+  const isLoading = isFoodTruckLoading || isAnalyticsLoading;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   // Prepare data for charts
   const salesData = {
-    labels: data.salesOverTime.map(item => item.date),
+    labels: salesOverTime.map(item => item.date),
     datasets: [
       {
         label: 'Orders',
-        data: data.salesOverTime.map(item => item.orders),
+        data: salesOverTime.map(item => item.orders),
         borderColor: 'rgb(53, 162, 235)',
         backgroundColor: 'rgba(53, 162, 235, 0.5)',
         borderWidth: 2,
@@ -235,7 +301,7 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
       },
       {
         label: 'Revenue ($)',
-        data: data.salesOverTime.map(item => item.revenue),
+        data: salesOverTime.map(item => item.revenue),
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.5)',
         borderWidth: 2,
@@ -248,11 +314,11 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
   }
 
   const popularItemsData = {
-    labels: data.popularItems.map(item => item.name),
+    labels: popularItems.map(item => item.name),
     datasets: [
       {
         label: 'Orders',
-        data: data.popularItems.map(item => item.count),
+        data: popularItems.map(item => item.count),
         backgroundColor: [
           'rgba(255, 99, 132, 0.7)',
           'rgba(54, 162, 235, 0.7)',
@@ -274,11 +340,11 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
   }
 
   const trafficSourcesData = {
-    labels: data.trafficSources.map(item => item.source),
+    labels: trafficSources.map(item => item.source),
     datasets: [
       {
         label: 'Visits',
-        data: data.trafficSources.map(item => item.count),
+        data: trafficSources.map(item => item.count),
         backgroundColor: [
           'rgba(255, 99, 132, 0.7)',
           'rgba(54, 162, 235, 0.7)',
@@ -300,7 +366,7 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
   }
 
   // Check if user is on basic plan
-  const isBasicPlan = data.subscriptionPlan === 'basic';
+  const isBasicPlan = subscriptionPlan === 'basic';
 
   // Premium feature overlay component
   const PremiumFeatureOverlay = () => (
@@ -324,24 +390,24 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
           <h3 className="text-lg font-medium text-gray-500">Total Orders</h3>
-          <p className="text-3xl font-bold">{data.totalOrders}</p>
+          <p className="text-3xl font-bold">{totalOrders}</p>
           <p className="text-sm text-gray-500">All time</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
           <h3 className="text-lg font-medium text-gray-500">Revenue</h3>
-          <p className="text-3xl font-bold">{formatCurrency(data.totalRevenue)}</p>
+          <p className="text-3xl font-bold">{formatCurrency(totalRevenue)}</p>
           <p className="text-sm text-gray-500">All time</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
           <h3 className="text-lg font-medium text-gray-500">Website Visits</h3>
-          <p className="text-3xl font-bold">{data.totalPageViews}</p>
+          <p className="text-3xl font-bold">{totalPageViews}</p>
           <p className="text-sm text-gray-500">All time</p>
         </div>
       </div>
       
       <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow relative">
         <div className="h-80">
-          {data.salesOverTime.length > 0 ? (
+          {salesOverTime.length > 0 ? (
             <Line options={lineOptions} data={salesData} />
           ) : (
             <div className="border border-gray-300 rounded-md p-4 h-full flex items-center justify-center bg-gray-100">
@@ -355,7 +421,7 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow relative">
           <div className="h-80">
-            {data.popularItems.length > 0 ? (
+            {popularItems.length > 0 ? (
               <Bar options={barOptions} data={popularItemsData} />
             ) : (
               <div className="border border-gray-300 rounded-md p-4 h-full flex items-center justify-center bg-gray-100">
@@ -368,7 +434,7 @@ export function AnalyticsClient({ data }: { data: AnalyticsData }) {
         
         <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow relative">
           <div className="h-80">
-            {data.trafficSources.length > 0 ? (
+            {trafficSources.length > 0 ? (
               <Doughnut options={doughnutOptions} data={trafficSourcesData} />
             ) : (
               <div className="border border-gray-300 rounded-md p-4 h-full flex items-center justify-center bg-gray-100">
