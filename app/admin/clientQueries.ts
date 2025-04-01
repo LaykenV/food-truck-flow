@@ -109,3 +109,29 @@ export async function getAnalyticsData() {
     subscriptionPlan: foodTruck.subscription_plan
   };
 }
+
+export async function getOrders() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Get the food truck ID for the current user
+  const { data: foodTruck } = await supabase
+    .from('FoodTrucks')
+    .select('id')
+    .eq('user_id', user?.id)
+    .single();
+  
+  if (!foodTruck) return [];
+  
+  // Fetch orders for this food truck
+  const { data, error } = await supabase
+    .from('Orders')
+    .select('*')
+    .eq('food_truck_id', foodTruck.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+  
+  if (error) throw error;
+  
+  return data || [];
+}
