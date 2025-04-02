@@ -23,7 +23,7 @@ import { createClient } from "@/utils/supabase/client"
 import { useSubscription } from '@supabase-cache-helpers/postgrest-react-query'
 import { reopenToday } from './actions'
 import { CloseForTodayDialog } from "./close-for-today-dialog"
-import { getFoodTruck, getAnalyticsData, getOrders } from './clientQueries'
+import { getFoodTruck, getAnalyticsData, getRecentOrders } from './clientQueries'
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from 'sonner'
 
@@ -86,8 +86,8 @@ export default function AdminDashboardClient() {
     data: orders = [],
     isLoading: isOrdersLoading,
   } = useQuery({
-    queryKey: ['orders'],
-    queryFn: getOrders,
+    queryKey: ['recentOrders'],
+    queryFn: getRecentOrders,
     enabled: !!foodTruck?.id
   })
   

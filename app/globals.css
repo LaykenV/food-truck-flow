@@ -37,6 +37,28 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Admin Theme Colors - Light Mode (Slate + Indigo) */
+    --admin-background: 210 40% 98%; /* Light Slate */
+    --admin-foreground: 222.2 47.4% 11.2%; /* Dark Slate */
+    --admin-card: 0 0% 100%; /* White */
+    --admin-card-foreground: 222.2 47.4% 11.2%; /* Dark Slate */
+    --admin-popover: 0 0% 100%; /* White */
+    --admin-popover-foreground: 222.2 47.4% 11.2%; /* Dark Slate */
+    --admin-primary: 226 70% 55.5%; /* Indigo */
+    --admin-primary-foreground: 210 40% 98%; /* White */
+    --admin-secondary: 210 40% 96.1%; /* Light Slate */
+    --admin-secondary-foreground: 222.2 47.4% 11.2%; /* Dark Slate */
+    --admin-muted: 210 40% 96.1%; /* Light Slate */
+    --admin-muted-foreground: 215.4 16.3% 46.9%; /* Slate Gray */
+    --admin-accent: 210 40% 96.1%; /* Light Slate */
+    --admin-accent-foreground: 222.2 47.4% 11.2%; /* Dark Slate */
+    --admin-destructive: 0 84.2% 60.2%; /* Red */
+    --admin-destructive-foreground: 210 40% 98%; /* White */
+    --admin-border: 214.3 31.8% 91.4%; /* Light Slate Border */
+    --admin-input: 214.3 31.8% 91.4%; /* Light Slate Input */
+    --admin-ring: 226 70% 55.5%; /* Indigo Ring */
+    --admin-gradient-start: 226 70% 55.5%; /* Indigo Start */
+    --admin-gradient-end: 250 84% 67%; /* Violet End */
   }
 
   .dark {
@@ -72,6 +94,28 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Admin Theme Colors - Dark Mode (Dark Slate + Bright Indigo/Violet) */
+    --admin-background: 222.2 84% 4.9%; /* Very Dark Slate */
+    --admin-foreground: 210 40% 98%; /* White */
+    --admin-card: 222.2 84% 4.9%; /* Very Dark Slate */
+    --admin-card-foreground: 210 40% 98%; /* White */
+    --admin-popover: 222.2 84% 4.9%; /* Very Dark Slate */
+    --admin-popover-foreground: 210 40% 98%; /* White */
+    --admin-primary: 226 70% 65.5%; /* Brighter Indigo */
+    --admin-primary-foreground: 0 0% 100%; /* White */
+    --admin-secondary: 217.2 32.6% 17.5%; /* Darker Slate */
+    --admin-secondary-foreground: 210 40% 98%; /* White */
+    --admin-muted: 217.2 32.6% 17.5%; /* Darker Slate */
+    --admin-muted-foreground: 214.3 31.8% 65.4%; /* Lighter Slate */
+    --admin-accent: 217.2 32.6% 17.5%; /* Darker Slate */
+    --admin-accent-foreground: 210 40% 98%; /* White */
+    --admin-destructive: 0 62.8% 30.6%; /* Darker Red */
+    --admin-destructive-foreground: 0 0% 98%; /* White */
+    --admin-border: 217.2 32.6% 17.5%; /* Darker Slate Border */
+    --admin-input: 217.2 32.6% 17.5%; /* Darker Slate Input */
+    --admin-ring: 226 70% 65.5%; /* Brighter Indigo */
+    --admin-gradient-start: 226 70% 65.5%; /* Brighter Indigo Start */
+    --admin-gradient-end: 250 84% 77%; /* Brighter Violet End */
   }
 }
 

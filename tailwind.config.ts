@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config = {
-  darkMode: ["class"],
+  darkMode: ["selector"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -61,6 +61,27 @@ const config = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			admin: {
+  				DEFAULT: 'hsl(var(--admin-background))',
+  				foreground: 'hsl(var(--admin-foreground))',
+  				card: 'hsl(var(--admin-card))',
+  				'card-foreground': 'hsl(var(--admin-card-foreground))',
+  				popover: 'hsl(var(--admin-popover))',
+  				'popover-foreground': 'hsl(var(--admin-popover-foreground))',
+  				primary: 'hsl(var(--admin-primary))',
+  				'primary-foreground': 'hsl(var(--admin-primary-foreground))',
+  				secondary: 'hsl(var(--admin-secondary))',
+  				'secondary-foreground': 'hsl(var(--admin-secondary-foreground))',
+  				muted: 'hsl(var(--admin-muted))',
+  				'muted-foreground': 'hsl(var(--admin-muted-foreground))',
+  				accent: 'hsl(var(--admin-accent))',
+  				'accent-foreground': 'hsl(var(--admin-accent-foreground))',
+  				destructive: 'hsl(var(--admin-destructive))',
+  				'destructive-foreground': 'hsl(var(--admin-destructive-foreground))',
+  				border: 'hsl(var(--admin-border))',
+  				input: 'hsl(var(--admin-input))',
+  				ring: 'hsl(var(--admin-ring))'
   			}
   		},
   		borderRadius: {

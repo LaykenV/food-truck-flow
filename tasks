@@ -61,6 +61,8 @@ template
     //integrate into settings
     //integrate into account
 
+    apply theming and ui update to all admin routes. context.md
+
     order cleanup
 
     admin edits

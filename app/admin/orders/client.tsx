@@ -15,8 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertCircle, CheckCircle2, Clock, CookingPot, Loader } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import { getFoodTruck } from '@/app/admin/clientQueries'
-import { getOrders } from './clientQueries'
+import { getFoodTruck, getOrders } from '@/app/admin/clientQueries'
 import { updateOrderStatus } from './actions'
 
 // Types
