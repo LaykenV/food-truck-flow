@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFoodTruck } from '@/app/admin/clientQueries';
 import { saveConfiguration } from '@/app/admin/config/actions';
 import { getDefaultConfig } from '@/utils/config-utils';
+import { Card, CardContent } from "@/components/ui/card";
 
 export function AdminConfigClient() {
   const queryClient = useQueryClient();
@@ -61,7 +62,7 @@ export function AdminConfigClient() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
       </div>
     );
   }
@@ -69,21 +70,29 @@ export function AdminConfigClient() {
   // Show error state
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        <p>Error loading configuration: {(error as Error).message}</p>
-      </div>
+      <Card className="border-admin-destructive bg-admin-destructive/10">
+        <CardContent className="p-6">
+          <p className="text-admin-destructive font-medium">Error loading configuration: {(error as Error).message}</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <ConfigProvider initialConfig={config} onSave={handleSaveConfig}>
-      <AdminConfigWrapper 
-        initialConfig={config} 
-        onSave={handleSaveConfig} 
-        isSaving={saveConfigMutation.isPending}
-        lastSaved={lastSaved}
-        userId={foodTruck?.user_id || ''}
-      />
+      <div className="space-y-6">
+        <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+          <CardContent className="p-0">
+            <AdminConfigWrapper 
+              initialConfig={config} 
+              onSave={handleSaveConfig} 
+              isSaving={saveConfigMutation.isPending}
+              lastSaved={lastSaved}
+              userId={foodTruck?.user_id || ''}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </ConfigProvider>
   );
 }

@@ -5,7 +5,7 @@ import { UnifiedConfigForm } from './UnifiedConfigForm';
 import { AdminLivePreview } from './UnifiedLivePreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Smartphone } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { toast } from 'sonner';
 import { useConfig } from './UnifiedConfigProvider';
@@ -121,7 +121,7 @@ export function ConfigWrapper({
           value={activeTab}
           onValueChange={setActiveTab}
         >
-          <TabsList className="grid w-full grid-cols-2 mb-6 sticky top-0 z-10 bg-background">
+          <TabsList className="grid w-full grid-cols-2 mb-6 sticky top-0 z-10 bg-admin-background shadow-sm">
             <TabsTrigger value="config" className="flex items-center gap-2 py-3">
               <Settings className="h-4 w-4" />
               <span>Configure</span>
@@ -143,9 +143,14 @@ export function ConfigWrapper({
           </TabsContent>
           
           <TabsContent value="preview" className="space-y-4 pb-8">
-            <h2 className="text-xl font-bold text-gray-900 text-center mb-4">
-              Preview Your Food Truck Website
-            </h2>
+            <div className="flex justify-center flex-col items-center mb-4">
+              <h2 className="text-lg font-medium text-admin-foreground">
+                Preview Your Food Truck Website
+              </h2>
+              <p className="text-sm text-admin-muted-foreground">
+                Here's how your website will appear to visitors
+              </p>
+            </div>
             <AdminLivePreview config={localConfig} />
           </TabsContent>
         </Tabs>
@@ -166,13 +171,20 @@ export function ConfigWrapper({
         
         {/* Preview Section - Full Width */}
         <div className="w-full">
-          <Card className="p-6 bg-gray-50 border-0 shadow-none">
-            <h2 className="text-xl font-bold text-gray-900 text-center mb-6">
-              Preview Your Food Truck Website
-            </h2>
-            <div className="flex justify-center w-full">
-              <AdminLivePreview config={localConfig} />
-            </div>
+          <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+            <CardContent className="p-6">
+              <div className="flex justify-center flex-col items-center mb-4">
+                <h2 className="text-lg font-medium text-admin-foreground">
+                  Preview Your Food Truck Website
+                </h2>
+                <p className="text-sm text-admin-muted-foreground">
+                  Here's how your website will appear to visitors
+                </p>
+              </div>
+              <div className="flex justify-center w-full">
+                <AdminLivePreview config={localConfig} />
+              </div>
+            </CardContent>
           </Card>
         </div>
       </div>

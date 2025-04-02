@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity, LucideArrowUpRight, LucideCalendar, LucideX, LucideRefreshCw } from "lucide-react"
+import { LucideShoppingCart, LucideDollarSign, LucideUsers, LucideActivity, LucideArrowUpRight, LucideCalendar, LucideX, LucideRefreshCw, LucideMapPin, LucideClock } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { format, subDays } from "date-fns"
@@ -23,7 +23,7 @@ import { createClient } from "@/utils/supabase/client"
 import { useSubscription } from '@supabase-cache-helpers/postgrest-react-query'
 import { reopenToday } from './actions'
 import { CloseForTodayDialog } from "./close-for-today-dialog"
-import { getFoodTruck, getAnalyticsData, getRecentOrders } from './clientQueries'
+import { getFoodTruck, getAnalyticsData, getRecentOrders, getMenuItems } from './clientQueries'
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from 'sonner'
 
@@ -88,6 +88,16 @@ export default function AdminDashboardClient() {
   } = useQuery({
     queryKey: ['recentOrders'],
     queryFn: getRecentOrders,
+    enabled: !!foodTruck?.id
+  })
+  
+  // Fetch menu items to check if any exist
+  const {
+    data: menuItems = [],
+    isLoading: isMenuItemsLoading,
+  } = useQuery({
+    queryKey: ['menuItems'],
+    queryFn: getMenuItems,
     enabled: !!foodTruck?.id
   })
   
@@ -162,9 +172,9 @@ export default function AdminDashboardClient() {
   
   // Calculate metrics from analytics data
   const {
-    totalOrders,
-    totalRevenue,
-    totalPageViews,
+    lastThirtyDaysOrders,
+    lastThirtyDaysRevenue,
+    lastThirtyDaysPageViews,
     ordersPercentChange,
     revenuePercentChange,
     visitsPercentChange,
@@ -172,22 +182,49 @@ export default function AdminDashboardClient() {
   } = useMemo(() => {
     const analyticsItems = analyticsData?.analyticsData || []
     
-    // Calculate total orders and revenue
-    const totalOrders = analyticsItems.reduce((sum, day) => sum + (day.orders_placed || 0), 0) || 0
-    const totalRevenue = analyticsItems.reduce((sum, day) => sum + (day.revenue || 0), 0) || 0
+    // Get only the last 30 days of data for totals
+    const last30Days = analyticsItems.slice(0, 30)
     
-    // Calculate total page views
-    const totalPageViews = analyticsItems.reduce((sum, day) => sum + (day.page_views || 0), 0) || 0
+    // Calculate last 30 days orders and revenue
+    const lastThirtyDaysOrders = last30Days.reduce((sum, day) => sum + (day.orders_placed || 0), 0) || 0
+    const lastThirtyDaysRevenue = last30Days.reduce((sum, day) => sum + (day.revenue || 0), 0) || 0
     
-    // Calculate percentage change for metrics
+    // Calculate last 30 days page views
+    const lastThirtyDaysPageViews = last30Days.reduce((sum, day) => sum + (day.page_views || 0), 0) || 0
+    
+    // Calculate percentage change for metrics (last 30 days vs previous 30 days)
     const calculatePercentChange = (data: any[] | null, metric: string) => {
-      if (!data || data.length < 30) return 0
+      if (!data || data.length === 0) return 0
       
-      const currentMonth = data.slice(0, 15).reduce((sum, day) => sum + (day[metric] || 0), 0)
-      const previousMonth = data.slice(15, 30).reduce((sum, day) => sum + (day[metric] || 0), 0)
+      // Determine how many days of data we have to work with
+      const daysAvailable = data.length
       
-      if (previousMonth === 0) return currentMonth > 0 ? 100 : 0
-      return Math.round(((currentMonth - previousMonth) / previousMonth) * 100)
+      // If we have at least 60 days, compare last 30 vs previous 30
+      if (daysAvailable >= 60) {
+        const current30Days = data.slice(0, 30).reduce((sum, day) => sum + (day[metric] || 0), 0)
+        const previous30Days = data.slice(30, 60).reduce((sum, day) => sum + (day[metric] || 0), 0)
+        console.log(`${metric} - current30Days:`, current30Days)
+        console.log(`${metric} - previous30Days:`, previous30Days)
+        
+        if (previous30Days === 0) return current30Days > 0 ? 100 : 0
+        return Math.round(((current30Days - previous30Days) / previous30Days) * 100)
+      } 
+      // If we have between 30 and 59 days, compare half and half
+      else if (daysAvailable >= 30) {
+        const halfPoint = Math.floor(daysAvailable / 2)
+        const current = data.slice(0, halfPoint).reduce((sum, day) => sum + (day[metric] || 0), 0)
+        const previous = data.slice(halfPoint).reduce((sum, day) => sum + (day[metric] || 0), 0)
+        console.log(`${metric} - current (${halfPoint} days):`, current)
+        console.log(`${metric} - previous (${daysAvailable - halfPoint} days):`, previous)
+        
+        if (previous === 0) return current > 0 ? 100 : 0
+        return Math.round(((current - previous) / previous) * 100)
+      }
+      // If we have less than 30 days, just return 0 (not enough data)
+      else {
+        console.log(`Not enough data for ${metric} percent change (only ${daysAvailable} days)`)
+        return 0
+      }
     }
     
     const ordersPercentChange = calculatePercentChange(analyticsItems, 'orders_placed')
@@ -195,9 +232,9 @@ export default function AdminDashboardClient() {
     const visitsPercentChange = calculatePercentChange(analyticsItems, 'page_views')
     
     return {
-      totalOrders,
-      totalRevenue,
-      totalPageViews,
+      lastThirtyDaysOrders,
+      lastThirtyDaysRevenue,
+      lastThirtyDaysPageViews,
       ordersPercentChange,
       revenuePercentChange,
       visitsPercentChange,
@@ -234,7 +271,6 @@ export default function AdminDashboardClient() {
           profileSetup: false,
           customColors: false,
           menuItems: false,
-          stripeApiKey: false,
           customDomain: false,
           subscribed: false
         } 
@@ -251,13 +287,10 @@ export default function AdminDashboardClient() {
     const hasCustomColors = (foodTruck?.configuration?.primaryColor && foodTruck.configuration.primaryColor !== '#FF6B35') || 
                           (foodTruck?.configuration?.secondaryColor && foodTruck.configuration.secondaryColor !== '#4CB944')
     
-    // Check if there are any menu items
-    const hasMenuItems = !!foodTruck?.has_menu_items // Assuming this property exists, or create a separate query
+    // Check if there are any menu items using the fetched data
+    const hasMenuItems = menuItems.length > 0
     
-    const hasStripeApiKey = !!foodTruck?.stripe_api_key
-    
-    const hasCustomDomain = foodTruck?.custom_domain && 
-                          !foodTruck.subdomain.startsWith('foodtruck-')
+    const hasCustomDomain = foodTruck?.custom_domain || !foodTruck.subdomain.startsWith('foodtruck-')
     
     const isSubscribed = !!foodTruck?.stripe_subscription_id
     
@@ -265,7 +298,6 @@ export default function AdminDashboardClient() {
     const allChecklistItemsCompleted = !!hasProfileSetup && 
                                     !!hasCustomColors && 
                                     !!hasMenuItems && 
-                                    !!hasStripeApiKey && 
                                     !!hasCustomDomain && 
                                     !!isSubscribed
     
@@ -273,7 +305,6 @@ export default function AdminDashboardClient() {
       profileSetup: !!hasProfileSetup,
       customColors: !!hasCustomColors,
       menuItems: !!hasMenuItems,
-      stripeApiKey: !!hasStripeApiKey,
       customDomain: !!hasCustomDomain,
       subscribed: !!isSubscribed
     }
@@ -282,7 +313,7 @@ export default function AdminDashboardClient() {
     const showChecklist = !checklistCompletedState && !allChecklistItemsCompleted
     
     return { showChecklist, checklistItems }
-  }, [foodTruck, checklistCompletedState])
+  }, [foodTruck, checklistCompletedState, menuItems])
   
   // Mark checklist as completed
   const markChecklistAsCompleted = async () => {
@@ -304,7 +335,7 @@ export default function AdminDashboardClient() {
   }, [])
 
   // Loading states
-  const isLoading = isFoodTruckLoading || isAnalyticsLoading || isOrdersLoading
+  const isLoading = isFoodTruckLoading || isAnalyticsLoading || isOrdersLoading || isMenuItemsLoading
   
   if (isLoading) {
     return <DashboardSkeleton />
@@ -312,91 +343,208 @@ export default function AdminDashboardClient() {
   
   if (foodTruckError) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        <p className="font-semibold">Error loading food truck data</p>
-        <p>{foodTruckError instanceof Error ? foodTruckError.message : 'An unknown error occurred'}</p>
+      <div className="bg-admin-destructive/10 border border-admin-destructive/30 text-admin-destructive px-4 py-3 rounded-lg shadow-sm">
+        <p className="font-medium">Error loading food truck data</p>
+        <p className="text-sm mt-1">{foodTruckError instanceof Error ? foodTruckError.message : 'An unknown error occurred'}</p>
       </div>
     )
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Getting Started Checklist - Only show if not completed */}
-      {showChecklist && (
+  // Only show checklist if not completed
+  if (showChecklist) {
+    return (
+      <div className="space-y-6">
         <ChecklistClient 
           initialChecklist={checklistItems}
           markChecklistAsCompleted={markChecklistAsCompleted}
         />
-      )}
-      
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <LucideShoppingCart className="h-4 w-4 text-muted-foreground" />
+      </div>
+    )
+  }
+
+  // If checklist is complete, show the full dashboard
+  return (
+    <div className="space-y-6">
+      {/* Quick Stats - Responsive for both mobile and desktop */}
+      <div className="grid grid-cols-1 gap-4">
+        {/* Mobile Compact Stats Card */}
+        <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200 md:hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-full bg-admin-primary/10 flex items-center justify-center">
+                <LucideActivity className="h-3.5 w-3.5 text-admin-primary" />
+              </div>
+              <CardTitle className="text-sm font-medium text-admin-card-foreground">30-Day Performance</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              {ordersPercentChange >= 0 ? '+' : ''}{ordersPercentChange}% from last month
-            </p>
+          <CardContent className="p-0">
+            <div className="grid grid-cols-3 divide-x divide-admin-border">
+              {/* Orders */}
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-admin-muted-foreground">Orders</span>
+                  <div className="h-5 w-5 rounded-full bg-admin-primary/10 flex items-center justify-center">
+                    <LucideShoppingCart className="h-3 w-3 text-admin-primary" />
+                  </div>
+                </div>
+                <div className="text-lg font-bold text-admin-foreground">{lastThirtyDaysOrders}</div>
+                <div className="flex items-center mt-1">
+                  <Badge 
+                    variant={ordersPercentChange >= 0 ? "admin" : "outline"} 
+                    className={`text-xs font-normal px-1 ${ordersPercentChange >= 0 ? "" : "text-admin-destructive"}`}
+                  >
+                    {ordersPercentChange >= 0 ? '+' : ''}{ordersPercentChange}%
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Revenue */}
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-admin-muted-foreground">Revenue</span>
+                  <div className="h-5 w-5 rounded-full bg-admin-primary/10 flex items-center justify-center">
+                    <LucideDollarSign className="h-3 w-3 text-admin-primary" />
+                  </div>
+                </div>
+                <div className="text-lg font-bold text-admin-foreground">{formatCurrency(lastThirtyDaysRevenue)}</div>
+                <div className="flex items-center mt-1">
+                  <Badge 
+                    variant={revenuePercentChange >= 0 ? "admin" : "outline"} 
+                    className={`text-xs font-normal px-1 ${revenuePercentChange >= 0 ? "" : "text-admin-destructive"}`}
+                  >
+                    {revenuePercentChange >= 0 ? '+' : ''}{revenuePercentChange}%
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Visits */}
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-admin-muted-foreground">Visits</span>
+                  <div className="h-5 w-5 rounded-full bg-admin-primary/10 flex items-center justify-center">
+                    <LucideUsers className="h-3 w-3 text-admin-primary" />
+                  </div>
+                </div>
+                <div className="text-lg font-bold text-admin-foreground">{lastThirtyDaysPageViews}</div>
+                <div className="flex items-center mt-1">
+                  <Badge 
+                    variant={visitsPercentChange >= 0 ? "admin" : "outline"} 
+                    className={`text-xs font-normal px-1 ${visitsPercentChange >= 0 ? "" : "text-admin-destructive"}`}
+                  >
+                    {visitsPercentChange >= 0 ? '+' : ''}{visitsPercentChange}%
+                  </Badge>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <LucideDollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              {revenuePercentChange >= 0 ? '+' : ''}{revenuePercentChange}% from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Website Visits</CardTitle>
-            <LucideUsers className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalPageViews}</div>
-            <p className="text-xs text-muted-foreground">
-              {visitsPercentChange >= 0 ? '+' : ''}{visitsPercentChange}% from last month
-            </p>
-          </CardContent>
-        </Card>
+
+        {/* Desktop Expanded Stats Cards */}
+        <div className="hidden md:grid md:grid-cols-3 gap-4">
+          {/* Orders */}
+          <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-admin-card-foreground">Last 30 Days Orders</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-admin-primary/10 flex items-center justify-center">
+                <LucideShoppingCart className="h-4 w-4 text-admin-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-admin-foreground">{lastThirtyDaysOrders}</div>
+              <div className="flex items-center mt-1">
+                <Badge 
+                  variant={ordersPercentChange >= 0 ? "admin" : "outline"} 
+                  className={`text-xs font-normal ${ordersPercentChange >= 0 ? "" : "text-admin-destructive"}`}
+                >
+                  {ordersPercentChange >= 0 ? '+' : ''}{ordersPercentChange}%
+                </Badge>
+                <span className="text-xs text-admin-muted-foreground ml-2">vs previous 30 days</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Revenue */}
+          <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-admin-card-foreground">Last 30 Days Revenue</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-admin-primary/10 flex items-center justify-center">
+                <LucideDollarSign className="h-4 w-4 text-admin-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-admin-foreground">{formatCurrency(lastThirtyDaysRevenue)}</div>
+              <div className="flex items-center mt-1">
+                <Badge 
+                  variant={revenuePercentChange >= 0 ? "admin" : "outline"} 
+                  className={`text-xs font-normal ${revenuePercentChange >= 0 ? "" : "text-admin-destructive"}`}
+                >
+                  {revenuePercentChange >= 0 ? '+' : ''}{revenuePercentChange}%
+                </Badge>
+                <span className="text-xs text-admin-muted-foreground ml-2">vs previous 30 days</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Visits */}
+          <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-admin-card-foreground">Last 30 Days Visits</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-admin-primary/10 flex items-center justify-center">
+                <LucideUsers className="h-4 w-4 text-admin-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-admin-foreground">{lastThirtyDaysPageViews}</div>
+              <div className="flex items-center mt-1">
+                <Badge 
+                  variant={visitsPercentChange >= 0 ? "admin" : "outline"} 
+                  className={`text-xs font-normal ${visitsPercentChange >= 0 ? "" : "text-admin-destructive"}`}
+                >
+                  {visitsPercentChange >= 0 ? '+' : ''}{visitsPercentChange}%
+                </Badge>
+                <span className="text-xs text-admin-muted-foreground ml-2">vs previous 30 days</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
       
       {/* Daily Schedule */}
-      <Card>
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Today's Schedule</CardTitle>
-            <CardDescription>Your location and hours for {new Date().toLocaleDateString('en-US', { weekday: 'long' })}</CardDescription>
+            <CardTitle className="text-lg font-semibold text-admin-card-foreground">Today's Schedule</CardTitle>
+            <CardDescription className="text-admin-muted-foreground">Your location and hours for {new Date().toLocaleDateString('en-US', { weekday: 'long' })}</CardDescription>
           </div>
-          <LucideCalendar className="h-4 w-4 text-muted-foreground" />
+          <div className="h-8 w-8 rounded-full bg-admin-primary/10 flex items-center justify-center">
+            <LucideCalendar className="h-4 w-4 text-admin-primary" />
+          </div>
         </CardHeader>
         <CardContent>
           {todaySchedule ? (
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">{todaySchedule.location || 'No location set'}</h3>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <LucideMapPin className="h-4 w-4 text-admin-primary" />
+                    <h3 className="font-medium text-admin-foreground">{todaySchedule.location || 'No location set'}</h3>
+                  </div>
                   {todaySchedule.address && (
-                    <p className="text-sm text-muted-foreground">{todaySchedule.address}</p>
+                    <p className="text-sm text-admin-muted-foreground ml-6">{todaySchedule.address}</p>
                   )}
                   {todaySchedule.openTime && todaySchedule.closeTime && (
-                    <p className="text-sm font-medium mt-1">Hours: <FormattedTimeDisplay 
-                      openTime={todaySchedule.openTime} 
-                      closeTime={todaySchedule.closeTime}
-                    /></p>
+                    <div className="flex items-center gap-2 ml-0">
+                      <LucideClock className="h-4 w-4 text-admin-primary" />
+                      <p className="text-sm font-medium text-admin-foreground">
+                        <FormattedTimeDisplay 
+                          openTime={todaySchedule.openTime} 
+                          closeTime={todaySchedule.closeTime}
+                        />
+                      </p>
+                    </div>
                   )}
                 </div>
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col items-start md:items-end gap-1">
                   <StatusIndicator 
                     isCurrentlyOpen={isCurrentlyOpen} 
                     isClosed={todaySchedule.isClosed}
@@ -409,14 +557,13 @@ export default function AdminDashboardClient() {
                 </div>
               </div>
               
-              <Separator />
+              <Separator className="bg-admin-border/50" />
               
               {/* Add Close/Reopen Buttons */}
               <div className="flex flex-col sm:flex-row gap-2">
                 {todaySchedule.isClosed ? (
                   <Button 
-                    className="w-full" 
-                    variant="outline" 
+                    className="w-full bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground hover:opacity-90" 
                     onClick={() => reopenTodayMutation.mutate()}
                     disabled={reopenTodayMutation.isPending}
                   >
@@ -439,68 +586,88 @@ export default function AdminDashboardClient() {
                   <CloseForTodayDialog />
                 ) : null}
                 
-                <Link href="/admin/schedule">
-                  <Button className="w-full sm:w-auto" variant={todaySchedule.isClosed || isCurrentlyOpen ? "outline" : "default"}>
+                <Button className="w-full sm:w-auto" variant={todaySchedule.isClosed || isCurrentlyOpen ? "admin-outline" : "admin"} asChild>
+                  <Link href="/admin/schedule" className="inline-flex items-center">
                     Manage Schedule
                     <LucideArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center bg-amber-100 text-amber-800 px-4 py-3 rounded-md">
+              <div className="flex items-center bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-400 px-4 py-3 rounded-md">
                 <div className="w-2 h-2 rounded-full mr-2 bg-amber-500"></div>
                 <p className="text-sm">You don't have a schedule set for today ({new Date().toLocaleDateString('en-US', { weekday: 'long' })})</p>
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-admin-muted-foreground">
                 Set up your schedule to let customers know where to find you.
               </div>
-              <Link href="/admin/schedule">
-                <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground hover:opacity-90" asChild>
+                <Link href="/admin/schedule" className="inline-flex items-center">
                   Manage Schedule
                   <LucideArrowUpRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           )}
         </CardContent>
       </Card>
       
       {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest orders and updates</CardDescription>
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-lg font-semibold text-admin-card-foreground">Recent Activity</CardTitle>
+            <CardDescription className="text-admin-muted-foreground">Your latest orders and updates</CardDescription>
+          </div>
+          <div className="h-8 w-8 rounded-full bg-admin-primary/10 flex items-center justify-center">
+            <LucideActivity className="h-4 w-4 text-admin-primary" />
+          </div>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[400px]">
+          <ScrollArea className="h-[350px] md:h-[400px] pr-4">
             {recentOrders.length > 0 ? (
               <div className="space-y-4">
                 {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-start justify-between border-b pb-4">
+                  <div key={order.id} className="flex items-start justify-between border-b border-admin-border pb-4 group hover:bg-admin-accent/5 p-2 -mx-2 rounded-md transition-colors duration-200">
                     <div>
-                      <p className="font-medium">{order.customer_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.created_at).toLocaleString()}
+                      <p className="font-medium text-admin-foreground">{order.customer_name}</p>
+                      <p className="text-xs text-admin-muted-foreground mt-1">
+                        {new Date(order.created_at).toLocaleString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
-                      <p className="text-sm">
-                        {order.items.length} {order.items.length === 1 ? 'item' : 'items'} - {formatCurrency(order.total_amount)}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm text-admin-foreground">
+                          {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                        </p>
+                        <div className="w-1 h-1 rounded-full bg-admin-muted-foreground/50"></div>
+                        <p className="text-sm font-medium text-admin-foreground">{formatCurrency(order.total_amount)}</p>
+                      </div>
                     </div>
                     <Badge variant={
                       order.status === 'completed' ? 'default' :
                       order.status === 'ready' ? 'secondary' :
                       order.status === 'preparing' ? 'outline' :
                       'secondary'
-                    }>
+                    } className="group-hover:bg-opacity-100 transition-colors duration-200">
                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </Badge>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No recent activity to display.</p>
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <div className="h-12 w-12 rounded-full bg-admin-secondary flex items-center justify-center mb-3">
+                  <LucideShoppingCart className="h-6 w-6 text-admin-muted-foreground" />
+                </div>
+                <p className="text-admin-muted-foreground">No recent orders to display</p>
+                <p className="text-xs text-admin-muted-foreground mt-1">Orders will appear here when customers place them</p>
+              </div>
             )}
           </ScrollArea>
         </CardContent>
@@ -514,70 +681,116 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-6">
       {/* Quick Stats Skeleton */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-4 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-20 mb-1" />
-              <Skeleton className="h-4 w-40" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 gap-4">
+        {/* Mobile Compact Stats Card */}
+        <Card className="border border-admin-border/30 bg-admin-card/50 shadow-sm overflow-hidden md:hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-6 rounded-full bg-admin-accent/10" />
+              <Skeleton className="h-5 w-32 bg-admin-accent/10" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="grid grid-cols-3 divide-x divide-admin-border/30">
+              {/* Orders */}
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <Skeleton className="h-3 w-12 bg-admin-accent/10" />
+                  <Skeleton className="h-5 w-5 rounded-full bg-admin-accent/10" />
+                </div>
+                <Skeleton className="h-6 w-12 mb-2 bg-admin-accent/10" />
+                <Skeleton className="h-4 w-10 bg-admin-accent/10" />
+              </div>
+              
+              {/* Revenue Stats Skeleton */}
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <Skeleton className="h-3 w-12 bg-admin-accent/10" />
+                  <Skeleton className="h-5 w-5 rounded-full bg-admin-accent/10" />
+                </div>
+                <Skeleton className="h-6 w-14 mb-2 bg-admin-accent/10" />
+                <Skeleton className="h-4 w-10 bg-admin-accent/10" />
+              </div>
+              
+              {/* Visits Stats Skeleton */}
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <Skeleton className="h-3 w-12 bg-admin-accent/10" />
+                  <Skeleton className="h-5 w-5 rounded-full bg-admin-accent/10" />
+                </div>
+                <Skeleton className="h-6 w-12 mb-2 bg-admin-accent/10" />
+                <Skeleton className="h-4 w-10 bg-admin-accent/10" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Desktop Expanded Stats Cards */}
+        <div className="hidden md:grid md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="border border-admin-border/30 bg-admin-card/50 shadow-sm overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-5 w-32 bg-admin-accent/10" />
+                <Skeleton className="h-8 w-8 rounded-full bg-admin-accent/10" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-20 mb-2 bg-admin-accent/10" />
+                <Skeleton className="h-5 w-40 bg-admin-accent/10" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
       
       {/* Daily Schedule Skeleton */}
-      <Card>
+      <Card className="border border-admin-border/30 bg-admin-card/50 shadow-sm overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <Skeleton className="h-6 w-40 mb-2" />
-            <Skeleton className="h-4 w-60" />
+            <Skeleton className="h-6 w-40 mb-2 bg-admin-accent/10" />
+            <Skeleton className="h-4 w-60 bg-admin-accent/10" />
           </div>
-          <Skeleton className="h-4 w-4 rounded-full" />
+          <Skeleton className="h-8 w-8 rounded-full bg-admin-accent/10" />
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <Skeleton className="h-5 w-40 mb-2" />
-                <Skeleton className="h-4 w-60 mb-2" />
-                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-5 w-40 mb-2 bg-admin-accent/10" />
+                <Skeleton className="h-4 w-60 mb-2 bg-admin-accent/10" />
+                <Skeleton className="h-4 w-32 bg-admin-accent/10" />
               </div>
               <div className="flex flex-col items-end">
-                <Skeleton className="h-6 w-24 mb-2" />
-                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-6 w-24 mb-2 bg-admin-accent/10" />
+                <Skeleton className="h-4 w-32 bg-admin-accent/10" />
               </div>
             </div>
             
-            <Skeleton className="h-px w-full" />
+            <Skeleton className="h-px w-full bg-admin-accent/10" />
             
             <div className="flex flex-col sm:flex-row gap-2">
-              <Skeleton className="h-10 w-full sm:w-40" />
-              <Skeleton className="h-10 w-full sm:w-40" />
+              <Skeleton className="h-10 w-full sm:w-40 bg-admin-accent/10" />
+              <Skeleton className="h-10 w-full sm:w-40 bg-admin-accent/10" />
             </div>
           </div>
         </CardContent>
       </Card>
       
       {/* Recent Activity Skeleton */}
-      <Card>
+      <Card className="border border-admin-border/30 bg-admin-card/50 shadow-sm overflow-hidden">
         <CardHeader>
-          <Skeleton className="h-6 w-40 mb-2" />
-          <Skeleton className="h-4 w-60" />
+          <Skeleton className="h-6 w-40 mb-2 bg-admin-accent/10" />
+          <Skeleton className="h-4 w-60 bg-admin-accent/10" />
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-start justify-between border-b pb-4">
+              <div key={i} className="flex items-start justify-between border-b border-admin-border/30 pb-4">
                 <div>
-                  <Skeleton className="h-5 w-32 mb-2" />
-                  <Skeleton className="h-4 w-40 mb-2" />
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-5 w-32 mb-2 bg-admin-accent/10" />
+                  <Skeleton className="h-4 w-40 mb-2 bg-admin-accent/10" />
+                  <Skeleton className="h-4 w-24 bg-admin-accent/10" />
                 </div>
-                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-20 bg-admin-accent/10" />
               </div>
             ))}
           </div>

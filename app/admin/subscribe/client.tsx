@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, CreditCard } from "lucide-react";
+import { Check, CreditCard, Gift, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 
 export default function SubscribeClient() {
@@ -76,14 +76,14 @@ export default function SubscribeClient() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+      <div className="bg-admin-destructive/10 border border-admin-destructive text-admin-destructive px-4 py-3 rounded-md">
         <p>{(error as Error).message}</p>
       </div>
     );
@@ -93,45 +93,48 @@ export default function SubscribeClient() {
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
         {/* Basic Plan */}
-        <Card className={currentPlan === 'basic' ? 'border-primary' : ''}>
-          <CardHeader>
+        <Card className={`bg-admin-card border-admin-border hover:shadow-md transition-all duration-200 ${currentPlan === 'basic' ? 'border-admin-primary border-2' : ''}`}>
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle>Basic Plan</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Gift className="h-5 w-5 text-admin-primary" />
+                <CardTitle className="text-admin-card-foreground">Basic Plan</CardTitle>
+              </div>
               {currentPlan === 'basic' && (
-                <Badge variant="outline" className="ml-2">Current Plan</Badge>
+                <Badge variant="outline" className="ml-2 bg-admin-primary/10 text-admin-primary border-admin-primary">Current Plan</Badge>
               )}
             </div>
-            <CardDescription>Perfect for getting started</CardDescription>
+            <CardDescription className="text-admin-muted-foreground">Perfect for getting started</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-4xl font-bold">$29<span className="text-sm font-normal text-muted-foreground">/month</span></div>
-            <ul className="space-y-2 text-sm">
+          <CardContent className="space-y-4 pb-6">
+            <div className="text-4xl font-bold text-admin-card-foreground">$29<span className="text-sm font-normal text-admin-muted-foreground">/month</span></div>
+            <ul className="space-y-3 text-sm">
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Website template</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Website template</span>
               </li>
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Online ordering</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Online ordering</span>
               </li>
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Basic analytics</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Basic analytics</span>
               </li>
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Subdomain hosting</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Subdomain hosting</span>
               </li>
             </ul>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="pt-2">
             {currentPlan === 'basic' ? (
-              <Button variant="outline" className="w-full" disabled>
+              <Button variant="outline" className="w-full bg-admin-secondary/50 text-admin-secondary-foreground border-admin-border" disabled>
                 Current Plan
               </Button>
             ) : (
               <Button
-                className="w-full"
+                className="w-full bg-gradient-to-r from-[hsl(var(--admin-primary))] to-[hsl(var(--admin-gradient-end))] text-white hover:shadow-lg"
                 onClick={() => handleSubscription('basic')}
                 disabled={isProcessing}
               >
@@ -143,45 +146,48 @@ export default function SubscribeClient() {
         </Card>
         
         {/* Pro Plan */}
-        <Card className={currentPlan === 'pro' ? 'border-primary' : ''}>
-          <CardHeader>
+        <Card className={`bg-admin-card border-admin-border hover:shadow-md transition-all duration-200 ${currentPlan === 'pro' ? 'border-admin-primary border-2' : ''}`}>
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle>Pro Plan</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Zap className="h-5 w-5 text-admin-primary" />
+                <CardTitle className="text-admin-card-foreground">Pro Plan</CardTitle>
+              </div>
               {currentPlan === 'pro' && (
-                <Badge variant="outline" className="ml-2">Current Plan</Badge>
+                <Badge variant="outline" className="ml-2 bg-admin-primary/10 text-admin-primary border-admin-primary">Current Plan</Badge>
               )}
             </div>
-            <CardDescription>For serious food truck businesses</CardDescription>
+            <CardDescription className="text-admin-muted-foreground">For serious food truck businesses</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-4xl font-bold">$49<span className="text-sm font-normal text-muted-foreground">/month</span></div>
-            <ul className="space-y-2 text-sm">
+          <CardContent className="space-y-4 pb-6">
+            <div className="text-4xl font-bold text-admin-card-foreground">$49<span className="text-sm font-normal text-admin-muted-foreground">/month</span></div>
+            <ul className="space-y-3 text-sm">
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Everything in Basic</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Everything in Basic</span>
               </li>
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Custom domain support</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Custom domain support</span>
               </li>
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Advanced analytics</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Advanced analytics</span>
               </li>
               <li className="flex items-center">
-                <Check className="mr-2 h-4 w-4 text-primary" />
-                <span>Priority support</span>
+                <Check className="mr-2 h-4 w-4 text-admin-primary" />
+                <span className="text-admin-card-foreground">Priority support</span>
               </li>
             </ul>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="pt-2">
             {currentPlan === 'pro' ? (
-              <Button variant="outline" className="w-full" disabled>
+              <Button variant="outline" className="w-full bg-admin-secondary/50 text-admin-secondary-foreground border-admin-border" disabled>
                 Current Plan
               </Button>
             ) : (
               <Button
-                className="w-full"
+                className="w-full bg-gradient-to-r from-[hsl(var(--admin-primary))] to-[hsl(var(--admin-gradient-end))] text-white hover:shadow-lg"
                 onClick={() => handleSubscription('pro')}
                 disabled={isProcessing}
               >
@@ -193,42 +199,45 @@ export default function SubscribeClient() {
         </Card>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Subscription Status</CardTitle>
-          <CardDescription>Manage your current subscription</CardDescription>
+      <Card className="bg-admin-card border-admin-border shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-2">
+            <Shield className="h-5 w-5 text-admin-primary" />
+            <CardTitle className="text-admin-card-foreground">Subscription Status</CardTitle>
+          </div>
+          <CardDescription className="text-admin-muted-foreground">Manage your current subscription</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <h3 className="text-sm font-medium">Current Plan</h3>
-              <p className="text-sm text-muted-foreground">
+            <div className="bg-admin-secondary/30 p-3 rounded-md">
+              <h3 className="text-sm font-medium text-admin-card-foreground">Current Plan</h3>
+              <p className="text-sm text-admin-muted-foreground mt-1">
                 {currentPlan === 'none' ? 'No active subscription' : `${currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} Plan`}
               </p>
             </div>
             {isSubscribed && (
               <>
-                <div>
-                  <h3 className="text-sm font-medium">Subscription ID</h3>
-                  <p className="text-sm text-muted-foreground truncate">
+                <div className="bg-admin-secondary/30 p-3 rounded-md">
+                  <h3 className="text-sm font-medium text-admin-card-foreground">Subscription ID</h3>
+                  <p className="text-sm text-admin-muted-foreground mt-1 truncate">
                     {foodTruck?.stripe_subscription_id || 'N/A'}
                   </p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium">Status</h3>
-                  <p className="text-sm text-muted-foreground">
+                <div className="bg-admin-secondary/30 p-3 rounded-md">
+                  <h3 className="text-sm font-medium text-admin-card-foreground">Status</h3>
+                  <p className="text-sm text-admin-muted-foreground mt-1">
                     {isSubscribed ? 'Active' : 'Inactive'}
                   </p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium">Next Billing Date</h3>
-                  <p className="text-sm text-muted-foreground">
+                <div className="bg-admin-secondary/30 p-3 rounded-md">
+                  <h3 className="text-sm font-medium text-admin-card-foreground">Next Billing Date</h3>
+                  <p className="text-sm text-admin-muted-foreground mt-1">
                     {isSubscribed ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium">Monthly Price</h3>
-                  <p className="text-sm text-muted-foreground">
+                <div className="bg-admin-secondary/30 p-3 rounded-md">
+                  <h3 className="text-sm font-medium text-admin-card-foreground">Monthly Price</h3>
+                  <p className="text-sm text-admin-muted-foreground mt-1">
                     {currentPlan === 'pro' ? '$49' : '$29'}/month
                   </p>
                 </div>
@@ -236,21 +245,28 @@ export default function SubscribeClient() {
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:space-x-2 sm:space-y-0">
+        <CardFooter className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-x-2 sm:space-y-0 pt-2">
           {isSubscribed ? (
             <>
-              <Button variant="outline" disabled>Manage Billing</Button>
+              <Button 
+                variant="outline" 
+                disabled 
+                className="bg-admin-secondary/50 text-admin-secondary-foreground border-admin-border"
+              >
+                Manage Billing
+              </Button>
               <Button 
                 variant="destructive"
                 onClick={handleCancelSubscription}
                 disabled={isProcessing}
+                className="bg-admin-destructive text-admin-destructive-foreground hover:bg-admin-destructive/90"
               >
                 {isProcessing ? 'Processing...' : 'Cancel Subscription'}
               </Button>
             </>
           ) : (
             <Button
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-gradient-to-r from-[hsl(var(--admin-primary))] to-[hsl(var(--admin-gradient-end))] text-white hover:shadow-lg"
               onClick={() => handleSubscription('basic')}
               disabled={isProcessing}
             >

@@ -25,7 +25,7 @@ export function ThemeToggle() {
 
   return (
     <Button 
-      variant="ghost" 
+      variant="admin-ghost" 
       size="icon" 
       onClick={toggleTheme} 
       className="h-9 w-9 text-admin-foreground/80 hover:text-admin-foreground"

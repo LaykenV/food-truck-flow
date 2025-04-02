@@ -1,18 +1,18 @@
 'use client';
 
 import { createClient } from '@/utils/supabase/client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Save, Edit, Trash2, Plus, Calendar, MapPin, Clock, XCircle, X } from 'lucide-react';
+import { Save, Edit, Trash2, Plus, Calendar, MapPin, Clock, XCircle, X, Settings, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { format } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { formatTimeRange } from '@/lib/schedule-utils';
 import type { AddressAutofillRetrieveResponse } from '@mapbox/search-js-core';
 import AddressAutofillInput from '@/components/AddressAutofillInput';
@@ -20,6 +20,8 @@ import { ScheduleCard, ScheduleDayGroup } from '@/components/ui/schedule-card';
 import { updateSchedule } from './actions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFoodTruck, getScheduleFromFoodTruck } from '@/app/admin/clientQueries';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AdminScheduleCard } from '@/components/ui/admin-schedule-card';
 
 interface ScheduleDay {
   day: string;
@@ -35,11 +37,74 @@ interface ScheduleDay {
   };
 }
 
+// Custom Modal component that's compatible with AddressAutofill
+function ScheduleModal({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  title: string; 
+  children: React.ReactNode 
+}) {
+  // Handle ESC key press to close the modal
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+      // Prevent body scrolling when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm" 
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      
+      {/* Modal content */}
+      <div className="relative w-full max-w-lg max-h-[90vh] m-4 sm:m-6 overflow-auto bg-admin-card rounded-lg shadow-lg animate-in fade-in duration-200 border border-admin-border z-50">
+        <div className="sticky top-0 flex items-center justify-between bg-admin-card border-b border-admin-border p-4 z-10">
+          <h2 className="text-lg font-medium text-admin-foreground">{title}</h2>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className="h-8 w-8 text-admin-muted-foreground hover:text-admin-foreground"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="p-4 sm:p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ScheduleClient() {
   const queryClient = useQueryClient();
   const [editingDay, setEditingDay] = useState<ScheduleDay | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Days of the week for display order
@@ -101,7 +166,7 @@ export default function ScheduleClient() {
       isClosed: false
     });
     setEditingIndex(null);
-    setIsEditing(true);
+    setIsModalOpen(true);
   };
 
   const handleEditDay = (group: ScheduleDay[], groupIndex: number) => {
@@ -110,7 +175,7 @@ export default function ScheduleClient() {
     // Store the index of the first day in the original schedule
     const originalIndex = schedule.findIndex((day: ScheduleDay) => day.day === group[0].day);
     setEditingIndex(originalIndex);
-    setIsEditing(true);
+    setIsModalOpen(true);
   };
 
   const handleDeleteDay = async (group: ScheduleDay[]) => {
@@ -145,7 +210,7 @@ export default function ScheduleClient() {
       scheduleDescription: description
     });
 
-    setIsEditing(false);
+    setIsModalOpen(false);
   };
 
   const handleInputChange = (field: keyof ScheduleDay, value: string | boolean) => {
@@ -242,11 +307,51 @@ export default function ScheduleClient() {
   const today = format(new Date(), 'EEEE');
   const todaySchedule = schedule.find((day: ScheduleDay) => day.day === today);
 
+  // Generate the current week dates
+  const currentWeekDates = useMemo(() => {
+    // Get the current date
+    const today = new Date();
+    // Find the Monday of the current week (startOfWeek uses Sunday as first day by default, so we offset by 1)
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    
+    // Create an array for all days of the week with their dates
+    return daysOfWeek.map((dayName, index) => {
+      const date = addDays(weekStart, index);
+      return {
+        dayName,
+        date,
+        dateString: format(date, 'MMM d')
+      };
+    });
+  }, []);
+
+  // Create a map for quickly finding schedules by day
+  const scheduleByDay = useMemo(() => {
+    const map = new Map();
+    schedule.forEach((day: ScheduleDay) => {
+      map.set(day.day, day);
+    });
+    return map;
+  }, [schedule]);
+
+  const handleAddNewSchedule = (dayName: string) => {
+    setEditingDay({
+      day: dayName,
+      location: '',
+      address: '',
+      openTime: '11:00',
+      closeTime: '14:00',
+      isClosed: false
+    });
+    setEditingIndex(null);
+    setIsModalOpen(true);
+  };
+
   // Show error when no data can be loaded
   if (!isFoodTruckLoading && foodTruckError) {
     return (
       <div className="space-y-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-destructive/10 border border-destructive text-destructive-foreground px-4 py-3 rounded-md">
           <p className="font-semibold">Error loading schedule data</p>
           <p>{foodTruckError.message || 'Please try again later.'}</p>
         </div>
@@ -258,7 +363,7 @@ export default function ScheduleClient() {
   if (isFoodTruckLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-admin-primary"></div>
       </div>
     );
   }
@@ -266,7 +371,7 @@ export default function ScheduleClient() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex items-center justify-between">
+        <div className="bg-destructive/10 border border-destructive text-destructive-foreground px-4 py-3 rounded-md relative flex items-center justify-between">
           <span className="block">{error}</span>
           <Button 
             variant="ghost" 
@@ -279,73 +384,77 @@ export default function ScheduleClient() {
         </div>
       )}
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Schedule Configuration</CardTitle>
-          <CardDescription>
-            Set the title and description for your schedule section
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="scheduleTitle">Schedule Section Title</Label>
-            <Input
-              id="scheduleTitle"
-              value={title}
-              onChange={(e) => updateScheduleMutation.mutate({
-                scheduleData: schedule,
-                scheduleTitle: e.target.value,
-                scheduleDescription: description
-              })}
-              placeholder="Title for your schedule section"
-              className="mt-1"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="scheduleDescription">Schedule Description</Label>
-            <Textarea
-              id="scheduleDescription"
-              value={description}
-              onChange={(e) => updateScheduleMutation.mutate({
-                scheduleData: schedule,
-                scheduleTitle: title,
-                scheduleDescription: e.target.value
-              })}
-              placeholder="Description for your schedule section"
-              className="mt-1"
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button
-            onClick={handleSaveMetadata}
-            disabled={updateScheduleMutation.isPending}
-            size="sm"
-          >
-            {updateScheduleMutation.isPending ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Configuration
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-      
-      <Separator />
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="schedule-config" className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200 rounded-lg border-b-0">
+          <AccordionTrigger className="px-6 py-4 rounded-t-lg text-admin-foreground hover:no-underline hover:bg-admin-accent/40">
+            <div className="flex items-center">
+              <Settings className="h-4 w-4 mr-2 text-admin-muted-foreground" />
+              <span>Schedule Configuration</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6">
+            <div className="space-y-4 py-2">
+              <div>
+                <Label htmlFor="scheduleTitle" className="text-admin-foreground">Schedule Section Title</Label>
+                <Input
+                  id="scheduleTitle"
+                  value={title}
+                  onChange={(e) => updateScheduleMutation.mutate({
+                    scheduleData: schedule,
+                    scheduleTitle: e.target.value,
+                    scheduleDescription: description
+                  })}
+                  placeholder="Title for your schedule section"
+                  className="mt-1 border-admin-input bg-admin-background text-admin-foreground"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="scheduleDescription" className="text-admin-foreground">Schedule Description</Label>
+                <Textarea
+                  id="scheduleDescription"
+                  value={description}
+                  onChange={(e) => updateScheduleMutation.mutate({
+                    scheduleData: schedule,
+                    scheduleTitle: title,
+                    scheduleDescription: e.target.value
+                  })}
+                  placeholder="Description for your schedule section"
+                  className="mt-1 border-admin-input bg-admin-background text-admin-foreground"
+                />
+              </div>
+              
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSaveMetadata}
+                  disabled={updateScheduleMutation.isPending}
+                  size="sm"
+                  className="bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90"
+                >
+                  {updateScheduleMutation.isPending ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Configuration
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Schedule Management UI */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-4">
           <div>
-            <CardTitle>Weekly Schedule</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-admin-card-foreground text-xl mb-1">Weekly Schedule</CardTitle>
+            <CardDescription className="text-admin-muted-foreground max-w-[280px] sm:max-w-none">
               {todaySchedule 
                 ? todaySchedule.isClosed
                   ? `Today (${today}): ${todaySchedule.location} - Manually Closed`
@@ -357,180 +466,161 @@ export default function ScheduleClient() {
                 : `No schedule for today (${today})`}
             </CardDescription>
           </div>
-          <Button size="sm" onClick={handleAddDay} className="flex items-center gap-1">
+          <Button 
+            size="sm" 
+            onClick={handleAddDay} 
+            className="flex items-center gap-1 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-white hover:opacity-90 mt-2 sm:mt-0 w-full sm:w-auto"
+          >
             <Plus className="h-4 w-4" />
             <span>Add Schedule</span>
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Inline Edit Form - Only show when editing */}
-          {isEditing && (
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">{editingIndex !== null ? 'Edit Schedule' : 'Add Schedule'}</h3>
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
-                      <XCircle className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="grid gap-4 py-2">
-                    <div className="grid gap-2">
-                      <Label htmlFor="day">Day</Label>
-                      <Select
-                        value={editingDay?.day || ''}
-                        onValueChange={(value) => handleInputChange('day', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select day" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {daysOfWeek.map((day: string) => (
-                            <SelectItem key={day} value={day}>{day}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={editingDay?.location || ''}
-                        onChange={(e) => handleInputChange('location', e.target.value)}
-                        placeholder="Downtown, Food Truck Park, etc."
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="address">Address</Label>
-                      <AddressAutofillInput
-                        id="address"
-                        value={editingDay?.address || ''}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        onRetrieve={handleAddressRetrieve}
-                        placeholder="Enter address"
-                      />
-                      {editingDay?.coordinates && (
-                        <p className="text-xs text-muted-foreground">
-                          Coordinates saved: {editingDay.coordinates.lat.toFixed(6)}, {editingDay.coordinates.lng.toFixed(6)}
-                        </p>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="openTime">Open Time</Label>
-                        <Input
-                          id="openTime"
-                          type="time"
-                          value={editingDay?.openTime || ''}
-                          onChange={(e) => handleInputChange('openTime', e.target.value)}
-                        />
-                      </div>
-                      
-                      <div className="grid gap-2">
-                        <Label htmlFor="closeTime">Close Time</Label>
-                        <Input
-                          id="closeTime"
-                          type="time"
-                          value={editingDay?.closeTime || ''}
-                          onChange={(e) => handleInputChange('closeTime', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                    <Button onClick={handleSaveDay} disabled={updateScheduleMutation.isPending}>
-                      {updateScheduleMutation.isPending ? (
-                        <>
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                          Saving...
-                        </>
-                      ) : (
-                        'Save'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {isFoodTruckLoading && !isEditing ? (
+          {isFoodTruckLoading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : schedule.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50" />
-              <p className="mt-2">No schedule items yet</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={handleAddDay}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Schedule
-              </Button>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
             </div>
           ) : (
             <>
-              {/* Mobile view - horizontal scrolling */}
-              <div className="md:hidden">
-                <ScrollArea className="w-full whitespace-nowrap">
-                  <div className="flex space-x-3 p-1">
-                    {groupedScheduleDays.map((group, groupIndex) => (
-                      <div key={groupIndex} className="relative min-w-[260px]">
-                        <ScheduleCard 
-                          group={group}
-                          primaryColor={primaryColor}
-                          secondaryColor={primaryColor}
-                          className="border-l-4"
-                        />
-                        <div className="absolute top-2 right-2 flex space-x-1 z-10">
-                          <Button variant="ghost" size="icon" onClick={() => handleEditDay(group.days, groupIndex)} className="h-6 w-6 bg-background/80 backdrop-blur-sm">
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteDay(group.days)} className="h-6 w-6 text-destructive bg-background/80 backdrop-blur-sm">
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+              {/* Mobile view - vertical layout */}
+              <div className="md:hidden grid grid-cols-1 gap-4">
+                {currentWeekDates.map((dayInfo, index) => {
+                  const scheduleForDay = scheduleByDay.get(dayInfo.dayName);
+                  return (
+                    <AdminScheduleCard
+                      key={index}
+                      dayInfo={dayInfo}
+                      scheduleForDay={scheduleForDay}
+                      onEdit={handleEditDay}
+                      onDelete={handleDeleteDay}
+                      onAddNew={handleAddNewSchedule}
+                      isCompact
+                    />
+                  );
+                })}
               </div>
 
               {/* Desktop view - grid layout */}
-              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {groupedScheduleDays.map((group, groupIndex) => (
-                  <div key={groupIndex} className="relative">
-                    <ScheduleCard 
-                      group={group}
-                      primaryColor={primaryColor}
-                      secondaryColor={primaryColor}
-                      className="border-l-4"
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {currentWeekDates.map((dayInfo, index) => {
+                  const scheduleForDay = scheduleByDay.get(dayInfo.dayName);
+                  return (
+                    <AdminScheduleCard
+                      key={index}
+                      dayInfo={dayInfo}
+                      scheduleForDay={scheduleForDay}
+                      onEdit={handleEditDay}
+                      onDelete={handleDeleteDay}
+                      onAddNew={handleAddNewSchedule}
                     />
-                    <div className="absolute top-3 right-3 flex space-x-1 z-10">
-                      <Button variant="ghost" size="icon" onClick={() => handleEditDay(group.days, groupIndex)} className="bg-background/80 backdrop-blur-sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteDay(group.days)} className="text-destructive bg-background/80 backdrop-blur-sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
         </CardContent>
       </Card>
+
+      {/* Schedule Form Modal */}
+      <ScheduleModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        title={editingIndex !== null ? 'Edit Schedule' : 'Add Schedule'}
+      >
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="day" className="text-admin-foreground">Day</Label>
+            <Select
+              value={editingDay?.day || ''}
+              onValueChange={(value) => handleInputChange('day', value)}
+            >
+              <SelectTrigger className="border-admin-input bg-admin-background text-admin-foreground">
+                <SelectValue placeholder="Select day" />
+              </SelectTrigger>
+              <SelectContent className="bg-admin-popover text-admin-popover-foreground border-admin-border">
+                {daysOfWeek.map((day: string) => (
+                  <SelectItem key={day} value={day} className="text-admin-foreground focus:bg-admin-accent focus:text-admin-accent-foreground">{day}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="location" className="text-admin-foreground">Location</Label>
+            <Input
+              id="location"
+              value={editingDay?.location || ''}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              placeholder="Downtown, Food Truck Park, etc."
+              className="border-admin-input bg-admin-background text-admin-foreground"
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="address" className="text-admin-foreground">Address</Label>
+            <AddressAutofillInput
+              id="address"
+              value={editingDay?.address || ''}
+              onChange={(e) => handleInputChange('address', e.target.value)}
+              onRetrieve={handleAddressRetrieve}
+              placeholder="Enter address"
+            />
+            {editingDay?.coordinates && (
+              <p className="text-xs text-admin-muted-foreground">
+                Coordinates saved: {editingDay.coordinates.lat.toFixed(6)}, {editingDay.coordinates.lng.toFixed(6)}
+              </p>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="openTime" className="text-admin-foreground">Open Time</Label>
+              <Input
+                id="openTime"
+                type="time"
+                value={editingDay?.openTime || ''}
+                onChange={(e) => handleInputChange('openTime', e.target.value)}
+                className="border-admin-input bg-admin-background text-admin-foreground"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="closeTime" className="text-admin-foreground">Close Time</Label>
+              <Input
+                id="closeTime"
+                type="time"
+                value={editingDay?.closeTime || ''}
+                onChange={(e) => handleInputChange('closeTime', e.target.value)}
+                className="border-admin-input bg-admin-background text-admin-foreground"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsModalOpen(false)}
+            className="border-admin-border text-admin-foreground hover:bg-admin-accent/50"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSaveDay} 
+            disabled={updateScheduleMutation.isPending}
+            className="bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-white hover:opacity-90"
+          >
+            {updateScheduleMutation.isPending ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                Saving...
+              </>
+            ) : (
+              'Save'
+            )}
+          </Button>
+        </div>
+      </ScheduleModal>
     </div>
   );
 } 

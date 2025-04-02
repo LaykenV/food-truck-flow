@@ -24,6 +24,7 @@ import Image from 'next/image'
 import { addMenuItem, updateMenuItem, deleteMenuItem } from './actions'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMenuItems, getCategories, getFoodTruck } from '@/app/admin/clientQueries'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface MenuItemType {
   id: string;
@@ -49,6 +50,8 @@ export default function MenuClient() {
     category: '',
     image_url: ''
   })
+  const [customCategory, setCustomCategory] = useState('')
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false)
   
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -321,10 +324,14 @@ export default function MenuClient() {
   if (!isFoodTruckLoading && !foodTruck) {
     return (
       <div className="space-y-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p className="font-semibold">No food truck found</p>
-          <p>Please complete your profile setup first before managing menu items.</p>
-        </div>
+        <Card className="border border-admin-border bg-admin-card text-admin-card-foreground shadow-sm">
+          <CardHeader>
+            <CardTitle>No Food Truck Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Please complete your profile setup first before managing menu items.</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -332,68 +339,52 @@ export default function MenuClient() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex items-center justify-between">
+        <div className="bg-destructive/10 border border-destructive text-destructive rounded-md px-4 py-3 relative flex items-center justify-between">
           <span className="block">{error}</span>
           <Button 
             variant="ghost" 
             size="icon"
             onClick={() => setError(null)}
-            className="h-8 w-8"
+            className="h-8 w-8 text-destructive hover:text-destructive"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       )}
       
-      <div className="flex">
-        <Button 
-          onClick={() => {
-            setEditingMenuItem(null)
-            setMenuForm({
-              name: '',
-              description: '',
-              price: '',
-              category: '',
-              image_url: ''
-            })
-            setShowMenuForm(true)
-          }}
-          className="ml-0"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Menu Item
-        </Button>
-      </div>
-      
-      <Separator />
-      
       {/* Category Filter */}
-      <Card>
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
         <CardHeader className="pb-2">
-          <CardTitle>Categories</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-admin-card-foreground">Categories</CardTitle>
+          <CardDescription className="text-admin-muted-foreground">
             Filter your menu by category
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            <Badge 
-              variant={categoryFilter === null ? "default" : "outline"}
-              className="cursor-pointer"
+            <button
+              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
+                categoryFilter === null 
+                  ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
+                  : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
+              }`}
               onClick={() => setCategoryFilter(null)}
             >
               All
-            </Badge>
+            </button>
             
             {categories.map((category) => (
-              <Badge
+              <button
                 key={category}
-                variant={categoryFilter === category ? "default" : "outline"}
-                className="cursor-pointer"
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
+                  categoryFilter === category 
+                    ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
+                    : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
+                }`}
                 onClick={() => setCategoryFilter(category)}
               >
                 {category}
-              </Badge>
+              </button>
             ))}
           </div>
         </CardContent>
@@ -401,30 +392,31 @@ export default function MenuClient() {
       
       {/* Menu Item Form Dialog */}
       <Dialog open={showMenuForm} onOpenChange={setShowMenuForm}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-admin-card border-admin-border text-admin-card-foreground shadow-lg backdrop-blur-sm bg-opacity-95">
           <DialogHeader>
             <DialogTitle>{editingMenuItem ? 'Edit Menu Item' : 'Add Menu Item'}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-admin-muted-foreground">
               {editingMenuItem 
                 ? 'Update the details of your menu item' 
                 : 'Fill in the details to add a new menu item to your food truck'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={editingMenuItem ? handleUpdateMenuItem : handleAddMenuItem}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 py-4 animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" className="text-admin-card-foreground">Name</Label>
                   <Input
                     id="name"
                     value={menuForm.name}
                     onChange={(e) => setMenuForm({...menuForm, name: e.target.value})}
                     placeholder="Taco Supreme"
                     required
+                    className="bg-transparent text-admin-card-foreground border-admin-border"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price ($)</Label>
+                  <Label htmlFor="price" className="text-admin-card-foreground">Price ($)</Label>
                   <Input
                     id="price"
                     type="number"
@@ -433,42 +425,111 @@ export default function MenuClient() {
                     onChange={(e) => setMenuForm({...menuForm, price: e.target.value})}
                     placeholder="9.99"
                     required
+                    className="bg-transparent text-admin-card-foreground border-admin-border"
                   />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-admin-card-foreground">Description</Label>
                 <Textarea
                   id="description"
                   rows={3}
                   value={menuForm.description}
                   onChange={(e) => setMenuForm({...menuForm, description: e.target.value})}
                   placeholder="Delicious taco with all the fixings..."
+                  className="bg-transparent text-admin-card-foreground border-admin-border"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <div className="relative">
-                  <Input
-                    id="category"
-                    list="category-suggestions"
-                    value={menuForm.category}
-                    onChange={(e) => setMenuForm({...menuForm, category: e.target.value})}
-                    placeholder="Enter or select a category"
-                    required
-                  />
-                  <datalist id="category-suggestions">
-                    {categories.map((category) => (
-                      <option key={category} value={category} />
-                    ))}
-                  </datalist>
+                <Label htmlFor="category" className="text-admin-card-foreground">Category</Label>
+                <div className="space-y-2">
+                  {showCustomCategoryInput ? (
+                    <div className="flex gap-2 relative animate-in slide-in-from-right-2 duration-200">
+                      <Input
+                        id="custom-category"
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        placeholder="Enter a new category"
+                        className="bg-transparent text-admin-card-foreground border-admin-border flex-1"
+                        autoFocus
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="border-admin-border text-admin-card-foreground hover:bg-admin-accent/20"
+                        onClick={(e) => {
+                          // Prevent event from bubbling up to parent elements
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (customCategory.trim()) {
+                            // Update local categories list with the new category and set it as selected
+                            if (!categories.includes(customCategory.trim())) {
+                              queryClient.setQueryData(['menuCategories'], [...categories, customCategory.trim()]);
+                            }
+                            setMenuForm({...menuForm, category: customCategory.trim()});
+                            setShowCustomCategoryInput(false);
+                          }
+                        }}
+                      >
+                        Add
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowCustomCategoryInput(false);
+                        }}
+                        className="h-10 px-3 rounded-md inline-flex items-center justify-center bg-transparent text-admin-destructive hover:text-white hover:bg-admin-destructive/90 transition-all duration-200 border border-admin-destructive"
+                        aria-label="Cancel"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Select 
+                        value={menuForm.category}
+                        onValueChange={(value) => setMenuForm({...menuForm, category: value})}
+                      >
+                        <SelectTrigger className="bg-transparent text-admin-card-foreground border-admin-border w-full">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-admin-card text-admin-card-foreground border-admin-border">
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>{category}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="border-admin-border text-admin-card-foreground hover:bg-admin-accent/20 transition-all duration-200 group"
+                        onClick={(e) => {
+                          // Prevent event from bubbling up to parent elements
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setCustomCategory('')
+                          setShowCustomCategoryInput(true)
+                        }}
+                        // Prevent the mousedown event from closing the select dropdown
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1 transition-transform group-hover:rotate-90" />
+                        New
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="image_url">Image</Label>
+                <Label htmlFor="image_url" className="text-admin-card-foreground">Image</Label>
                 <div className="flex items-center gap-4">
                   <Input
                     id="image_url"
@@ -484,7 +545,7 @@ export default function MenuClient() {
                     accept="image/*"
                     className="hidden"
                   />
-                  <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md h-32 overflow-hidden relative">
+                  <div className="flex-1 flex items-center justify-center border-2 border-dashed border-admin-border rounded-md h-32 overflow-hidden relative">
                     {previewUrl ? (
                       <div className="relative w-full h-full">
                         <Image
@@ -496,7 +557,7 @@ export default function MenuClient() {
                         <Button
                           variant="destructive"
                           size="icon"
-                          className="absolute top-2 right-2 h-6 w-6"
+                          className="absolute top-2 right-2 h-6 w-6 bg-admin-destructive text-admin-destructive-foreground"
                           onClick={() => {
                             setSelectedFile(null)
                             setPreviewUrl(null)
@@ -511,22 +572,31 @@ export default function MenuClient() {
                         className="flex flex-col items-center justify-center cursor-pointer h-full w-full"
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        <ImageIcon className="h-8 w-8 text-gray-400" />
-                        <p className="text-sm text-gray-500 mt-2">Click to upload image</p>
+                        <ImageIcon className="h-8 w-8 text-admin-muted-foreground" />
+                        <p className="text-sm text-admin-muted-foreground mt-2">Click to upload image</p>
                       </div>
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-admin-muted-foreground">
                   Upload an image for your menu item. Leave blank to use default image.
                 </p>
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowMenuForm(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowMenuForm(false)}
+                className="border-admin-border text-admin-card-foreground hover:bg-admin-accent hover:text-admin-accent-foreground"
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-white"
+              >
                 {isSubmitting ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -543,21 +613,26 @@ export default function MenuClient() {
       
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
+        <DialogContent className="bg-admin-card border-admin-border text-admin-card-foreground shadow-lg backdrop-blur-sm bg-opacity-95">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-admin-muted-foreground">
               Are you sure you want to delete this menu item? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(false)}
+              className="border-admin-border text-admin-card-foreground hover:bg-admin-accent hover:text-admin-accent-foreground"
+            >
               Cancel
             </Button>
             <Button 
               variant="destructive" 
               onClick={handleDeleteMenuItem}
               disabled={deleteMenuItemMutation.isPending}
+              className="bg-admin-destructive text-admin-destructive-foreground"
             >
               {deleteMenuItemMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
@@ -566,37 +641,58 @@ export default function MenuClient() {
       </Dialog>
       
       {/* Menu Items Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Menu Items {categoryFilter ? `(${categoryFilter})` : ''}</span>
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+          <div>
+            <CardTitle className="text-admin-card-foreground">
+              Menu Items {categoryFilter ? `(${categoryFilter})` : ''}
+            </CardTitle>
+            <CardDescription className="text-admin-muted-foreground">
+              {filteredMenuItems.length} items in your menu
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
             {categoryFilter && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setCategoryFilter(null)}
-                className="h-8"
+                className="h-8 text-admin-muted-foreground hover:text-admin-card-foreground"
               >
                 <X className="mr-2 h-4 w-4" />
                 Clear Filter
               </Button>
             )}
-          </CardTitle>
-          <CardDescription>
-            {filteredMenuItems.length} items in your menu
-          </CardDescription>
+            <Button 
+              onClick={() => {
+                setEditingMenuItem(null)
+                setMenuForm({
+                  name: '',
+                  description: '',
+                  price: '',
+                  category: '',
+                  image_url: ''
+                })
+                setShowMenuForm(true)
+              }}
+              className="bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-white hover:shadow-lg transition-all duration-300"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Menu Item
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
             </div>
           ) : filteredMenuItems.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-admin-muted-foreground">
               <p>No menu items found</p>
               <Button 
                 variant="outline" 
-                className="mt-4"
+                className="mt-4 border-admin-border hover:bg-admin-accent hover:text-admin-accent-foreground"
                 onClick={() => {
                   setEditingMenuItem(null)
                   setMenuForm({
@@ -614,11 +710,11 @@ export default function MenuClient() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {filteredMenuItems.map((item) => (
                 <Card 
                   key={item.id} 
-                  className="overflow-hidden"
+                  className="overflow-hidden border border-admin-border bg-admin-card hover:shadow-md transition-all duration-200"
                 >
                   <div className="relative w-full h-48">
                     <Image
@@ -637,16 +733,16 @@ export default function MenuClient() {
                   <CardHeader className="p-4 pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-lg">{item.name}</CardTitle>
-                        <Badge variant="outline" className="mt-1">
+                        <CardTitle className="text-lg text-admin-card-foreground">{item.name}</CardTitle>
+                        <Badge variant="outline" className="mt-1 border-admin-border">
                           {item.category}
                         </Badge>
                       </div>
-                      <div className="text-lg font-bold">${item.price.toFixed(2)}</div>
+                      <div className="text-lg font-bold text-admin-primary">${item.price.toFixed(2)}</div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-4 pt-2">
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-sm text-admin-muted-foreground line-clamp-2">
                       {item.description || "No description provided"}
                     </p>
                   </CardContent>
@@ -656,6 +752,7 @@ export default function MenuClient() {
                       size="sm"
                       onClick={() => startEditing(item)}
                       disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
+                      className="border-admin-border text-admin-card-foreground hover:bg-admin-accent hover:text-admin-accent-foreground"
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
@@ -665,6 +762,7 @@ export default function MenuClient() {
                       size="sm"
                       onClick={() => confirmDelete(item.id)}
                       disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
+                      className="bg-admin-destructive text-admin-destructive-foreground"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete

@@ -31,6 +31,45 @@ Theming is **scoped** to the `/admin` routes and does not affect the rest of the
     *   `enableSystem`: Allows switching based on `prefers-color-scheme`.
 *   **Tailwind Config:** `tailwind.config.js` includes `darkMode: 'selector'` (or `darkMode: 'class'` for older Tailwind versions).
 
+## Layout Consistency
+
+To maintain consistency across admin routes, follow these guidelines:
+
+### Server-Rendered Header Removal
+
+The default server-rendered header should be removed from all admin pages to maintain visual consistency with client components:
+
+* Remove any server-rendered header components in shared layouts
+* Client components like those in `app/admin/client.tsx` and `app/admin/config/client.tsx` manage their own headers
+
+### Padding and Positioning
+
+To ensure consistent padding and positioning across routes:
+
+* Apply consistent padding in all client components:
+  ```tsx
+  <div className="space-y-6"> {/* Consistent top-level spacing */}
+    <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+      {/* Component content */}
+    </Card>
+  </div>
+  ```
+
+* Use the same card structure and spacing as demonstrated in `app/admin/client.tsx`:
+  - Top-level container with `space-y-6` for consistent vertical spacing
+  - Cards with consistent border, background, and shadow styling
+  - Consistent padding in card headers and content
+
+* Follow the pattern of using `CardHeader` and `CardContent` components with consistent spacing:
+  ```tsx
+  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+    {/* Header content */}
+  </CardHeader>
+  <CardContent>
+    {/* Main content */}
+  </CardContent>
+  ```
+
 ## Color Scheme
 
 A custom color scheme is defined using CSS variables in `app/globals.css`.

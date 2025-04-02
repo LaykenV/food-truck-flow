@@ -16,11 +16,15 @@ import {
   RadialLinearScale,
   ChartData
 } from 'chart.js'
-import { Line, Bar, Doughnut } from 'react-chartjs-2'
+import { Line } from 'react-chartjs-2'
 import { formatCurrency } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { getFoodTruck, getAnalyticsData } from '../clientQueries'
-import { format, subDays } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, subMonths } from 'date-fns'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { useTheme } from 'next-themes'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 // Register ChartJS components
 ChartJS.register(
@@ -47,180 +51,114 @@ export type AnalyticsData = {
     orders: number
     revenue: number
   }[]
-  popularItems: {
-    name: string
-    count: number
-  }[]
-  trafficSources: {
-    source: string
-    count: number
-  }[]
   subscriptionPlan: string
 }
 
-// Chart options
-const lineOptions = {
-  responsive: true,
-  interaction: {
-    mode: 'index' as const,
-    intersect: false,
-  },
-  plugins: {
-    legend: {
-      position: 'top' as const,
-      labels: {
-        usePointStyle: true,
-        boxWidth: 10,
-        font: {
-          size: 12
-        }
-      }
-    },
-    title: {
-      display: true,
-      text: 'Sales Over Time',
-      font: {
-        size: 16,
-        weight: 'bold' as const
-      }
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          const label = context.dataset.label || '';
-          const value = context.raw;
-          if (label === 'Revenue ($)') {
-            return `${label}: $${value}`;
-          }
-          return `${label}: ${value}`;
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      grid: {
-        display: false
-      },
-      ticks: {
-        font: {
-          size: 11
-        }
-      }
-    },
-    y: {
-      type: 'linear' as const,
-      display: true,
-      position: 'left' as const,
-      title: {
-        display: true,
-        text: 'Orders',
-        font: {
-          size: 12
-        }
-      },
-      grid: {
-        color: 'rgba(0, 0, 0, 0.05)'
-      },
-      beginAtZero: true
-    },
-    y1: {
-      type: 'linear' as const,
-      display: true,
-      position: 'right' as const,
-      title: {
-        display: true,
-        text: 'Revenue ($)',
-        font: {
-          size: 12
-        }
-      },
-      grid: {
-        drawOnChartArea: false,
-      },
-      beginAtZero: true
-    }
-  }
-}
-
-const barOptions = {
-  responsive: true,
-  indexAxis: 'y' as const,
-  plugins: {
-    legend: {
-      display: false
-    },
-    title: {
-      display: true,
-      text: 'Popular Menu Items',
-      font: {
-        size: 16,
-        weight: 'bold' as const
-      }
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          return `Orders: ${context.raw}`;
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      beginAtZero: true,
-      grid: {
-        color: 'rgba(0, 0, 0, 0.05)'
-      },
-      ticks: {
-        precision: 0
-      }
-    },
-    y: {
-      grid: {
-        display: false
-      }
-    }
-  }
-}
-
-const doughnutOptions = {
-  responsive: true,
-  cutout: '70%',
-  plugins: {
-    legend: {
-      position: 'right' as const,
-      labels: {
-        usePointStyle: true,
-        boxWidth: 10,
-        font: {
-          size: 11
-        }
-      }
-    },
-    title: {
-      display: true,
-      text: 'Traffic Sources',
-      font: {
-        size: 16,
-        weight: 'bold' as const
-      }
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          const label = context.label || '';
-          const value = context.raw;
-          const total = context.chart.data.datasets[0].data.reduce((a: number, b: number) => a + b, 0);
-          const percentage = Math.round((value / total) * 100);
-          return `${label}: ${value} (${percentage}%)`;
-        }
-      }
-    }
-  }
-}
+// Time range selector type
+type TimeRange = 'daily' | 'monthly' | 'total';
 
 export function AnalyticsClient() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+  const [timeRange, setTimeRange] = useState<TimeRange>('daily');
+  
+  // Chart options with theme support and improved visibility for dark mode
+  const lineOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          color: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.7)',
+          font: {
+            size: 12
+          }
+        }
+      },
+      title: {
+        display: true,
+        text: 'Sales Over Time',
+        color: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)',
+        font: {
+          size: 16,
+          weight: 'bold' as const
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            const label = context.dataset.label || '';
+            const value = context.raw;
+            if (label === 'Revenue ($)') {
+              return `${label}: $${value}`;
+            }
+            return `${label}: ${value}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)',
+          font: {
+            size: 11
+          }
+        }
+      },
+      y: {
+        type: 'linear' as const,
+        display: true,
+        position: 'left' as const,
+        title: {
+          display: true,
+          text: 'Orders',
+          color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+          font: {
+            size: 12
+          }
+        },
+        grid: {
+          color: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)'
+        },
+        beginAtZero: true,
+        ticks: {
+          color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)',
+        }
+      },
+      y1: {
+        type: 'linear' as const,
+        display: true,
+        position: 'right' as const,
+        title: {
+          display: true,
+          text: 'Revenue ($)',
+          color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+          font: {
+            size: 12
+          }
+        },
+        grid: {
+          drawOnChartArea: false,
+        },
+        beginAtZero: true,
+        ticks: {
+          color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)',
+        }
+      }
+    }
+  };
+
   // Query for the food truck data
   const { data: foodTruck, isLoading: isFoodTruckLoading } = useQuery({
     queryKey: ['foodTruck'],
@@ -238,145 +176,166 @@ export function AnalyticsClient() {
   const analyticsData = analyticsResult?.analyticsData || [];
   const subscriptionPlan = analyticsResult?.subscriptionPlan || 'basic';
   
-  // Calculate totals
+  // Calculate totals for all time
   const totalOrders = analyticsData?.reduce((sum, day) => sum + (day.orders_placed || 0), 0) || 0;
   const totalRevenue = analyticsData?.reduce((sum, day) => sum + (day.revenue || 0), 0) || 0;
   const totalPageViews = analyticsData?.reduce((sum, day) => sum + (day.page_views || 0), 0) || 0;
   
-  // Generate dates for the last 30 days
-  const last30Days = Array.from({ length: 30 }, (_, i) => {
-    const date = subDays(new Date(), i);
-    return format(date, 'yyyy-MM-dd');
-  }).reverse();
-  
-  // Prepare sales over time data
-  const salesOverTime = last30Days.map(date => {
-    const dayData = analyticsData?.find(d => d.date === date);
+  // Calculate metrics based on selected time range
+  const getTimeRangeData = () => {
+    const now = new Date();
+    let filteredData = [];
+    let periodLabel = '';
     
-    return {
-      date: format(new Date(date), 'MMM dd'),
-      orders: dayData?.orders_placed || 0,
-      revenue: dayData?.revenue || 0
-    };
-  });
+    if (timeRange === 'daily') {
+      // Get today's data
+      const today = format(now, 'yyyy-MM-dd');
+      filteredData = analyticsData.filter(d => d.date === today);
+      periodLabel = 'Today';
+    } else if (timeRange === 'monthly') {
+      // Get current month's data
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      filteredData = analyticsData.filter(d => {
+        const date = new Date(d.date);
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      });
+      periodLabel = format(now, 'MMMM yyyy');
+    } else {
+      // Total (all time)
+      filteredData = analyticsData;
+      periodLabel = 'All time';
+    }
+    
+    // Calculate sums for the filtered data
+    const orders = filteredData.reduce((sum, day) => sum + (day.orders_placed || 0), 0);
+    const revenue = filteredData.reduce((sum, day) => sum + (day.revenue || 0), 0);
+    const views = filteredData.reduce((sum, day) => sum + (day.page_views || 0), 0);
+    
+    return { orders, revenue, views, periodLabel };
+  };
   
-  // Mock popular items (would come from a real analytics service in production)
-  const popularItems = Array(5).fill(0).map((_, index) => ({
-    name: `Menu Item ${index + 1}`,
-    count: Math.floor(Math.random() * 20) + 5 // Random count between 5-25
-  }));
+  const { orders, revenue, views, periodLabel } = getTimeRangeData();
   
-  // Mock traffic sources data (would come from a real analytics service in production)
-  const trafficSources = [
-    { source: 'Direct', count: Math.floor(totalPageViews * 0.4) },
-    { source: 'Social Media', count: Math.floor(totalPageViews * 0.3) },
-    { source: 'Search', count: Math.floor(totalPageViews * 0.2) },
-    { source: 'Referral', count: Math.floor(totalPageViews * 0.1) }
-  ].filter(source => source.count > 0);
+  // Generate data for the sales chart based on time range
+  const getSalesChartData = () => {
+    let chartData = [];
+    let dateFormat = 'MMM dd';
+    
+    if (timeRange === 'daily') {
+      // Last 7 days
+      chartData = Array.from({ length: 7 }, (_, i) => {
+        const date = subDays(new Date(), i);
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        const dayData = analyticsData?.find(d => d.date === formattedDate);
+        
+        return {
+          date: format(date, dateFormat),
+          orders: dayData?.orders_placed || 0,
+          revenue: dayData?.revenue || 0
+        };
+      }).reverse();
+    } else if (timeRange === 'monthly') {
+      // Last month's data with daily granularity
+      const lastMonth = subMonths(new Date(), 1);
+      const startDate = startOfMonth(lastMonth);
+      const endDate = endOfMonth(lastMonth);
+      const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+      
+      chartData = daysInMonth.map(date => {
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        const dayData = analyticsData?.find(d => d.date === formattedDate);
+        
+        return {
+          date: format(date, 'MMM dd'),
+          orders: dayData?.orders_placed || 0,
+          revenue: dayData?.revenue || 0
+        };
+      });
+      
+    } else {
+      // Last 6 months (for total view)
+      chartData = Array.from({ length: 6 }, (_, i) => {
+        const date = subMonths(new Date(), i);
+        const startDate = startOfMonth(date);
+        const endDate = endOfMonth(date);
+        
+        // Filter data for this month
+        const monthData = analyticsData?.filter(d => {
+          const dataDate = new Date(d.date);
+          return dataDate >= startDate && dataDate <= endDate;
+        });
+        
+        // Sum up orders and revenue for the month
+        const monthOrders = monthData?.reduce((sum, day) => sum + (day.orders_placed || 0), 0) || 0;
+        const monthRevenue = monthData?.reduce((sum, day) => sum + (day.revenue || 0), 0) || 0;
+        
+        return {
+          date: format(date, 'MMM yyyy'),
+          orders: monthOrders,
+          revenue: monthRevenue
+        };
+      }).reverse();
+      
+      dateFormat = 'MMM yyyy';
+    }
+    
+    return chartData;
+  };
+  
+  const salesOverTime = getSalesChartData();
 
   // Loading state
   const isLoading = isFoodTruckLoading || isAnalyticsLoading;
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
       </div>
     );
   }
 
-  // Prepare data for charts
+  // Prepare data for charts with improved visibility for dark mode
   const salesData = {
     labels: salesOverTime.map(item => item.date),
     datasets: [
       {
         label: 'Orders',
         data: salesOverTime.map(item => item.orders),
-        borderColor: 'rgb(53, 162, 235)',
-        backgroundColor: 'rgba(53, 162, 235, 0.5)',
-        borderWidth: 2,
+        borderColor: isDark ? 'hsl(43, 74%, 66%)' : 'rgb(53, 162, 235)', // Bright yellow in dark mode
+        backgroundColor: isDark ? 'hsla(43, 74%, 66%, 0.5)' : 'rgba(53, 162, 235, 0.5)',
+        borderWidth: isDark ? 3 : 2,
         tension: 0.3,
-        pointRadius: 3,
-        pointHoverRadius: 5,
+        pointRadius: 4,
+        pointHoverRadius: 6,
         yAxisID: 'y',
       },
       {
         label: 'Revenue ($)',
         data: salesOverTime.map(item => item.revenue),
-        borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-        borderWidth: 2,
+        borderColor: isDark ? 'hsl(173, 58%, 55%)' : 'rgb(75, 192, 192)', // Bright teal in dark mode
+        backgroundColor: isDark ? 'hsla(173, 58%, 55%, 0.5)' : 'rgba(75, 192, 192, 0.5)',
+        borderWidth: isDark ? 3 : 2,
         tension: 0.3,
-        pointRadius: 3,
-        pointHoverRadius: 5,
+        pointRadius: 4,
+        pointHoverRadius: 6,
         yAxisID: 'y1',
       },
     ],
-  }
-
-  const popularItemsData = {
-    labels: popularItems.map(item => item.name),
-    datasets: [
-      {
-        label: 'Orders',
-        data: popularItems.map(item => item.count),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.7)',
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(255, 206, 86, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(153, 102, 255, 0.7)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
-        borderWidth: 1,
-        borderRadius: 4,
-      },
-    ],
-  }
-
-  const trafficSourcesData = {
-    labels: trafficSources.map(item => item.source),
-    datasets: [
-      {
-        label: 'Visits',
-        data: trafficSources.map(item => item.count),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.7)',
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(255, 206, 86, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(153, 102, 255, 0.7)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
-        borderWidth: 1,
-        hoverOffset: 15,
-      },
-    ],
-  }
+  };
 
   // Check if user is on basic plan
   const isBasicPlan = subscriptionPlan === 'basic';
 
   // Premium feature overlay component
   const PremiumFeatureOverlay = () => (
-    <div className="absolute inset-0 backdrop-blur-md bg-white/30 flex flex-col items-center justify-center z-10 rounded-lg">
-      <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-md">
-        <h3 className="text-xl font-bold text-blue-600 mb-2">Pro Feature</h3>
-        <p className="text-gray-700 mb-4">Upgrade to our Pro plan to unlock detailed analytics and gain valuable insights for your food truck business.</p>
+    <div className="absolute inset-0 backdrop-blur-md bg-admin-background/30 flex flex-col items-center justify-center z-10 rounded-lg">
+      <div className="bg-admin-card p-6 rounded-lg shadow-lg text-center max-w-md border border-admin-border">
+        <h3 className="text-xl font-bold text-admin-primary mb-2">Pro Feature</h3>
+        <p className="text-admin-foreground mb-4">Upgrade to our Pro plan to unlock detailed analytics and gain valuable insights for your food truck business.</p>
         <a 
           href="/admin/subscribe" 
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground rounded-md hover:opacity-90 transition-opacity"
         >
           <span className="mr-2">Upgrade Now</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -387,77 +346,102 @@ export function AnalyticsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
-          <h3 className="text-lg font-medium text-gray-500">Total Orders</h3>
-          <p className="text-3xl font-bold">{totalOrders}</p>
-          <p className="text-sm text-gray-500">All time</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
-          <h3 className="text-lg font-medium text-gray-500">Revenue</h3>
-          <p className="text-3xl font-bold">{formatCurrency(totalRevenue)}</p>
-          <p className="text-sm text-gray-500">All time</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
-          <h3 className="text-lg font-medium text-gray-500">Website Visits</h3>
-          <p className="text-3xl font-bold">{totalPageViews}</p>
-          <p className="text-sm text-gray-500">All time</p>
-        </div>
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow relative">
-        <div className="h-80">
-          {salesOverTime.length > 0 ? (
-            <Line options={lineOptions} data={salesData} />
-          ) : (
-            <div className="border border-gray-300 rounded-md p-4 h-full flex items-center justify-center bg-gray-100">
-              <p className="text-gray-500">No sales data available yet</p>
-            </div>
+      {/* Time Range Selector */}
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setTimeRange('daily')}
+          className={cn(
+            "rounded-full px-4 border-admin-border",
+            timeRange === 'daily' ? 'bg-admin-primary text-admin-primary-foreground' : 'bg-admin-card text-admin-foreground'
           )}
-        </div>
-        {isBasicPlan && <PremiumFeatureOverlay />}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow relative">
-          <div className="h-80">
-            {popularItems.length > 0 ? (
-              <Bar options={barOptions} data={popularItemsData} />
-            ) : (
-              <div className="border border-gray-300 rounded-md p-4 h-full flex items-center justify-center bg-gray-100">
-                <p className="text-gray-500">No menu item data available yet</p>
-              </div>
-            )}
-          </div>
-          {isBasicPlan && <PremiumFeatureOverlay />}
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow relative">
-          <div className="h-80">
-            {trafficSources.length > 0 ? (
-              <Doughnut options={doughnutOptions} data={trafficSourcesData} />
-            ) : (
-              <div className="border border-gray-300 rounded-md p-4 h-full flex items-center justify-center bg-gray-100">
-                <p className="text-gray-500">No traffic source data available yet</p>
-              </div>
-            )}
-          </div>
-          {isBasicPlan && <PremiumFeatureOverlay />}
-        </div>
+        >
+          Daily
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setTimeRange('monthly')}
+          className={cn(
+            "rounded-full px-4 border-admin-border",
+            timeRange === 'monthly' ? 'bg-admin-primary text-admin-primary-foreground' : 'bg-admin-card text-admin-foreground'
+          )}
+        >
+          Monthly
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setTimeRange('total')}
+          className={cn(
+            "rounded-full px-4 border-admin-border",
+            timeRange === 'total' ? 'bg-admin-primary text-admin-primary-foreground' : 'bg-admin-card text-admin-foreground'
+          )}
+        >
+          Total
+        </Button>
       </div>
 
-      {isBasicPlan && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-6 rounded-lg shadow-md">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0">
-              <h3 className="text-xl font-bold text-blue-800 mb-2">Unlock Premium Analytics</h3>
-              <p className="text-blue-600">Get access to detailed sales trends, customer insights, and performance metrics to grow your food truck business.</p>
-            </div>
-            <a href="/admin/subscribe" className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm">
-              Upgrade to Pro
-            </a>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-medium text-admin-muted-foreground">Orders</h3>
+            <p className="text-3xl font-bold text-admin-foreground">{orders}</p>
+            <p className="text-sm text-admin-muted-foreground">{periodLabel}</p>
+          </CardContent>
+        </Card>
+        <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-medium text-admin-muted-foreground">Revenue</h3>
+            <p className="text-3xl font-bold text-admin-foreground">{formatCurrency(revenue)}</p>
+            <p className="text-sm text-admin-muted-foreground">{periodLabel}</p>
+          </CardContent>
+        </Card>
+        <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200 sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-medium text-admin-muted-foreground">Website Visits</h3>
+            <p className="text-3xl font-bold text-admin-foreground">{views}</p>
+            <p className="text-sm text-admin-muted-foreground">{periodLabel}</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200 relative">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <h3 className="text-lg font-medium text-admin-foreground">Sales Trends</h3>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="h-[300px] sm:h-[400px]">
+            {salesOverTime.length > 0 ? (
+              <Line options={lineOptions} data={salesData} />
+            ) : (
+              <div className="border border-admin-border rounded-md p-4 h-full flex items-center justify-center bg-admin-muted">
+                <p className="text-admin-muted-foreground">No sales data available yet</p>
+              </div>
+            )}
           </div>
-        </div>
+        </CardContent>
+        {isBasicPlan && <PremiumFeatureOverlay />}
+      </Card>
+
+      {isBasicPlan && (
+        <Card className="border border-admin-border shadow-md overflow-hidden">
+          <div className="bg-gradient-to-r from-[hsl(var(--admin-primary)/0.1)] to-[hsl(var(--admin-gradient-end)/0.1)] p-6">
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <div className="mb-4 md:mb-0">
+                <h3 className="text-xl font-bold text-admin-foreground mb-2">Unlock Premium Analytics</h3>
+                <p className="text-admin-foreground/80">Get access to detailed sales trends, customer insights, and performance metrics to grow your food truck business.</p>
+              </div>
+              <a 
+                href="/admin/subscribe" 
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground font-medium rounded-md hover:opacity-90 transition-opacity shadow-sm"
+              >
+                Upgrade to Pro
+              </a>
+            </div>
+          </div>
+        </Card>
       )}
     </div>
   )

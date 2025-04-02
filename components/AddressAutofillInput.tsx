@@ -40,7 +40,7 @@ export default function AddressAutofillInput({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          autoComplete="address-line1"
+          autoComplete="off"
           className="w-full"
         />
       </div>
@@ -64,7 +64,7 @@ export default function AddressAutofillInput({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          autoComplete="address-line1"
+          autoComplete="off"
           className="w-full"
         />
       </AddressAutofill>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import {
   Sheet,
@@ -98,7 +98,6 @@ export function ConfigHistoryDrawer({ onSelectVersion, currentConfig }: ConfigHi
   const handleSelectVersion = (item: HistoryItem) => {
     setSelectedConfig(item);
     setShowConfirmDialog(true);
-    // Keep the drawer open until confirmation
   };
 
   // Handle opening bookmark dialog
@@ -132,34 +131,41 @@ export function ConfigHistoryDrawer({ onSelectVersion, currentConfig }: ConfigHi
     
     // Invalidate foodTruck query to refetch with the new selected config
     queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
-    
-    //toast.success(`Switched to configuration: ${selectedConfig.configName || selectedConfig.config.name || 'Unnamed Configuration'}`);
   };
 
   return (
     <>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2 text-admin-foreground border-admin-border w-full sm:w-auto">
             <History className="h-4 w-4" />
             <span>History</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-full sm:max-w-md">
-          <SheetHeader>
-            <div className="flex items-center justify-between">
-              <SheetTitle>Configuration History</SheetTitle>
+        <SheetContent 
+          side="right" 
+          className="w-full max-w-full sm:max-w-md border-admin-border bg-gradient-to-b from-admin-primary/5 to-admin/95 text-admin-foreground [&_.absolute.right-4.top-4]:hidden"
+        >
+          <SheetHeader className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <SheetClose asChild className="sm:hidden">
+                  <Button variant="ghost" size="icon" className="text-admin-foreground p-1 h-8 w-8">
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                </SheetClose>
+                <SheetTitle className="text-xl font-semibold text-admin-foreground">Configuration History</SheetTitle>
+              </div>
               <Button 
-                variant="outline" 
-                size="sm" 
                 onClick={handleOpenBookmarkDialog}
-                className="flex items-center gap-2"
+                className="bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-white hover:opacity-90 transition-opacity flex items-center gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 <Bookmark className="h-4 w-4" />
                 <span>Bookmark Current</span>
               </Button>
             </div>
-            <SheetDescription>
+            <SheetDescription className="text-admin-muted-foreground">
               View, restore or bookmark configurations
             </SheetDescription>
           </SheetHeader>
@@ -167,19 +173,19 @@ export function ConfigHistoryDrawer({ onSelectVersion, currentConfig }: ConfigHi
           <ScrollArea className="h-[calc(100vh-200px)] mt-6 pr-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
               </div>
             ) : error ? (
-              <div className="bg-red-100 text-red-700 p-4 rounded-md">
+              <div className="bg-admin-destructive/10 text-admin-destructive p-4 rounded-md">
+                <AlertTriangle className="h-4 w-4 inline mr-2" />
                 Error loading history: {(error as Error).message}
               </div>
             ) : history.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No saved configurations found</p>
+              <div className="text-center py-8 text-admin-muted-foreground flex flex-col items-center">
+                <p className="mb-4">No saved configurations found</p>
                 <Button 
-                  variant="outline" 
-                  className="mt-4"
                   onClick={handleOpenBookmarkDialog}
+                  className="bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-white hover:opacity-90 transition-opacity"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Bookmark Current Configuration
@@ -188,15 +194,15 @@ export function ConfigHistoryDrawer({ onSelectVersion, currentConfig }: ConfigHi
             ) : (
               <div className="space-y-4">
                 {history.map((item) => (
-                  <div key={item.id} className="group">
-                    <div className="flex items-start justify-between">
+                  <div key={item.id} className="group rounded-lg p-3 hover:bg-admin-secondary/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex items-start gap-3">
-                        <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <Clock className="h-5 w-5 text-admin-muted-foreground mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="font-medium">
+                          <div className="font-medium text-admin-foreground">
                             {item.configName || item.config.name || 'Unnamed Configuration'}
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-admin-muted-foreground">
                             {formatTimestamp(item.timestamp)}
                           </div>
                         </div>
@@ -205,21 +211,21 @@ export function ConfigHistoryDrawer({ onSelectVersion, currentConfig }: ConfigHi
                         variant="ghost" 
                         size="sm"
                         onClick={() => handleSelectVersion(item)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="text-admin-primary hover:text-white hover:bg-gradient-to-r hover:from-[hsl(var(--admin-gradient-start))] hover:to-[hsl(var(--admin-gradient-end))] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity mt-2 sm:mt-0 w-full sm:w-auto"
                       >
                         Restore
                       </Button>
                     </div>
-                    <Separator className="my-4" />
+                    <Separator className="my-4 bg-admin-border" />
                   </div>
                 ))}
               </div>
             )}
           </ScrollArea>
           
-          <SheetFooter className="mt-6">
+          <SheetFooter className="mt-6 hidden sm:flex sm:justify-start">
             <SheetClose asChild>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 text-admin-foreground border-admin-border w-full">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back</span>
               </Button>
@@ -230,35 +236,37 @@ export function ConfigHistoryDrawer({ onSelectVersion, currentConfig }: ConfigHi
 
       {/* Bookmark Dialog */}
       <Dialog open={showBookmarkDialog} onOpenChange={setShowBookmarkDialog}>
-        <DialogContent>
+        <DialogContent className="bg-admin-background border-admin-border text-admin-foreground sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Bookmark Current Configuration</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg font-semibold">Bookmark Current Configuration</DialogTitle>
+            <DialogDescription className="text-admin-muted-foreground">
               Give this configuration a name so you can easily find it later
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
-            <Label htmlFor="bookmarkName">Configuration Name</Label>
+            <Label htmlFor="bookmarkName" className="text-admin-foreground">Configuration Name</Label>
             <Input
               id="bookmarkName"
               value={bookmarkName}
               onChange={(e) => setBookmarkName(e.target.value)}
               placeholder="My Favorite Configuration"
-              className="mt-2"
+              className="mt-2 bg-admin-background border-admin-border text-admin-foreground"
             />
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
               onClick={() => setShowBookmarkDialog(false)}
+              className="text-admin-foreground border-admin-border w-full sm:w-auto order-2 sm:order-1"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleBookmarkConfig}
               disabled={bookmarkMutation.isPending || !bookmarkName.trim()}
+              className="bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-white hover:opacity-90 transition-opacity w-full sm:w-auto order-1 sm:order-2"
             >
               {bookmarkMutation.isPending ? (
                 <>
@@ -278,38 +286,39 @@ export function ConfigHistoryDrawer({ onSelectVersion, currentConfig }: ConfigHi
 
       {/* Confirmation Dialog for Version Switch */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
+        <DialogContent className="bg-admin-background border-admin-border text-admin-foreground sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              <DialogTitle>Confirm Configuration Switch</DialogTitle>
+              <DialogTitle className="text-lg font-semibold">Confirm Configuration Switch</DialogTitle>
             </div>
-            <DialogDescription>
+            <DialogDescription className="text-admin-muted-foreground">
               Are you sure you want to switch to this previous configuration? Your current unsaved changes will be lost.
             </DialogDescription>
           </DialogHeader>
           
           {selectedConfig && (
-            <div className="my-2 p-3 bg-muted rounded-md">
-              <p className="font-medium">
+            <div className="my-2 p-3 bg-admin-secondary rounded-md">
+              <p className="font-medium text-admin-foreground">
                 {selectedConfig.configName || selectedConfig.config.name || 'Unnamed Configuration'}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-admin-muted-foreground">
                 {formatTimestamp(selectedConfig.timestamp)}
               </p>
             </div>
           )}
           
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
               onClick={() => setShowConfirmDialog(false)}
+              className="text-admin-foreground border-admin-border w-full sm:w-auto order-2 sm:order-1"
             >
               Cancel
             </Button>
             <Button 
-              variant="default"
               onClick={handleConfirmSwitch}
+              className="bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-white hover:opacity-90 transition-opacity w-full sm:w-auto order-1 sm:order-2"
             >
               Confirm Switch
             </Button>

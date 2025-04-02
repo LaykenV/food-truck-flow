@@ -57,9 +57,9 @@ export function UnifiedLivePreview({
   // Return a placeholder during server-side rendering
   if (!isMounted) {
     return (
-      <Card className="w-full overflow-hidden border shadow-lg">
+      <Card className="w-full overflow-hidden border border-admin-border bg-admin-card shadow-sm">
         <CardContent className="p-0">
-          <div className="relative mx-auto max-w-[375px] bg-white rounded-t-xl overflow-hidden shadow-md border-4 border-gray-200">
+          <div className="relative mx-auto max-w-[375px] bg-admin-card rounded-t-xl overflow-hidden shadow-md border-4 border-admin-border">
             <div className="h-6 bg-black text-white text-xs flex items-center justify-between px-4">
               <span>9:41</span>
               <div className="flex items-center space-x-1">
@@ -67,7 +67,7 @@ export function UnifiedLivePreview({
               </div>
             </div>
             <div className="h-[600px] flex items-center justify-center">
-              <p className="text-gray-500">Loading preview...</p>
+              <p className="text-admin-muted-foreground">Loading preview...</p>
             </div>
             <div className="h-1 w-1/3 mx-auto bg-black rounded-full my-2"></div>
           </div>
@@ -211,10 +211,10 @@ export function UnifiedLivePreview({
 
   return (
     <div className="w-full">
-      <Card className="w-full overflow-hidden border shadow-lg">
+      <Card className="w-full overflow-hidden border border-admin-border bg-admin-card shadow-sm">
         <CardContent className="p-0">
           {/* View Mode Selector - Inside the card */}
-          <div className="bg-gray-100 border-b border-gray-200 p-2 flex justify-center">
+          <div className="bg-admin-secondary/30 border-b border-admin-border p-2 flex justify-center">
             <Tabs 
               value={viewMode} 
               onValueChange={(value) => setViewMode(value as 'mobile' | 'desktop')}
@@ -245,8 +245,7 @@ export function UnifiedLivePreview({
                 initialView="sign-up" 
                 trigger={
                   <Button 
-                    className="w-full max-w-xs flex items-center justify-center gap-2 text-white"
-                    style={{ backgroundColor: config.primaryColor }}
+                    className="w-full max-w-xs flex items-center justify-center gap-2 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground hover:opacity-90"
                   >
                     Sign Up With This Configuration
                     <ArrowUpRight className="h-4 w-4" />

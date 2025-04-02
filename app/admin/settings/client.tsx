@@ -145,16 +145,16 @@ export default function SettingsClient() {
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <LucideLoader className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading settings...</span>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <LucideLoader className="h-8 w-8 animate-spin text-admin-primary" />
+        <span className="ml-2 text-admin-foreground">Loading settings...</span>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+      <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md">
         <p>Failed to load settings. Please try again.</p>
       </div>
     );
@@ -162,24 +162,32 @@ export default function SettingsClient() {
   
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-admin-border">
           <div className="space-y-1">
-            <CardTitle>Website Status</CardTitle>
-            <CardDescription>Manage your website's publication status</CardDescription>
+            <CardTitle className="text-admin-card-foreground">Website Status</CardTitle>
+            <CardDescription className="text-admin-muted-foreground">Manage your website's publication status</CardDescription>
           </div>
-          <LucideGlobe className="h-4 w-4 text-muted-foreground" />
+          <div className="bg-admin-secondary/30 p-2 rounded-full">
+            <LucideGlobe className="h-5 w-5 text-admin-primary" />
+          </div>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 text-admin-card-foreground">
           <div className="flex items-center space-x-2 mb-4">
-            <p className="font-medium">Status:</p>
-            <Badge variant={isPublished ? "default" : "secondary"} className={isPublished ? "bg-green-500" : "bg-yellow-500"}>
+            <p className="font-medium text-admin-card-foreground">Status:</p>
+            <Badge 
+              variant={isPublished ? "default" : "secondary"} 
+              className={isPublished 
+                ? "bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-white" 
+                : "bg-yellow-500 hover:bg-yellow-600 text-white"}
+            >
               {isPublished ? "Published" : "Not Published"}
             </Badge>
           </div>
           
           {!isPublished && (
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-admin-muted-foreground mb-4">
               {!hasSubscription
                 ? "You need to subscribe to a plan before publishing."
                 : !hasStripeKey 
@@ -188,29 +196,32 @@ export default function SettingsClient() {
             </p>
           )}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="border-t border-admin-border pt-4">
           {!hasSubscription ? (
-            <Button variant="default" asChild>
+            <Button variant="default" asChild className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground">
               <Link href="/admin/account">Manage Subscription</Link>
             </Button>
           ) : !hasStripeKey ? (
             <form onSubmit={handlePublishWebsite} className="w-full space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="stripeApiKey">Stripe API Key</Label>
+                <Label htmlFor="stripeApiKey" className="text-admin-card-foreground">Stripe API Key</Label>
                 <Input
                   id="stripeApiKey"
                   value={stripeApiKey}
                   onChange={(e) => setStripeApiKey(e.target.value)}
                   type="password"
                   required
+                  className="border-admin-border bg-admin-card text-admin-card-foreground"
+                  autoComplete="off"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-admin-muted-foreground">
                   Your Stripe API key is required to process payments for your food truck.
                 </p>
               </div>
               <Button 
                 type="submit"
                 disabled={publishMutation.isPending || !stripeApiKey}
+                className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
               >
                 {publishMutation.isPending ? (
                   <>
@@ -223,11 +234,14 @@ export default function SettingsClient() {
               </Button>
             </form>
           ) : (
-            <form onSubmit={handlePublishWebsite}>
+            <form onSubmit={handlePublishWebsite} className="w-full">
               <Button 
                 type="submit"
                 variant={isPublished ? "outline" : "default"}
                 disabled={isPublished || publishMutation.isPending}
+                className={`w-full sm:w-auto ${isPublished 
+                  ? "border-admin-border text-admin-muted-foreground hover:bg-admin-secondary/30" 
+                  : "bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"}`}
               >
                 {publishMutation.isPending ? (
                   <>
@@ -245,36 +259,42 @@ export default function SettingsClient() {
         </CardFooter>
       </Card>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-admin-border">
           <div className="space-y-1">
-            <CardTitle>Domain Settings</CardTitle>
-            <CardDescription>Configure your website's domain</CardDescription>
+            <CardTitle className="text-admin-card-foreground">Domain Settings</CardTitle>
+            <CardDescription className="text-admin-muted-foreground">Configure your website's domain</CardDescription>
           </div>
-          <LucideGlobe className="h-4 w-4 text-muted-foreground" />
+          <div className="bg-admin-secondary/30 p-2 rounded-full">
+            <LucideGlobe className="h-5 w-5 text-admin-primary" />
+          </div>
         </CardHeader>
-        <CardContent className="pt-6">
-          <form onSubmit={handleUpdateDomainSettings} className="space-y-4">
+        <CardContent className="pt-6 text-admin-card-foreground">
+          <form onSubmit={handleUpdateDomainSettings} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="subdomain">Subdomain</Label>
+              <Label htmlFor="subdomain" className="text-admin-card-foreground">Subdomain</Label>
               <div className="flex items-center">
                 <Input
                   id="subdomain"
                   value={subdomain}
                   onChange={(e) => setSubdomain(e.target.value)}
-                  className="rounded-r-none"
+                  className="rounded-r-none border-admin-border bg-admin-card text-admin-card-foreground"
+                  autoComplete="off"
                 />
-                <span className="bg-muted px-3 py-2 border border-l-0 rounded-r-md text-muted-foreground">
+                <span className="bg-admin-secondary px-3 py-2 border border-admin-border border-l-0 rounded-r-md text-admin-muted-foreground whitespace-nowrap">
                   .foodtruckflow.com
                 </span>
               </div>
+              <p className="text-xs text-admin-muted-foreground mt-1">
+                This is your unique subdomain for your food truck website.
+              </p>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="customDomain">Custom Domain</Label>
+                <Label htmlFor="customDomain" className="text-admin-card-foreground">Custom Domain</Label>
                 {foodTruck?.subscription_plan !== 'pro' && (
-                  <Badge variant="outline" className="text-xs bg-muted">Pro Feature</Badge>
+                  <Badge variant="outline" className="text-xs bg-admin-secondary/50 border-admin-border text-admin-muted-foreground">Pro Feature</Badge>
                 )}
               </div>
               <Input
@@ -283,19 +303,20 @@ export default function SettingsClient() {
                 onChange={(e) => setCustomDomain(e.target.value)}
                 placeholder="yourdomain.com"
                 disabled={foodTruck?.subscription_plan !== 'pro'}
-                className={foodTruck?.subscription_plan !== 'pro' ? "opacity-50" : ""}
+                className={`border-admin-border bg-admin-card text-admin-card-foreground ${foodTruck?.subscription_plan !== 'pro' ? "opacity-50" : ""}`}
+                autoComplete="off"
               />
               {foodTruck?.subscription_plan !== 'pro' ? (
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 mt-1">
+                  <p className="text-xs text-admin-muted-foreground">
                     Custom domains are available on the Pro plan.
                   </p>
-                  <Button variant="link" size="sm" className="h-auto p-0" asChild>
+                  <Button variant="link" size="sm" className="h-auto p-0 text-admin-primary hover:text-admin-primary/90" asChild>
                     <Link href="/admin/account">Upgrade to Pro</Link>
                   </Button>
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-admin-muted-foreground mt-1">
                   Enter your custom domain to use instead of the subdomain.
                 </p>
               )}
@@ -304,6 +325,7 @@ export default function SettingsClient() {
             <Button 
               type="submit"
               disabled={domainMutation.isPending || (!subdomain && (!customDomain || foodTruck?.subscription_plan !== 'pro'))}
+              className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
             >
               {domainMutation.isPending ? (
                 <>
@@ -318,32 +340,38 @@ export default function SettingsClient() {
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-admin-border">
           <div className="space-y-1">
-            <CardTitle>Stripe Integration</CardTitle>
-            <CardDescription>Configure your Stripe payment settings</CardDescription>
+            <CardTitle className="text-admin-card-foreground">Stripe Integration</CardTitle>
+            <CardDescription className="text-admin-muted-foreground">Configure your Stripe payment settings</CardDescription>
           </div>
-          <LucideCreditCard className="h-4 w-4 text-muted-foreground" />
+          <div className="bg-admin-secondary/30 p-2 rounded-full">
+            <LucideCreditCard className="h-5 w-5 text-admin-primary" />
+          </div>
         </CardHeader>
-        <CardContent className="pt-6">
-          <form onSubmit={handleUpdateStripeApiKey} className="space-y-4">
+        <CardContent className="pt-6 text-admin-card-foreground">
+          <form onSubmit={handleUpdateStripeApiKey} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="stripeKey">Stripe API Key</Label>
+              <Label htmlFor="stripeKey" className="text-admin-card-foreground">Stripe API Key</Label>
               <Input
                 id="stripeKey"
                 value={stripeApiKey}
                 onChange={(e) => setStripeApiKey(e.target.value)}
                 type="password"
                 placeholder={hasStripeKey ? "••••••••••••••••••••••" : "Enter your Stripe API key"}
+                className="border-admin-border bg-admin-card text-admin-card-foreground"
+                autoComplete="off"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-admin-muted-foreground mt-1">
                 Your Stripe API key is required to process payments for your food truck.
+                {hasStripeKey && " Your key has been saved securely."}
               </p>
             </div>
             <Button 
               type="submit"
               disabled={stripeMutation.isPending || !stripeApiKey}
+              className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
             >
               {stripeMutation.isPending ? (
                 <>

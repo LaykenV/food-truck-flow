@@ -383,14 +383,14 @@ export function UnifiedConfigForm({
   };
 
   return (
-    <Card className="w-full border shadow-sm">
+    <Card className="w-full border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
       <CardHeader className="pb-3">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <CardTitle className="text-xl">
+            <CardTitle className="text-xl text-admin-foreground">
               {onSave ? 'Food Truck Configuration' : 'Customize Your Food Truck Website'}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-admin-muted-foreground">
               {onSave ? 'Manage the configuration for this food truck website' : 'Customize the appearance and content of your food truck website'}
             </CardDescription>
           </div>
@@ -401,7 +401,7 @@ export function UnifiedConfigForm({
               <Button
                 onClick={handleSubmitChanges}
                 disabled={isSaving}
-                className="h-9"
+                className="h-9 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground hover:opacity-90"
               >
                 {isSaving ? (
                   <>
@@ -429,7 +429,7 @@ export function UnifiedConfigForm({
         
         {/* Last saved indicator (admin only) */}
         {onSave && lastSaved && (
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-xs text-admin-muted-foreground mt-1">
             Last saved: {formatLastSaved()}
           </div>
         )}
@@ -438,7 +438,7 @@ export function UnifiedConfigForm({
       <CardContent className="pt-0">
         <Tabs defaultValue="branding" className="w-full">
           <div className="flex pb-2 mb-4 overflow-x-auto no-scrollbar">
-            <TabsList className="flex-nowrap">
+            <TabsList className="flex-nowrap bg-admin-secondary">
               <TabsTrigger value="branding" className="flex items-center gap-1 whitespace-nowrap">
                 <Palette className="h-4 w-4" />
                 <span>Branding</span>
@@ -463,7 +463,7 @@ export function UnifiedConfigForm({
           </div>
 
           {/* Tab content sections */}
-          <TabsContent value="branding" className="space-y-4">
+          <TabsContent value="branding" className="space-y-4 text-admin-foreground">
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Food Truck Name</Label>
@@ -560,8 +560,8 @@ export function UnifiedConfigForm({
                   </div>
                 </div>
                 
-                <div className="mt-4 p-4 border rounded-md bg-gray-50">
-                  <h4 className="text-sm font-medium mb-2">Color Preview</h4>
+                <div className="mt-4 p-4 border rounded-md bg-admin-secondary/10">
+                  <h4 className="text-sm font-medium mb-2 text-admin-foreground">Color Preview</h4>
                   <div 
                     className="w-full h-8 rounded-md"
                     style={{ 
@@ -573,7 +573,7 @@ export function UnifiedConfigForm({
             </div>
           </TabsContent>
           
-          <TabsContent value="hero" className="space-y-4">
+          <TabsContent value="hero" className="space-y-4 text-admin-foreground">
             <div className="space-y-4">
               <div>
                 <Label htmlFor="heroTitle">Hero Title</Label>
@@ -643,7 +643,7 @@ export function UnifiedConfigForm({
             </div>
           </TabsContent>
           
-          <TabsContent value="about" className="space-y-4">
+          <TabsContent value="about" className="space-y-4 text-admin-foreground">
             <div className="space-y-4">
               <div>
                 <Label htmlFor="aboutTitle">About Section Title</Label>
@@ -695,7 +695,7 @@ export function UnifiedConfigForm({
             </div>
           </TabsContent>
           
-          <TabsContent value="contact" className="space-y-4">
+          <TabsContent value="contact" className="space-y-4 text-admin-foreground">
             <div className="space-y-4">
               <div>
                 <Label htmlFor="contactEmail">Email Address</Label>
@@ -724,7 +724,7 @@ export function UnifiedConfigForm({
             </div>
           </TabsContent>
           
-          <TabsContent value="socials" className="space-y-4">
+          <TabsContent value="socials" className="space-y-4 text-admin-foreground">
             <div className="space-y-4">
               <div>
                 <Label htmlFor="socialTwitter">Twitter/X</Label>
@@ -768,11 +768,11 @@ export function UnifiedConfigForm({
       
       {/* Client mode submit button */}
       {!onSave && (
-        <CardFooter className="flex justify-end border-t pt-4">
+        <CardFooter className="flex justify-end border-t border-admin-border pt-4">
           <Button
             onClick={handleSubmitChanges}
             disabled={isSaving}
-            className="w-full md:w-auto"
+            className="w-full md:w-auto bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground hover:opacity-90"
           >
             {isSaving ? (
               <>
@@ -793,11 +793,11 @@ export function UnifiedConfigForm({
 
       {/* Admin mode mobile submit button */}
       {onSave && (
-        <CardFooter className="md:hidden flex justify-end border-t pt-4">
+        <CardFooter className="md:hidden flex flex-col gap-3 border-t border-admin-border pt-4">
           <Button
             onClick={handleSubmitChanges}
             disabled={isSaving}
-            className="w-full"
+            className="w-full bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground hover:opacity-90"
           >
             {isSaving ? (
               <>
@@ -813,6 +813,12 @@ export function UnifiedConfigForm({
               </>
             )}
           </Button>
+          
+          {/* Version history drawer (mobile only) */}
+          <ConfigHistoryDrawer 
+            onSelectVersion={handleSelectVersion} 
+            currentConfig={createConfigFromFormValues()}
+          />
         </CardFooter>
       )}
 
@@ -822,11 +828,11 @@ export function UnifiedConfigForm({
           <Alert variant={statusMessage === 'success' ? 'default' : 'destructive'}>
             <div className="flex items-center gap-2">
               {statusMessage === 'success' ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-admin-primary" />
               ) : (
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4 text-admin-destructive" />
               )}
-              <AlertDescription>
+              <AlertDescription className={statusMessage === 'success' ? 'text-admin-foreground' : 'text-admin-destructive'}>
                 {statusMessage === 'success' 
                   ? 'Changes applied successfully!' 
                   : 'Failed to apply changes. Please try again.'}

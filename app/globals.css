@@ -94,28 +94,28 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    /* Admin Theme Colors - Dark Mode (Dark Slate + Bright Indigo/Violet) */
-    --admin-background: 222.2 84% 4.9%; /* Very Dark Slate */
+    /* Admin Theme Colors - Dark Mode (Improved Contrast) */
+    --admin-background: 222.2 30% 12%; /* Lighter Dark Slate for better readability */
     --admin-foreground: 210 40% 98%; /* White */
-    --admin-card: 222.2 84% 4.9%; /* Very Dark Slate */
-    --admin-card-foreground: 210 40% 98%; /* White */
-    --admin-popover: 222.2 84% 4.9%; /* Very Dark Slate */
-    --admin-popover-foreground: 210 40% 98%; /* White */
-    --admin-primary: 226 70% 65.5%; /* Brighter Indigo */
+    --admin-card: 222.2 30% 8%; /* Darker card background for better contrast */
+    --admin-card-foreground: 0 0% 100%; /* Pure white text for maximum contrast */
+    --admin-popover: 222.2 30% 8%; /* Match card background */
+    --admin-popover-foreground: 0 0% 100%; /* Pure white */
+    --admin-primary: 226 80% 70%; /* Brighter, more saturated indigo */
     --admin-primary-foreground: 0 0% 100%; /* White */
-    --admin-secondary: 217.2 32.6% 17.5%; /* Darker Slate */
-    --admin-secondary-foreground: 210 40% 98%; /* White */
-    --admin-muted: 217.2 32.6% 17.5%; /* Darker Slate */
-    --admin-muted-foreground: 214.3 31.8% 65.4%; /* Lighter Slate */
-    --admin-accent: 217.2 32.6% 17.5%; /* Darker Slate */
-    --admin-accent-foreground: 210 40% 98%; /* White */
-    --admin-destructive: 0 62.8% 30.6%; /* Darker Red */
-    --admin-destructive-foreground: 0 0% 98%; /* White */
-    --admin-border: 217.2 32.6% 17.5%; /* Darker Slate Border */
-    --admin-input: 217.2 32.6% 17.5%; /* Darker Slate Input */
-    --admin-ring: 226 70% 65.5%; /* Brighter Indigo */
-    --admin-gradient-start: 226 70% 65.5%; /* Brighter Indigo Start */
-    --admin-gradient-end: 250 84% 77%; /* Brighter Violet End */
+    --admin-secondary: 217.2 28% 15%; /* Darker secondary for contrast with background */
+    --admin-secondary-foreground: 0 0% 100%; /* Pure white */
+    --admin-muted: 217.2 28% 15%; /* Match secondary */
+    --admin-muted-foreground: 214.3 31.8% 85%; /* Even lighter foreground for better contrast */
+    --admin-accent: 217.2 28% 15%; /* Match secondary */
+    --admin-accent-foreground: 0 0% 100%; /* Pure white */
+    --admin-destructive: 0 72% 40%; /* Brighter red for better visibility */
+    --admin-destructive-foreground: 0 0% 100%; /* Pure white */
+    --admin-border: 217.2 28% 25%; /* Lighter border for better definition */
+    --admin-input: 217.2 28% 25%; /* Match border */
+    --admin-ring: 226 80% 70%; /* Brighter ring to match primary */
+    --admin-gradient-start: 226 70% 15%; /* Darker but more saturated indigo for gradient start */
+    --admin-gradient-end: 250 60% 20%; /* Darker but more saturated violet for gradient end */
   }
 }
 

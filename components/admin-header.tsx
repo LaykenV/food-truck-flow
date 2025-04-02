@@ -55,7 +55,7 @@ export function AdminHeader() {
           
           {/* Status Indicator */}
           {todaySchedule?.isClosed ? (
-            <Badge variant="destructive" className="text-xs px-2">
+            <Badge variant="admin-destructive" className="text-xs px-2">
               {todaySchedule.closureTimestamp ? 'Emergency Closure' : 'Closed Today'}
             </Badge>
           ) : isCurrentlyOpen ? (
@@ -63,11 +63,11 @@ export function AdminHeader() {
               Open Now
             </Badge>
           ) : todaySchedule ? (
-            <Badge variant="secondary" className="text-xs px-2">
+            <Badge variant="admin-secondary" className="text-xs px-2">
               Closed Now
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-xs px-2">
+            <Badge variant="outline" className="text-xs px-2 border-admin-border text-admin-muted-foreground">
               No Schedule Set
             </Badge>
           )}
@@ -77,6 +77,7 @@ export function AdminHeader() {
           {!isLoading && !error && foodTruck?.subdomain && (
             <Button 
               size="sm" 
+              variant="admin"
               asChild
               className="bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] hover:opacity-90 text-admin-primary-foreground border-none shadow-sm transition-all duration-200 hover:shadow-md"
             >

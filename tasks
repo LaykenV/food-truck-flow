@@ -65,7 +65,10 @@ template
 
     order cleanup
 
-    admin edits
+    admin edits list 
+    dashboard - analytics to today, 'new' on orders
+    config - theme bleeding through to preview, preview mobile, photo sizing, about field?
+    
 
     go back through both
 
