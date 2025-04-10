@@ -104,10 +104,10 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
   };
 
   return (
-    <section id="contact-section" className="py-20 bg-background">
+    <section id="contact-section" className="py-12 md:py-16">
       <div className="container mx-auto px-4">
         {/* Decorative elements */}
-        <div className="relative mb-16">
+        <div className="relative mb-10 md:mb-12">
           <div 
             className="absolute top-1/2 left-0 w-full h-px -translate-y-1/2"
             style={{ 
@@ -115,18 +115,18 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
             }}
           ></div>
           <div className="relative flex justify-center">
-            <div className="bg-background px-8">
+            <div className="bg-[#f0f0f0] px-8">
               <div 
                 className="w-16 h-16 rounded-full flex items-center justify-center"
                 style={{ 
-                  background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` 
+                  background: `linear-gradient(135deg, ${primaryColor}95, ${secondaryColor}95)` 
                 }}
               >
                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
                   <div 
                     className="w-6 h-6 rounded-full"
                     style={{ 
-                      background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` 
+                      background: `linear-gradient(135deg, ${primaryColor}95, ${secondaryColor}95)` 
                     }}
                   ></div>
                 </div>
@@ -135,17 +135,17 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
           </div>
         </div>
         
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 md:mb-10">
           <h2 
-            className="text-3xl md:text-4xl font-bold mb-4"
-            style={{ color: secondaryColor }}
+            className="text-3xl md:text-4xl font-bold mb-3"
+            style={{ color: '#000000', opacity: 0.8 }}
           >
             Get In Touch
           </h2>
           <div 
-            className="w-16 h-1 mx-auto my-4"
+            className="w-16 h-1 mx-auto my-3"
             style={{ 
-              background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+              background: primaryColor
             }}
           ></div>
           <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 text-muted-foreground">
@@ -154,72 +154,84 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
         </div>
         
         <div 
-          className="max-w-4xl mx-auto bg-background rounded-lg p-8 shadow-lg"
+          className="max-w-3xl mx-auto bg-background rounded-lg p-6 md:p-8 shadow-lg"
           style={{ 
             borderWidth: "1px",
             borderImage: `linear-gradient(to right, ${primaryColor}, ${secondaryColor}) 1`,
-            boxShadow: `0 10px 30px rgba(0, 0, 0, 0.1), 0 1px 8px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.08)`
+            boxShadow: `0 8px 25px rgba(0, 0, 0, 0.08), 0 1px 6px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0, 0, 0, 0.06)`
           }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {/* Phone */}
-            <div className="flex flex-col items-center text-center group">
+            <a
+              href={displayMode === 'live' && contact?.phone ? `tel:${contact.phone}` : '#'}
+              onClick={displayMode === 'preview' || !contact?.phone ? handleLinkClick : undefined}
+              className="flex flex-col items-center text-center group no-underline"
+              title={displayMode === 'live' && contact?.phone ? `Call ${contact.phone}` : (contact?.phone ? 'Call (disabled in preview mode)' : 'Phone number not available')}
+              aria-label={displayMode === 'live' && contact?.phone ? `Call ${contact.phone}` : 'Phone'}
+            >
               <div 
-                className="p-4 rounded-full mb-5 transition-all transform group-hover:scale-110 duration-300"
+                className="p-3 rounded-full mb-3 transition-all transform group-hover:scale-110 duration-300"
                 style={{ 
-                  backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, white)`,
-                  boxShadow: `0 4px 20px ${primaryColor}30`
+                  background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
+                      boxShadow: `0 3px 10px ${primaryColor}20, 0 3px 10px ${secondaryColor}20`
                 }}
               >
                 <Phone 
-                  className="h-8 w-8" 
-                  style={{ color: primaryColor }}
-                />
-              </div>
-              <h4 className="font-bold text-xl mb-3 text-foreground">{contact?.phone || "Contact us to get our phone number"}</h4>
-              <p className="text-muted-foreground text-lg">Call us anytime</p>
-            </div>
-            
-            {/* Email */}
-            <div className="flex flex-col items-center text-center group">
-              <div 
-                className="p-4 rounded-full mb-5 transition-all transform group-hover:scale-110 duration-300"
-                style={{ 
-                  backgroundColor: `color-mix(in srgb, ${secondaryColor} 15%, white)`,
-                  boxShadow: `0 4px 20px ${secondaryColor}30`
-                }}
-              >
-                <Mail 
-                  className="h-8 w-8" 
+                  className="h-7 w-7" 
                   style={{ color: secondaryColor }}
                 />
               </div>
-              <h4 className="font-bold text-xl mb-3 text-foreground">{contact?.email || "info@foodtruckname.com"}</h4>
-              <p className="text-muted-foreground text-lg">Email us anytime</p>
-            </div>
+              <h4 className="font-bold text-xl mb-2 text-foreground">{contact?.phone || "Contact us"}</h4>
+              <p className="text-muted-foreground text-base md:text-lg">Call us anytime</p>
+            </a>
+            
+            {/* Email */}
+            <a
+              href={displayMode === 'live' && contact?.email ? `mailto:${contact.email}` : '#'}
+              onClick={displayMode === 'preview' || !contact?.email ? handleLinkClick : undefined}
+              className="flex flex-col items-center text-center group no-underline"
+              title={displayMode === 'live' && contact?.email ? `Email ${contact.email}` : (contact?.email ? 'Email (disabled in preview mode)' : 'Email address not available')}
+              aria-label={displayMode === 'live' && contact?.email ? `Email ${contact.email}` : 'Email'}
+            >
+              <div 
+                className="p-3 rounded-full mb-3 transition-all transform group-hover:scale-110 duration-300"
+                style={{ 
+                  background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
+                      boxShadow: `0 3px 10px ${primaryColor}20, 0 3px 10px ${secondaryColor}20`
+                }}
+              >
+                <Mail 
+                  className="h-7 w-7" 
+                  style={{ color: secondaryColor }}
+                />
+              </div>
+              <h4 className="font-bold text-xl mb-2 text-foreground">{contact?.email || "info@foodtruck.co"}</h4>
+              <p className="text-muted-foreground text-base md:text-lg">Email us anytime</p>
+            </a>
           </div>
           
           <div 
-            className="mt-16 text-center pt-10"
+            className="mt-10 md:mt-12 text-center pt-6 md:pt-8"
             style={{
               borderTop: `1px solid color-mix(in srgb, ${primaryColor} 30%, ${secondaryColor})20`
             }}
           >
-            <h4 className="font-bold text-xl mb-6 text-foreground">Follow Us</h4>
-            <div className="flex justify-center space-x-8">
+            <h4 className="font-bold text-xl mb-4 md:mb-5 text-foreground">Follow Us</h4>
+            <div className="flex justify-center space-x-5 md:space-x-6">
               {instagramUrl ? (
                 renderExternalLink(
                   instagramUrl,
                   <div 
-                    className="p-3 rounded-full transition-all hover:scale-110 duration-300"
+                    className="p-2.5 rounded-full transition-all hover:scale-110 duration-300"
                     style={{ 
-                      background: `linear-gradient(135deg, ${primaryColor}20, ${primaryColor}10)`,
-                      boxShadow: `0 4px 12px ${primaryColor}30`
+                      background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
+                      boxShadow: `0 3px 10px ${primaryColor}20, 0 3px 10px ${secondaryColor}20`
                     }}
                   >
                     <Instagram 
-                      size={28} 
-                      style={{ color: primaryColor }} 
+                      size={26} 
+                      style={{ color: `color-mix(in srgb, ${primaryColor} 50%, ${secondaryColor})` }}
                     />
                   </div>,
                   "text-muted-foreground",
@@ -231,15 +243,15 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
                 renderExternalLink(
                   facebookUrl,
                   <div 
-                    className="p-3 rounded-full transition-all hover:scale-110 duration-300"
+                    className="p-2.5 rounded-full transition-all hover:scale-110 duration-300"
                     style={{ 
-                      background: `linear-gradient(135deg, ${secondaryColor}20, ${secondaryColor}10)`,
-                      boxShadow: `0 4px 12px ${secondaryColor}30`
+                      background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
+                      boxShadow: `0 3px 10px ${primaryColor}20, 0 3px 10px ${secondaryColor}20`
                     }}
                   >
                     <Facebook 
-                      size={28} 
-                      style={{ color: secondaryColor }} 
+                      size={26} 
+                      style={{ color: `color-mix(in srgb, ${primaryColor} 50%, ${secondaryColor})` }}
                     />
                   </div>,
                   "text-muted-foreground",
@@ -251,15 +263,15 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
                 renderExternalLink(
                   twitterUrl,
                   <div 
-                    className="p-3 rounded-full transition-all hover:scale-110 duration-300"
+                    className="p-2.5 rounded-full transition-all hover:scale-110 duration-300"
                     style={{ 
                       background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
-                      boxShadow: `0 4px 12px ${primaryColor}20, 0 4px 12px ${secondaryColor}20`
+                      boxShadow: `0 3px 10px ${primaryColor}20, 0 3px 10px ${secondaryColor}20`
                     }}
                   >
                     <Twitter 
-                      size={28} 
-                      style={{ color: `color-mix(in srgb, ${primaryColor} 50%, ${secondaryColor})` }} 
+                      size={26} 
+                      style={{ color: `color-mix(in srgb, ${primaryColor} 50%, ${secondaryColor})` }}
                     />
                   </div>,
                   "text-muted-foreground",
@@ -269,7 +281,7 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
               
               {/* Show a message if no social links are available */}
               {!instagramUrl && !facebookUrl && !twitterUrl && (
-                <div className="text-muted-foreground/70 text-sm italic mt-2 p-4 rounded-lg bg-muted/30">
+                <div className="text-muted-foreground/70 text-sm italic mt-2 p-3 rounded-lg bg-muted/30">
                   Social media links will appear here when added
                 </div>
               )}

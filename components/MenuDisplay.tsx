@@ -5,6 +5,7 @@ import { MenuItem as MenuItemComponent } from '@/components/MenuItem';
 import { MenuItem } from '@/lib/cartContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 interface MenuDisplayProps {
   items: MenuItem[];
@@ -18,6 +19,11 @@ export function MenuDisplay({ items, primaryColor, secondaryColor }: MenuDisplay
   
   // Set "All" as the default selected tab
   const [selectedCategory, setSelectedCategory] = useState('All');
+
+  // Track active item index for each category (for mobile scrolling)
+  const [activeCategoryItems, setActiveCategoryItems] = useState<Record<string, number>>(
+    categories.reduce((acc, category) => ({ ...acc, [category]: 0 }), {})
+  );
   
   // If there are no items, show a message
   if (items.length === 0) {
@@ -40,6 +46,22 @@ export function MenuDisplay({ items, primaryColor, secondaryColor }: MenuDisplay
     color: primaryColor,
     backgroundColor: secondaryColor ? `${secondaryColor}15` : undefined
   };
+
+  // Handle scroll events for mobile carousel
+  const handleScroll = (category: string, e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const scrollPosition = container.scrollLeft;
+    const categoryItems = items.filter(item => item.category === category);
+    const itemWidth = container.scrollWidth / categoryItems.length;
+    const newActiveIndex = Math.round(scrollPosition / itemWidth);
+    
+    if (newActiveIndex !== activeCategoryItems[category]) {
+      setActiveCategoryItems(prev => ({
+        ...prev,
+        [category]: newActiveIndex
+      }));
+    }
+  };
   
   return (
     <>
@@ -58,11 +80,17 @@ export function MenuDisplay({ items, primaryColor, secondaryColor }: MenuDisplay
                 {category}
               </h3>
               
-              {/* Horizontal scrollable container for menu items */}
-              <ScrollArea className="w-full pb-4">
-                <div className="flex space-x-4 pb-4 pr-4">
+              {/* Horizontal scrollable container with snap for menu items */}
+              <div className="relative">
+                <div 
+                  className="flex overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide"
+                  onScroll={(e) => handleScroll(category, e)}
+                >
                   {categoryItems.map(item => (
-                    <div key={item.id} className="w-[250px] flex-shrink-0">
+                    <div 
+                      key={item.id} 
+                      className="min-w-[250px] w-[85vw] max-w-[300px] px-2 mr-2 snap-center flex-shrink-0"
+                    >
                       <MenuItemComponent
                         item={item}
                         primaryColor={primaryColor}
@@ -71,7 +99,32 @@ export function MenuDisplay({ items, primaryColor, secondaryColor }: MenuDisplay
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+                
+                {/* Scroll indicators for mobile */}
+                {categoryItems.length > 1 && (
+                  <div className="flex justify-center mt-2">
+                    <div className="flex space-x-2">
+                      {categoryItems.map((_, index) => (
+                        <div 
+                          key={index} 
+                          className={cn(
+                            "transition-all duration-300",
+                            activeCategoryItems[category] === index 
+                              ? "w-6 h-2 rounded-full" 
+                              : "w-2 h-2 rounded-full opacity-70"
+                          )}
+                          style={{ 
+                            backgroundColor: 
+                              activeCategoryItems[category] === index 
+                                ? secondaryColor || primaryColor
+                                : `color-mix(in srgb, ${secondaryColor || primaryColor} 30%, white)` 
+                          }}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

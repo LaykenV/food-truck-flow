@@ -36,6 +36,7 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [showNotesField, setShowNotesField] = useState(false);
   const pathname = usePathname();
   const [currentUrl, setCurrentUrl] = useState('');
   
@@ -58,6 +59,7 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
     // Reset state
     setNotes('');
     setQuantity(1);
+    setShowNotesField(false);
     setIsDialogOpen(false);
   };
   
@@ -93,7 +95,7 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
     <>
       {/* Photo-centric card with gradient border that opens dialog when clicked */}
       <div 
-        className="group h-full rounded-lg overflow-hidden transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+        className="h-full rounded-lg overflow-hidden cursor-pointer"
         style={gradientBorderStyle}
         onClick={() => setIsDialogOpen(true)}
       >
@@ -104,7 +106,7 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
                 src={imageSource} 
                 alt={item.name} 
                 fill 
-                className="object-cover group-hover:scale-105 transition-transform duration-300" 
+                className="object-cover" 
                 sizes="(max-width: 768px) 100vw, 33vw"
               />
             ) : (
@@ -131,15 +133,19 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
 
       {/* Detailed Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden mx-auto max-w-[calc(100%-2rem)] rounded-lg">
-          <div className="p-6 pb-3">
-            <DialogHeader>
-              <DialogTitle className="text-xl" style={{ color: primaryColor }}>{item.name}</DialogTitle>
-            </DialogHeader>
+        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden mx-auto max-w-[calc(100%-2rem)] rounded-lg max-h-[90vh] flex flex-col">
+          <div className="relative p-6 pb-3 flex items-center justify-center">
+            {/* Price in top left */}
+            <div className="absolute left-6 top-6 text-lg font-medium" style={{ color: primaryColor, opacity: '0.8' }}>
+              {formatCurrency(item.price)}
+            </div>
+            
+            {/* Item name centered */}
+            <DialogTitle className="text-xl text-center" style={{ color: '#000000', opacity: '0.8' }}>{item.name}</DialogTitle>
           </div>
           
-          {/* Image after header */}
-          <div className="relative w-full aspect-video">
+          {/* Square image after header - with max height */}
+          <div className="relative w-full aspect-square max-h-[300px]">
             {imageSource ? (
               <Image 
                 src={imageSource} 
@@ -155,28 +161,37 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
             )}
           </div>
           
-          <div className="p-6 pt-4">
-            {/* Price immediately after image */}
-            <div className="text-lg font-medium mb-2" style={{ color: secondaryColor }}>
-              {formatCurrency(item.price)}
-            </div>
-            
+          <div className="p-6 pt-4 overflow-y-auto">
             {/* Description */}
             <p className="text-gray-600">{item.description}</p>
             
             {/* Special Instructions */}
-            <div className="mt-6 grid gap-2">
-              <Label htmlFor="notes" className="flex items-center gap-1.5">
-                <MessageCircle className="h-4 w-4" />
-                Special Instructions (Optional)
-              </Label>
-              <Textarea
-                id="notes"
-                placeholder="Any special requests or modifications?"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[80px]"
-              />
+            <div className="mt-6">
+              {showNotesField ? (
+                <div className="grid gap-2">
+                  <Label htmlFor="notes" className="flex items-center gap-1.5">
+                    <MessageCircle className="h-4 w-4" />
+                    Special Instructions (Optional)
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Any special requests or modifications?"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="min-h-[40px]"
+                  />
+                </div>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-muted-foreground flex items-center hover:bg-muted/20 rounded-full px-3"
+                  onClick={() => setShowNotesField(true)}
+                >
+                  <MessageCircle className="h-3.5 w-3.5 mr-1.5" style={{ color: primaryColor }} />
+                  Add special instructions
+                </Button>
+              )}
             </div>
             
             {/* Quantity selector */}
@@ -214,7 +229,7 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
             <DialogFooter className="mt-6">
               <Button 
                 className={cn("w-full text-white")}
-                style={{ backgroundColor: primaryColor }}
+                style={{ backgroundColor: primaryColor, opacity: '0.8' }}
                 onClick={handleAddToCart}
               >
                 <PlusCircle className="h-4 w-4 mr-2" />

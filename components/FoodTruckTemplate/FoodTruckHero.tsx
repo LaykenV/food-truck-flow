@@ -102,7 +102,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                 }}
               >
                 <Link href={`/${subdomain}/menu`} prefetch={true}>
-                  Start Order
+                  View Menu
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
@@ -119,7 +119,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                 }}
                 onClick={handleButtonClick}
               >
-                Start Order
+                View Menu
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             )}
@@ -168,7 +168,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                       }}
                     >
                       <Link href={`/${subdomain}/menu`} prefetch={true}>
-                        Start Order
+                        View Menu
                         <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>
@@ -204,7 +204,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                       }}
                       onClick={handleButtonClick}
                     >
-                      Start Order
+                      View Menu
                       <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </Button>
                     <Button

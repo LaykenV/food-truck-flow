@@ -27,6 +27,7 @@ export function ShoppingCartDrawer({
 }: ShoppingCartDrawerProps) {
   const [open, setOpen] = useState(false);
   const [buttonAnimation, setButtonAnimation] = useState<'idle' | 'bounce'>('idle');
+  const [prevItemCount, setPrevItemCount] = useState(0);
   const { items } = useCart();
   const pathname = usePathname();
   
@@ -37,27 +38,37 @@ export function ShoppingCartDrawer({
   const foodTruckItems = items.filter(item => item.food_truck_id === foodTruckId);
   const itemCount = foodTruckItems.reduce((total, item) => total + item.quantity, 0);
   
-  // Add animation when items are added to the cart
+  // Add animation when items are added to the cart, but not on initial load
   useEffect(() => {
-    if (itemCount > 0) {
+    // Skip animation on initial render/refresh
+    if (prevItemCount === 0 && itemCount > 0) {
+      setPrevItemCount(itemCount);
+      return;
+    }
+    
+    // Only animate when items increase
+    if (itemCount > prevItemCount) {
       setButtonAnimation('bounce');
       const timer = setTimeout(() => {
         setButtonAnimation('idle');
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [itemCount]);
+    
+    setPrevItemCount(itemCount);
+  }, [itemCount, prevItemCount]);
   
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 h-8 z-50 shopping-cart-drawer">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 h-4 z-50 shopping-cart-drawer">
           {/* Bottom bump with gradient */}
           <div 
             className="absolute inset-0 rounded-t-[16px] shadow-lg"
             style={{ 
               background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
-              boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)'
+              boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
+              opacity: '0.9'
             }}
           >
             {/* Pull up indicator */}
@@ -65,11 +76,11 @@ export function ShoppingCartDrawer({
           </div>
           
           {/* Cart icon and count - positioned in the center */}
-          <div className="absolute left-1/2 -translate-x-1/2 -top-4 transform-gpu will-change-transform">
+          <div className="absolute left-1/2 -translate-x-1/2 -top-7 transform-gpu will-change-transform">
             <div 
               className={cn(
-                "relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg",
-                buttonAnimation === 'bounce' && "animate-bounce"
+                "relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-transform",
+                buttonAnimation === 'bounce' && "animate-cart-bounce"
               )}
               style={{ 
                 background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
@@ -82,7 +93,8 @@ export function ShoppingCartDrawer({
                   className="absolute -top-1 -right-1 bg-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center"
                   style={{ 
                     color: primaryColor,
-                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)'
+                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                    opacity: '0.8'
                   }}
                 >
                   {itemCount}

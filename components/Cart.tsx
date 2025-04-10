@@ -131,10 +131,10 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                     size="icon"
                     className="h-8 w-8 rounded-full border-2"
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    style={{ borderColor: primaryColor }}
+                    style={{ borderColor: primaryColor, opacity: '0.7' }}
                     disabled={isUpdating}
                   >
-                    <MinusCircle className="h-4 w-4" style={{ color: primaryColor }} />
+                    <MinusCircle className="h-4 w-4" style={{ color: primaryColor, opacity: '0.7' }} />
                     <span className="sr-only">Decrease quantity</span>
                   </Button>
                   <Button
@@ -142,10 +142,10 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                     size="icon"
                     className="h-8 w-8 rounded-full border-2"
                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    style={{ borderColor: primaryColor }}
+                    style={{ borderColor: primaryColor, opacity: '0.7' }}
                     disabled={isUpdating}
                   >
-                    <PlusCircle className="h-4 w-4" style={{ color: primaryColor }} />
+                    <PlusCircle className="h-4 w-4" style={{ color: primaryColor, opacity: '0.7' }} />
                     <span className="sr-only">Increase quantity</span>
                   </Button>
                   <Button
@@ -186,7 +186,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                       size="sm" 
                       onClick={() => handleSaveNotes(item.id)}
                       className="rounded-full"
-                      style={{ backgroundColor: primaryColor }}
+                      style={{ backgroundColor: primaryColor, opacity: '0.8' }}
                       disabled={isUpdating}
                     >
                       Save
@@ -245,7 +245,8 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
             onClick={handleCheckout}
             style={{ 
               background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+              opacity: '0.8'
             }}
             disabled={foodTruckItems.length === 0 || isUpdating}
           >

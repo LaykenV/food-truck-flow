@@ -84,7 +84,7 @@ export default function FloatingMenuButton({
     <div 
       ref={buttonRef}
       className={cn(
-        "fixed right-4 z-30 transition-all duration-500 ease-out floating-menu-button",
+        "fixed right-4 z-30 transition-all duration-500 ease-out floating-menu-button bg-background rounded-full",
         hasOrderTracker ? "bottom-4" : "bottom-4 sm:bottom-6 md:bottom-8",
         // Animation states
         animationState === 'hidden' && "opacity-0 translate-y-16 scale-75 pointer-events-none",
@@ -95,14 +95,14 @@ export default function FloatingMenuButton({
       <Link href={`/${subdomain}/menu`} prefetch={true}>
         <Button
           size="lg"
-          className="group rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 hover:scale-105 transition-transform"
+          className="group rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 transition-transform"
           style={{ 
-            backgroundColor: primaryColor,
+            background: `linear-gradient(to right, ${primaryColor}80, ${secondaryColor}80)`,
             color: 'white',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)'
           }}
         >
-          <span>Start Order</span>
+          <span>View Menu</span>
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>
       </Link>

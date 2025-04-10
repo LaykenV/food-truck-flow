@@ -159,7 +159,7 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
           </h2>
           <div 
             className="w-16 h-1 mx-auto mb-6"
-            style={{ backgroundColor: secondaryColor }}
+            style={{ backgroundColor: primaryColor }}
           ></div>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {schedule?.description || 'Check out our weekly schedule and locations'}
