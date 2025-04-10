@@ -123,7 +123,7 @@ export default async function FoodTruckLayout({
   
   return (
     <CartProvider>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-[#f0f0f0]">
         <FoodTruckNavbar config={config} subdomain={subdomain} displayMode="live" />
         <main className="flex-grow">
           {children}

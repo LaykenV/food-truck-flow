@@ -115,12 +115,12 @@ export function ScheduleCard({
           <div 
             className="p-2 rounded-full mr-3 shrink-0"
             style={{ 
-              backgroundColor: `color-mix(in srgb, ${primaryColor} 20%, white)` 
+              backgroundColor: `color-mix(in srgb, ${secondaryColor} 20%, white)` 
             }}
           >
             <Calendar 
               className="h-4 w-4" 
-              style={{ color: primaryColor }}
+              style={{ color: secondaryColor }}
             />
           </div>
           <div className="min-w-0">

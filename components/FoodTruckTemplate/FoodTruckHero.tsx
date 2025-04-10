@@ -64,237 +64,183 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
 
   return (
     <>
-      {/* Mobile hero (image only) - visible on small screens only */}
+      {/* Mobile hero section - visible on small screens only */}
       <section className={`md:hidden ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
-        <div className="relative w-full h-[50vh]">
-          <Image
-            src={heroImage}
-            alt={heroTitle}
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-            priority
-          />
-          <div 
-            className="absolute inset-0" 
-            style={{ 
-              background: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.4))` 
-            }}
-          />
-          
-          {/* Mobile title overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
-            <h1 
-              className="text-3xl font-bold leading-tight"
-              style={{ color: heroFont }}
-            >
-              {heroTitle}
-            </h1>
+        <div 
+          className="relative w-full h-[50vh] overflow-hidden flex flex-col items-center justify-center"
+          style={{ 
+            background: `linear-gradient(135deg, ${primaryColor}70, ${secondaryColor}70)` 
+          }}
+        >
+          {/* Food truck image */}
+          <div className="relative w-full h-full flex items-center justify-center px-6 z-10">
+            <Image
+              src={heroImage}
+              alt={heroTitle}
+              width={500}
+              height={500}
+              className="object-contain max-h-full"
+              sizes="(max-width: 768px) 90vw, 500px"
+              priority
+            />
           </div>
-
-          {/* Top accent line */}
-          <div 
-            className="absolute top-0 left-0 right-0 h-2 z-10"
-            style={{ 
-              background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
-            }}
-          ></div>
-        </div>
-
-        {/* Mobile content section */}
-        <div className="px-4 py-8 bg-white">
-          <div 
-            className="w-20 h-2 mb-4"
-            style={{ 
-              background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
-            }}
-          ></div>
-          <p 
-            className="text-xl mb-6 text-gray-800"
-          >
-            {heroSubtitle}
-          </p>
-          <div className="flex flex-col gap-3">
+          
+          {/* Start Order button moved inside hero area */}
+          <div className="absolute bottom-6 left-4 right-4 z-20 flex justify-center">
             {displayMode === 'live' ? (
-              <>
-                <Button
-                  asChild
-                  size="lg"
-                  className="group w-full"
-                  id="hero-menu-button"
-                  style={{ 
-                    backgroundColor: primaryColor,
-                    color: 'white'
-                  }}
-                >
-                  <Link href={`/${subdomain}/menu`} prefetch={true}>
-                    Start Order
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="group border-2 hover:text-white w-full"
-                  style={{ 
-                    borderColor: secondaryColor,
-                    color: secondaryColor,
-                    backgroundColor: 'transparent',
-                    "&:hover": {
-                      backgroundColor: secondaryColor
-                    }
-                  } as React.CSSProperties}
-                  onClick={handleSmoothScroll}
-                >
-                  Find Us
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  size="lg"
-                  className="group w-full"
-                  id="hero-menu-button"
-                  style={{ 
-                    backgroundColor: primaryColor,
-                    color: 'white'
-                  }}
-                  onClick={handleButtonClick}
-                >
+              <Button
+                asChild
+                size="lg"
+                className="group w-[90%]"
+                id="hero-menu-button"
+                style={{ 
+                  background: `linear-gradient(to right, ${secondaryColor}90, ${primaryColor}90)`,
+                  color: heroFont,
+                  border: `2px solid ${heroFont}`,
+                  fontWeight: 'bold',
+                  fontSize: '1.4rem'
+                }}
+              >
+                <Link href={`/${subdomain}/menu`} prefetch={true}>
                   Start Order
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="group border-2 hover:text-white w-full"
-                  style={{ 
-                    borderColor: secondaryColor,
-                    color: secondaryColor,
-                    backgroundColor: 'transparent',
-                    "&:hover": {
-                      backgroundColor: secondaryColor
-                    }
-                  } as React.CSSProperties}
-                  onClick={handleSmoothScroll}
-                >
-                  Find Us
-                </Button>
-              </>
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                className="group w-[90%]"
+                id="hero-menu-button"
+                style={{ 
+                  background: `linear-gradient(to right, ${secondaryColor}, ${primaryColor})`,
+                  color: heroFont,
+                  fontSize: '1.4rem',
+                  fontWeight: 'bold'
+                }}
+                onClick={handleButtonClick}
+              >
+                Start Order
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
             )}
           </div>
         </div>
       </section>
       
       {/* Desktop hero (full screen) - hidden on small screens */}
-      <section className={`hidden md:flex relative min-h-[100vh] items-center ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src={heroImage}
-            alt={heroTitle}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-          <div 
-            className="absolute inset-0" 
-            style={{ 
-              background: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.4))` 
-            }}
-          />
-        </div>
-
-        {/* Hero Content */}
-        <div className="container relative z-10 mx-auto px-4 py-20 mt-16">
-          <div className="max-w-3xl">
-            <h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
-              style={{ color: heroFont }}
-            >
-              {heroTitle}
-            </h1>
-            <div 
-              className="w-24 h-2 mb-6"
-              style={{ 
-                background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
-              }}
-            ></div>
-            <p 
-              className="text-xl md:text-2xl mb-8"
-              style={{ color: heroFont }}
-            >
-              {heroSubtitle}
-            </p>
-            <div className="flex flex-row gap-4">
-              {displayMode === 'live' ? (
-                <>
-                  <Button
-                    asChild
-                    size="lg"
-                    className="group"
-                    id="hero-menu-button"
-                    style={{ 
-                      backgroundColor: primaryColor,
-                      color: 'white'
-                    }}
-                  >
-                    <Link href={`/${subdomain}/menu`} prefetch={true}>
+      <section 
+        className={`hidden md:block relative min-h-[100vh] ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}
+        style={{ 
+          background: `linear-gradient(135deg, ${primaryColor}70, ${secondaryColor}70)` 
+        }}
+      >
+        {/* Hero Content - Two column layout */}
+        <div className="container relative z-10 mx-auto px-4 py-12 h-full">
+          <div className="flex flex-row items-center h-full py-8">
+            {/* Left column - Text content */}
+            <div className="w-full md:w-1/2 pr-4 pt-8">
+              <h1 
+                className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight"
+                style={{ color: heroFont }}
+              >
+                {heroTitle}
+              </h1>
+              <p 
+                className="text-2xl md:text-3xl mb-8"
+                style={{ color: heroFont }}
+              >
+                {heroSubtitle}
+              </p>
+              <div className="flex flex-row gap-4">
+                {displayMode === 'live' ? (
+                  <>
+                    <Button
+                      asChild
+                      size="lg"
+                      className="group"
+                      id="hero-menu-button"
+                      style={{ 
+                        background: `linear-gradient(to right, ${secondaryColor}90, ${primaryColor}90)`,
+                        color: heroFont,
+                        border: `2px solid ${heroFont}`,
+                        fontWeight: 'bold',
+                        fontSize: '1.4rem'
+                      }}
+                    >
+                      <Link href={`/${subdomain}/menu`} prefetch={true}>
+                        Start Order
+                        <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="group border-2 hover:text-white"
+                      style={{ 
+                        borderColor: heroFont,
+                        color: heroFont,
+                        backgroundColor: 'transparent',
+                        "&:hover": {
+                          backgroundColor: secondaryColor
+                        }
+                      } as React.CSSProperties}
+                      onClick={handleSmoothScroll}
+                    >
+                      Find Us
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      className="group"
+                      id="hero-menu-button"
+                      style={{ 
+                        background: `linear-gradient(to right, ${secondaryColor}90, ${primaryColor}90)`,
+                        color: heroFont,
+                        border: `2px solid ${heroFont}`,
+                        fontWeight: 'bold',
+                        fontSize: '1.4rem'
+                      }}
+                      onClick={handleButtonClick}
+                    >
                       Start Order
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="group border-2 hover:text-white"
-                    style={{ 
-                      borderColor: secondaryColor,
-                      color: secondaryColor,
-                      backgroundColor: 'transparent',
-                      "&:hover": {
-                        backgroundColor: secondaryColor
-                      }
-                    } as React.CSSProperties}
-                    onClick={handleSmoothScroll}
-                  >
-                    Find Us
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size="lg"
-                    className="group"
-                    id="hero-menu-button"
-                    style={{ 
-                      backgroundColor: primaryColor,
-                      color: 'white'
-                    }}
-                    onClick={handleButtonClick}
-                  >
-                    Start Order
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="group border-2 hover:text-white"
-                    style={{ 
-                      borderColor: secondaryColor,
-                      color: secondaryColor,
-                      backgroundColor: 'transparent',
-                      "&:hover": {
-                        backgroundColor: secondaryColor
-                      }
-                    } as React.CSSProperties}
-                    onClick={handleSmoothScroll}
-                  >
-                    Find Us
-                  </Button>
-                </>
-              )}
+                      <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="group border-2 hover:text-white"
+                      style={{ 
+                        borderColor: secondaryColor,
+                        color: heroFont,
+                        backgroundColor: 'transparent',
+                        "&:hover": {
+                          backgroundColor: secondaryColor
+                        }
+                      } as React.CSSProperties}
+                      onClick={handleSmoothScroll}
+                    >
+                      Find Us
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            {/* Right column - Food truck image */}
+            <div className="hidden md:flex md:w-1/2 justify-center items-center relative">
+              <div className="relative w-full h-[80vh] flex items-center justify-center">
+                <Image
+                  src={heroImage}
+                  alt={heroTitle}
+                  width={700}
+                  height={700}
+                  className="object-contain"
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -303,10 +249,10 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
         <div 
           className="absolute bottom-0 left-0 right-0 h-2 z-10"
           style={{ 
-            background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` 
+            background: `linear-gradient(to right, ${secondaryColor}, ${primaryColor})` 
           }}
         ></div>
       </section>
     </>
   );
-} 
+}

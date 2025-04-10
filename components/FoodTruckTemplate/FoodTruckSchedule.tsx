@@ -130,7 +130,7 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
           <div className="text-center mb-12">
             <h2 
               className="text-3xl md:text-4xl font-bold mb-4" 
-              style={{ color: secondaryColor }}
+              style={{ color: '#000000', opacity: 0.8 }}
             >
               {schedule?.title || 'Our Schedule'}
             </h2>
@@ -153,13 +153,13 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
         <div className="text-center mb-8 sm:mb-12">
           <h2 
             className="text-3xl md:text-4xl font-bold mb-4" 
-            style={{ color: secondaryColor }}
+            style={{ color: '#000000', opacity: 0.8 }}
           >
             {schedule?.title || 'Find Our Truck'}
           </h2>
           <div 
             className="w-16 h-1 mx-auto mb-6"
-            style={{ backgroundColor: primaryColor }}
+            style={{ backgroundColor: secondaryColor }}
           ></div>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {schedule?.description || 'Check out our weekly schedule and locations'}

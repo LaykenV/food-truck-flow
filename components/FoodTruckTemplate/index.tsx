@@ -131,12 +131,12 @@ export default function FoodTruckTemplate({
   return (
     <div className={`flex flex-col ${isMobileView ? 'mobile-view' : ''}`}>
       {/* Navbar */}
-      <FoodTruckNavbar
+      {/*<FoodTruckNavbar
         config={config}
         subdomain={subdomain}
         displayMode={displayMode}
         forceViewMode={forceViewMode}
-      />
+      />*/}
       
       <main className="flex-grow">
         {/* Hero Section */}
@@ -147,16 +147,16 @@ export default function FoodTruckTemplate({
           forceViewMode={forceViewMode}
         />
         
-        {/* About Section */}
-        <FoodTruckAbout 
-          config={config} 
-          displayMode={displayMode}
-          forceViewMode={forceViewMode}
-        />
-        
         {/* Schedule Section */}
         <FoodTruckSchedule
           config={config}
+          displayMode={displayMode}
+          forceViewMode={forceViewMode}
+        />
+
+        {/* About Section */}
+        <FoodTruckAbout 
+          config={config} 
           displayMode={displayMode}
           forceViewMode={forceViewMode}
         />

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Smartphone, Monitor } from 'lucide-react';
 import { AuthModalsWithConfig } from '@/components/auth-modals-with-config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import FoodTruckNavbar from '@/components/FoodTruckTemplate/FoodTruckNavbar';
 
 // Props for the LivePreview
 interface LivePreviewProps {
@@ -158,6 +159,12 @@ export function UnifiedLivePreview({
           `}</style>
           <div className="flex flex-col" style={{ minHeight: '600px' }}>
             <main className="flex-grow">
+              <FoodTruckNavbar
+                config={config}
+                subdomain={subdomain}
+                displayMode="preview"
+                forceViewMode="mobile"
+              />
               <FoodTruckTemplate 
                 key={`mobile-${templateKey}`}
                 config={config} 
@@ -195,6 +202,12 @@ export function UnifiedLivePreview({
         <div className="desktop-preview-container">
           <div className="flex flex-col" style={{ minHeight: '600px' }}>
             <main className="flex-grow">
+              <FoodTruckNavbar
+                config={config}
+                subdomain={subdomain}
+                displayMode="preview"
+                forceViewMode="desktop"
+              />
               <FoodTruckTemplate 
                 key={`desktop-${templateKey}`}
                 config={config} 

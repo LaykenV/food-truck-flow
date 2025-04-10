@@ -16,6 +16,7 @@ export interface FoodTruckNavbarProps {
     logo?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    heroFont?: string;
   };
   subdomain: string;
   displayMode?: DisplayMode;
@@ -41,6 +42,7 @@ export default function FoodTruckNavbar({
     logo,
     primaryColor = '#FF6B35',
     secondaryColor = '#2EC4B6',
+    heroFont = '#ffffff',
   } = config;
 
   // Check if current page is a page without hero section
@@ -199,11 +201,17 @@ export default function FoodTruckNavbar({
                     </div>
                   )}
                   <span 
-                    className="text-2xl font-bold" 
+                    className="text-2xl font-bold transition-all duration-300" 
                     style={{ 
-                      background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent"
+                      ...(scrolled || isNonHeroPage 
+                        ? {
+                            color: '#000000',
+                            opacity: 0.8
+                          }
+                        : {
+                            color: heroFont
+                          }
+                      )
                     }}
                   >
                     {name}
@@ -221,12 +229,14 @@ export default function FoodTruckNavbar({
                     className={cn(
                       "flex items-center justify-center p-2 rounded-full transition-colors relative",
                       scrolled || isNonHeroPage 
-                        ? "text-foreground hover:bg-muted" 
-                        : "text-white hover:bg-white/10"
+                        ? "hover:bg-muted" 
+                        : "hover:bg-white/10"
                     )}
                     aria-label="View Cart"
                     style={{
-                      color: scrolled || isNonHeroPage ? secondaryColor : "white"
+                      color: scrolled || isNonHeroPage 
+                        ? "#000000" 
+                        : heroFont
                     }}
                   >
                     <ShoppingCart size={24} />
@@ -245,11 +255,13 @@ export default function FoodTruckNavbar({
                     className={cn(
                       "flex items-center justify-center p-2 rounded-full transition-colors relative",
                       scrolled || isNonHeroPage 
-                        ? "text-foreground hover:bg-muted" 
-                        : "text-white hover:bg-white/10"
+                        ? "hover:bg-muted" 
+                        : "hover:bg-white/10"
                     )}
                     style={{
-                      color: scrolled || isNonHeroPage ? secondaryColor : "white"
+                      color: scrolled || isNonHeroPage 
+                        ? "#000000" 
+                        : heroFont
                     }}
                     onClick={handleLinkClick}
                   >

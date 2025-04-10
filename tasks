@@ -61,14 +61,17 @@ template
     //integrate into settings
     //integrate into account
 
-    apply theming and ui update to all admin routes. context.md
+    //apply theming and ui update to all admin routes. context.md
 
     order cleanup
 
     admin edits list 
-    dashboard - analytics to today, 'new' on orders
-    config - theme bleeding through to preview, preview mobile, photo sizing, about field?
-    
+    dashboard -  'new' on orders
+    config - theme bleeding through to preview, preview mobile, photo sizing
+    menu - professional photo with gemini, active boolean
+
+    template ui updates
+    menu - card full pic and modal with notes, ai photo modeling, fonts
 
     go back through both
 
