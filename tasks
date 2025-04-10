@@ -67,13 +67,14 @@ template
 
     template ui updates
     //menu - card full pic and modal with notes, ai photo modeling, fonts, colors 
-    order - colors to order tracker
-    order confirmation - colors to order tracker
-    order tracker - colors to order tracker
+    //order - colors to order tracker
+    //order confirmation - colors to order tracker
+    //order tracker - colors to order tracker
 
     admin edits list 
     config - theme bleeding through to preview, preview mobile, about photo sizing
     menu - professional photo with gemini, active boolean
+    order - add phone number to order
     subscription - stripe
 
     go back through both

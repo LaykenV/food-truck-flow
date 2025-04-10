@@ -567,7 +567,7 @@ export function OrderStatusTracker({
     boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)'
   };
   const buttonGradientStyle = { 
-    background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+    background: `linear-gradient(135deg, ${primaryColor}90, ${secondaryColor}90)`,
     boxShadow: `0 4px 12px rgba(0, 0, 0, 0.2)`
   };
   const linkStyle = { color: primaryColor };
@@ -583,25 +583,30 @@ export function OrderStatusTracker({
       menuButtonVisible ? 
         "bottom-20 sm:bottom-24 md:bottom-24" : 
         cartDrawerVisible ?
-          "bottom-16 sm:bottom-16 md:bottom-16 lg:bottom-4" : // Higher adjustment for cart drawer on mobile/tablet only
+          "bottom-8 sm:bottom-8 md:bottom-8 lg:bottom-4" : // Higher adjustment for cart drawer on mobile/tablet only
           "bottom-4 sm:bottom-6 md:bottom-8",
       "right-4",
       "transform transition-all duration-300"
     )}>
       {isMinimized ? (
-        <Button 
-          onClick={toggleMinimize}
-          className={cn(
-            "w-14 h-14 rounded-full shadow-lg text-white p-0 flex items-center justify-center",
-            orderDetails?.pickup_time && !orderDetails.is_asap && isPickupApproaching(orderDetails.pickup_time) && "animate-pulse",
-            "transform transition-all duration-300 hover:scale-105"
-          )}
-          style={buttonGradientStyle}
-          onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.05)'}
-          onMouseOut={(e) => e.currentTarget.style.filter = ''}
-        >
-          {getStatusIcon(true)}
-        </Button>
+        <div className={cn(
+          "h-14 w-14 rounded-full bg-background",
+          "transition-all duration-300 ease-out",
+          orderDetails?.pickup_time && !orderDetails.is_asap && isPickupApproaching(orderDetails.pickup_time) && "animate-pulse"
+        )}>
+          <Button 
+            onClick={toggleMinimize}
+            className={cn(
+              "w-14 h-14 rounded-full shadow-lg text-white p-0 flex items-center justify-center",
+              "transform transition-all duration-300 hover:scale-105"
+            )}
+            style={buttonGradientStyle}
+            onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.filter = ''}
+          >
+            {getStatusIcon(true)}
+          </Button>
+        </div>
       ) : (
         <Card className={cn(
           "shadow-lg transform transition-all duration-300",

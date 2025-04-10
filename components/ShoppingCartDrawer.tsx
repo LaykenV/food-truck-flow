@@ -68,7 +68,6 @@ export function ShoppingCartDrawer({
             style={{ 
               background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
               boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
-              opacity: '0.9'
             }}
           >
             {/* Pull up indicator */}

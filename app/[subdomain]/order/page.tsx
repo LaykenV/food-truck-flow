@@ -9,6 +9,7 @@ import { ClientOrderForm } from './client-order-form';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Metadata } from 'next';
+import { Cart } from '@/components/Cart';
 
 // Helper function to generate JSON-LD script tag
 function JsonLdScript({ data }: { data: object }) {
@@ -119,7 +120,7 @@ export default async function FoodTruckOrderPage({
   const linkStyle = { color: primaryColor };
   const iconBgStyle = { backgroundColor: `${secondaryColor}25` };
   const iconStyle = { color: secondaryColor };
-  const headingStyle = { color: primaryColor };
+  const headingStyle = { color: secondaryColor, opacity: 0.8 };
   const accentStyle = { color: secondaryColor };
   
   // Create FoodEstablishment schema for the order process
@@ -150,7 +151,6 @@ export default async function FoodTruckOrderPage({
         <div className="h-16"></div>
         
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
             <Link 
               href={`/${subdomain}/menu`} 
               className="inline-flex items-center hover:underline transition-colors"
@@ -159,18 +159,6 @@ export default async function FoodTruckOrderPage({
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back to Menu
             </Link>
-          </div>
-          
-          <div className="mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full" style={iconBgStyle}>
-                <ShoppingBag className="h-5 w-5" style={iconStyle} />
-              </div>
-              <h1 className="text-2xl md:text-3xl font-bold" style={headingStyle}>
-                Complete Your Order
-              </h1>
-            </div>
-          </div>
         </div>
         
         {/* ShoppingCartDrawer for Mobile when open */}
@@ -202,8 +190,33 @@ export default async function FoodTruckOrderPage({
               </Suspense>
             </div>
             
-            {/* Need Help Section */}
-            <div className="w-full lg:w-1/3 mt-8 lg:mt-0">
+            {/* Right Column */}
+            <div className="w-full lg:w-1/3 space-y-8">
+              {/* Order Summary - Only visible when food truck is open */}
+              {isCurrentlyOpen && (
+                <div className="hidden lg:block rounded-xl overflow-hidden shadow-md" 
+                  style={{ 
+                    boxShadow: `0 4px 20px rgba(0, 0, 0, 0.08)`,
+                    border: `1px solid rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.2)`
+                  }}
+                >
+                  <div className="p-6 border-b" style={{ backgroundColor: `${secondaryColor}10` }}>
+                    <h2 className="text-xl font-bold" style={{ color: secondaryColor, opacity: 0.9 }}>Order Summary</h2>
+                  </div>
+                  <div className="p-0">
+                    <Suspense fallback={<div className="p-6 text-center">Loading cart...</div>}>
+                      <Cart
+                        foodTruckId={foodTruck.id} 
+                        primaryColor={primaryColor} 
+                        secondaryColor={secondaryColor}
+                        hideCheckoutButton={true}
+                      />
+                    </Suspense>
+                  </div>
+                </div>
+              )}
+              
+              {/* Need Help Section */}
               <Suspense fallback={<ContactSkeleton />}>
                 <div 
                   className="rounded-xl overflow-hidden shadow-md"
@@ -219,10 +232,10 @@ export default async function FoodTruckOrderPage({
                     </p>
                     <p className="text-gray-600">
                       {config.contact?.phone && (
-                        <span className="block">Phone: <span style={{ color: secondaryColor }}>{config.contact.phone}</span></span>
+                        <span className="block">Phone: <span style={{ color: '#000000', opacity: 0.8 }}>{config.contact.phone}</span></span>
                       )}
                       {config.contact?.email && (
-                        <span className="block">Email: <span style={{ color: secondaryColor }}>{config.contact.email}</span></span>
+                        <span className="block">Email: <span style={{ color: '#000000', opacity: 0.8 }}>{config.contact.email}</span></span>
                       )}
                     </p>
                   </div>

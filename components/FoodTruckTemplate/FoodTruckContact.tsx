@@ -119,14 +119,14 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
               <div 
                 className="w-16 h-16 rounded-full flex items-center justify-center"
                 style={{ 
-                  background: `linear-gradient(135deg, ${primaryColor}95, ${secondaryColor}95)` 
+                  background: `linear-gradient(135deg, ${primaryColor}90, ${secondaryColor}90)` 
                 }}
               >
                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
                   <div 
                     className="w-6 h-6 rounded-full"
                     style={{ 
-                      background: `linear-gradient(135deg, ${primaryColor}95, ${secondaryColor}95)` 
+                      background: `linear-gradient(135deg, ${primaryColor}90, ${secondaryColor}90)` 
                     }}
                   ></div>
                 </div>

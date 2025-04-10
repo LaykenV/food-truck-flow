@@ -161,11 +161,6 @@ export function OrderForm({
       // Clear the cart
       clearCart();
       
-      // Show success message
-      toast("Order placed successfully!", {
-        description: "Your order has been received and is being processed.",
-      });
-      
       // Call the success callback or redirect
       if (onSuccess) {
         onSuccess();
@@ -244,7 +239,7 @@ export function OrderForm({
         
         {/* Pickup Time Selector */}
         <div className="space-y-2 p-3 rounded-md" style={{ backgroundColor: `${secondaryColor}08` }}>
-          <Label className="flex items-center gap-1.5" style={{ color: primaryColor }}>
+          <Label className="flex items-center gap-1.5" style={{ color: secondaryColor, opacity: 0.9 }}>
             <Clock className="h-4 w-4" style={{ color: secondaryColor }} />
             Pickup Time
           </Label>
@@ -257,7 +252,7 @@ export function OrderForm({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="notes" style={{ color: primaryColor }}>Additional Order Notes (optional)</Label>
+          <Label htmlFor="notes" style={{ color: secondaryColor, opacity: 0.9 }}>Additional Order Notes (optional)</Label>
           <Textarea
             id="notes"
             name="notes"
@@ -275,7 +270,7 @@ export function OrderForm({
       <div className="space-y-4 rounded-lg p-4" style={{ backgroundColor: `${secondaryColor}10` }}>
         <h3 className="font-medium flex items-center gap-2">
           <span style={{ color: secondaryColor }}>●</span>
-          <span style={{ color: primaryColor }}>Order Summary</span>
+          <span style={{ color: secondaryColor, opacity: 0.9 }}>Order Summary</span>
         </h3>
         <div className="space-y-2 text-sm">
           {foodTruckItems.length === 0 ? (
@@ -290,7 +285,7 @@ export function OrderForm({
               ))}
               <div className="border-t pt-2 mt-2 font-medium flex justify-between">
                 <span>Total</span>
-                <span style={{ color: secondaryColor }}>{formatCurrency(totalPrice)}</span>
+                <span style={{ color: primaryColor}}>{formatCurrency(totalPrice)}</span>
               </div>
             </>
           )}
@@ -314,7 +309,7 @@ export function OrderForm({
           style={{ 
             background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` 
           }}
-          className="transition-all hover:opacity-90"
+          className="transition-all opacity-90"
         >
           {isSubmitting ? (
             <>

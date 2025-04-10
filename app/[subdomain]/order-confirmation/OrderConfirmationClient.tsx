@@ -337,7 +337,8 @@ export function OrderConfirmationClient({
   const borderStyle = { borderColor: `${primaryColor}30` };
   const gradientButtonStyle = { 
     background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
-    border: 'none'
+    border: 'none',
+    opacity: 0.9
   };
   const outlineButtonStyle = { 
     color: primaryColor,
@@ -360,7 +361,7 @@ export function OrderConfirmationClient({
             </div>
             <CardTitle className="text-2xl font-bold">
               <span style={{ color: primaryColor }}>Order </span>
-              <span style={{ color: secondaryColor }}>Confirmed</span>
+              <span style={{ color: primaryColor }}>Confirmed</span>
             </CardTitle>
           </CardHeader>
           

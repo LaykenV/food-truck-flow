@@ -97,7 +97,7 @@ export default function FloatingMenuButton({
           size="lg"
           className="group rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 transition-transform"
           style={{ 
-            background: `linear-gradient(to right, ${primaryColor}80, ${secondaryColor}80)`,
+            background: `linear-gradient(to right, ${primaryColor}90, ${secondaryColor}90)`,
             color: 'white',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)'
           }}
