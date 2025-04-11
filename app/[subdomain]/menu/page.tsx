@@ -134,8 +134,9 @@ export default async function FoodTruckMenuPage({
     notFound();
   }
   
-  // Get menu items from the foodTruck data
-  const menuItems = foodTruck.menuItems || [];
+  // Get menu items from the foodTruck data and filter to only show active ones
+  const allMenuItems = foodTruck.menuItems || [];
+  const menuItems = allMenuItems.filter(item => item.active !== false); // Show if active is true or undefined (for backward compatibility)
   
   // Extract configuration data
   const config = foodTruck.configuration || {};

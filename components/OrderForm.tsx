@@ -15,6 +15,24 @@ import { Loader2, Clock } from 'lucide-react';
 import { getCookie, setCookie } from 'cookies-next';
 import { PickupTimeSelector, PickupTimeInfo } from './PickupTimeSelector';
 
+// Format a phone number as the user types
+const formatPhoneNumber = (value: string): string => {
+  // Strip all non-digit characters
+  const digitsOnly = value.replace(/\D/g, '');
+  
+  // Don't format if empty
+  if (!digitsOnly) return '';
+  
+  // Format based on length
+  if (digitsOnly.length <= 3) {
+    return digitsOnly;
+  } else if (digitsOnly.length <= 6) {
+    return `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
+  } else {
+    return `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
+  }
+};
+
 interface OrderFormProps {
   foodTruckId: string;
   subdomain?: string;
@@ -68,7 +86,13 @@ export function OrderForm({
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Special handling for phone number formatting
+    if (name === 'phone') {
+      setFormData(prev => ({ ...prev, [name]: formatPhoneNumber(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
   
   // Handle navigation back to menu
@@ -104,6 +128,7 @@ export function OrderForm({
           food_truck_id: foodTruckId,
           customer_name: formData.name,
           customer_email: formData.email,
+          customer_phone_number: formData.phone,
           items: foodTruckItems.map(item => ({
             id: item.id,
             name: item.name,
@@ -206,7 +231,26 @@ export function OrderForm({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email" style={{ color: primaryColor }}>Email</Label>
+          <Label htmlFor="phone" style={{ color: primaryColor }}>Phone</Label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            pattern="^[0-9+\-\(\) ]{10,15}$"
+            placeholder="Your phone number"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+            className="border-gray-300 focus:border-transparent"
+            style={focusRingStyle}
+          />
+          <p className="text-xs text-muted-foreground">
+            Enter 10-15 digits (e.g., 123-456-7890)
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email" style={{ color: primaryColor }}>Email (optional)</Label>
           <Input
             id="email"
             name="email"
@@ -214,27 +258,9 @@ export function OrderForm({
             placeholder="Your email"
             value={formData.email}
             onChange={handleChange}
-            required
             className="border-gray-300 focus:border-transparent"
             style={focusRingStyle}
           />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="phone" style={{ color: primaryColor }}>Phone (optional)</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            placeholder="Your phone number"
-            value={formData.phone}
-            onChange={handleChange}
-            className="border-gray-300 focus:border-transparent"
-            style={focusRingStyle}
-          />
-          <p className="text-xs text-muted-foreground">
-            For order notifications (not stored in database)
-          </p>
         </div>
         
         {/* Pickup Time Selector */}

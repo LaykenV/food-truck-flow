@@ -24,7 +24,8 @@ type Order = {
   id: string
   food_truck_id: string
   customer_name: string
-  customer_email: string
+  customer_email: string | null
+  customer_phone_number: string | null
   items: OrderItem[]
   total_amount: number
   status: 'preparing' | 'ready' | 'completed'
@@ -584,7 +585,12 @@ export default function OrdersClient() {
                                     </Badge>
                                   )}
                                 </div>
-                                <p className="text-sm text-admin-muted-foreground">{order.customer_email}</p>
+                                {order.customer_phone_number && (
+                                  <p className="text-sm text-admin-muted-foreground">{order.customer_phone_number}</p>
+                                )}
+                                {order.customer_email && (
+                                  <p className="text-sm text-admin-muted-foreground">{order.customer_email}</p>
+                                )}
                                 <p className="text-sm text-admin-muted-foreground">Order #{order.id.substring(0, 8)}</p>
                                 <p className="text-sm text-admin-muted-foreground">{formatDate(order.created_at)}</p>
                                 
@@ -610,7 +616,7 @@ export default function OrdersClient() {
                                       size="sm"
                                       onClick={() => handleUpdateOrderStatus(order.id, 'ready')}
                                       disabled={updateOrderMutation.isPending}
-                                      className="bg-admin-primary text-admin-primary-foreground border-admin-primary hover:bg-admin-primary/90"
+                                      className="bg-admin-primary text-admin-primary-foreground border-admin-primary hover:bg-admin-primary/90 hover:text-admin-primary-foreground"
                                     >
                                       {updateOrderMutation.isPending && updateOrderMutation.variables?.orderId === order.id ? (
                                         <>
@@ -628,7 +634,7 @@ export default function OrdersClient() {
                                       size="sm"
                                       onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
                                       disabled={updateOrderMutation.isPending}
-                                      className="bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground border-0 hover:opacity-90"
+                                      className="bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground border-0 hover:opacity-90 hover:text-admin-primary-foreground"
                                     >
                                       {updateOrderMutation.isPending && updateOrderMutation.variables?.orderId === order.id ? (
                                         <>
@@ -688,7 +694,12 @@ export default function OrdersClient() {
                                   <h3 className="font-medium text-admin-foreground">{order.customer_name}</h3>
                                   {getStatusBadge(order.status)}
                                 </div>
-                                <p className="text-sm text-admin-muted-foreground">{order.customer_email}</p>
+                                {order.customer_phone_number && (
+                                  <p className="text-sm text-admin-muted-foreground">{order.customer_phone_number}</p>
+                                )}
+                                {order.customer_email && (
+                                  <p className="text-sm text-admin-muted-foreground">{order.customer_email}</p>
+                                )}
                                 <p className="text-sm text-admin-muted-foreground">Order #{order.id.substring(0, 8)}</p>
                                 <p className="text-sm text-admin-muted-foreground">{formatDate(order.created_at)}</p>
                                 
@@ -754,7 +765,12 @@ export default function OrdersClient() {
                                     </Badge>
                                   )}
                                 </div>
-                                <p className="text-sm text-admin-muted-foreground">{order.customer_email}</p>
+                                {order.customer_phone_number && (
+                                  <p className="text-sm text-admin-muted-foreground">{order.customer_phone_number}</p>
+                                )}
+                                {order.customer_email && (
+                                  <p className="text-sm text-admin-muted-foreground">{order.customer_email}</p>
+                                )}
                                 <p className="text-sm text-admin-muted-foreground">Order #{order.id.substring(0, 8)}</p>
                                 <p className="text-sm text-admin-muted-foreground">{formatDate(order.created_at)}</p>
                                 

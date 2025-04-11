@@ -10,7 +10,8 @@ export async function addMenuItem(
     description: string,
     price: number,
     category: string,
-    image_url: string
+    image_url: string,
+    active: boolean
   }
 ) {
   try {
@@ -43,7 +44,8 @@ export async function addMenuItem(
           description: menuData.description,
           price: menuData.price,
           category: menuData.category,
-          image_url: menuData.image_url
+          image_url: menuData.image_url,
+          active: menuData.active
         }
       ])
       .select()
@@ -74,7 +76,8 @@ export async function updateMenuItem(
     description: string,
     price: number,
     category: string,
-    image_url: string
+    image_url: string,
+    active: boolean
   }
 ) {
   try {
@@ -102,7 +105,8 @@ export async function updateMenuItem(
         description: menuData.description,
         price: menuData.price,
         category: menuData.category,
-        image_url: menuData.image_url
+        image_url: menuData.image_url,
+        active: menuData.active
       })
       .eq('id', id)
     
@@ -186,5 +190,49 @@ export async function getFoodTruckId() {
   } catch (err: any) {
     console.error('Error getting food truck ID:', err)
     return { success: false, error: err.message || 'Failed to get food truck ID' }
+  }
+}
+
+// Update menu item active state
+export async function updateMenuItemActiveState(
+  id: string,
+  active: boolean
+) {
+  try {
+    const supabase = await createClient()
+    
+    // Get the current user's food truck ID
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    
+    // Get the food truck ID for the current user
+    const { data: foodTrucks, error: foodTruckError } = await supabase
+      .from('FoodTrucks')
+      .select('id, subdomain')
+      .eq('user_id', user.id)
+      .single()
+    
+    if (foodTruckError) throw foodTruckError
+    if (!foodTrucks) throw new Error('No food truck found')
+    
+    // Update the menu item's active state
+    const { error } = await supabase
+      .from('Menus')
+      .update({ active })
+      .eq('id', id)
+    
+    if (error) throw error
+    
+    // Revalidate the cache tag for this food truck's menu items
+    // This is for Next.js server cache invalidation
+    revalidateTag(`foodTruck:${foodTrucks.subdomain}`)
+    
+    // Note: React Query cache invalidation happens on the client side
+    // after mutation with queryClient.invalidateQueries({ queryKey: ['menuItems'] })
+    
+    return { success: true }
+  } catch (err: any) {
+    console.error('Error updating menu item active state:', err)
+    return { success: false, error: err.message || 'Failed to update menu item active state' }
   }
 } 

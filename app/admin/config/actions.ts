@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { FoodTruckConfig } from "@/components/FoodTruckTemplate";
 import { getDefaultConfig } from '@/utils/config-utils';
 
@@ -68,7 +68,7 @@ export async function saveConfiguration(config: FoodTruckConfig) {
     }
     
     // Revalidate the path to update Next.js cache
-    revalidatePath('/admin/config');
+    revalidateTag(`foodTruck:${foodTruck.subdomain}`)
     if (foodTruck.subdomain) {
       revalidatePath(`foodTruck:${foodTruck.subdomain}`);
     }

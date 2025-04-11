@@ -19,12 +19,13 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-import { PlusCircle, Edit, Trash2, Filter, Plus, X, Image as ImageIcon } from 'lucide-react'
+import { PlusCircle, Edit, Trash2, Filter, Plus, X, Image as ImageIcon, Check, EyeOff } from 'lucide-react'
 import Image from 'next/image'
-import { addMenuItem, updateMenuItem, deleteMenuItem } from './actions'
+import { addMenuItem, updateMenuItem, deleteMenuItem, updateMenuItemActiveState } from './actions'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMenuItems, getCategories, getFoodTruck } from '@/app/admin/clientQueries'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 
 interface MenuItemType {
   id: string;
@@ -34,6 +35,7 @@ interface MenuItemType {
   category: string;
   image_url: string;
   food_truck_id: string;
+  active: boolean;
 }
 
 export default function MenuClient() {
@@ -48,7 +50,8 @@ export default function MenuClient() {
     description: '',
     price: '',
     category: '',
-    image_url: ''
+    image_url: '',
+    active: true
   })
   const [customCategory, setCustomCategory] = useState('')
   const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false)
@@ -60,11 +63,16 @@ export default function MenuClient() {
   
   // Filter state
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)
   
   // Delete confirmation
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
+
+  // Active toggle confirmation
+  const [showActiveDialog, setShowActiveDialog] = useState(false)
+  const [itemToToggle, setItemToToggle] = useState<{id: string, active: boolean} | null>(null)
 
   // React Query hooks for data fetching
   const { data: foodTruck, isLoading: isFoodTruckLoading } = useQuery({
@@ -98,7 +106,8 @@ export default function MenuClient() {
       description: string,
       price: number,
       category: string,
-      image_url: string
+      image_url: string,
+      active: boolean
     }) => addMenuItem(menuData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menuItems'] })
@@ -120,7 +129,8 @@ export default function MenuClient() {
         description: string,
         price: number,
         category: string,
-        image_url: string
+        image_url: string,
+        active: boolean
       }
     }) => updateMenuItem(id, menuData),
     onSuccess: () => {
@@ -146,6 +156,21 @@ export default function MenuClient() {
     },
     onError: (error: any) => {
       toast.error(`Error deleting menu item: ${error.message || 'Unknown error'}`)
+      setError(error.message || 'An unknown error occurred')
+    }
+  })
+
+  const updateActiveStateMutation = useMutation({
+    mutationFn: ({ id, active }: { id: string, active: boolean }) => 
+      updateMenuItemActiveState(id, active),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] })
+      toast.success('Menu item visibility updated')
+      setItemToToggle(null)
+      setShowActiveDialog(false)
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating menu item visibility: ${error.message || 'Unknown error'}`)
       setError(error.message || 'An unknown error occurred')
     }
   })
@@ -225,7 +250,8 @@ export default function MenuClient() {
         description: menuForm.description,
         price: parseFloat(menuForm.price),
         category: menuForm.category,
-        image_url: imageUrl
+        image_url: imageUrl,
+        active: menuForm.active
       })
     } catch (err: any) {
       console.error('Error adding menu item:', err)
@@ -260,7 +286,8 @@ export default function MenuClient() {
           description: menuForm.description,
           price: parseFloat(menuForm.price),
           category: menuForm.category,
-          image_url: imageUrl
+          image_url: imageUrl,
+          active: menuForm.active
         }
       })
     } catch (err: any) {
@@ -276,7 +303,8 @@ export default function MenuClient() {
       description: '',
       price: '',
       category: '',
-      image_url: ''
+      image_url: '',
+      active: true
     })
     setSelectedFile(null)
     setPreviewUrl(null)
@@ -291,7 +319,8 @@ export default function MenuClient() {
       description: item.description || '',
       price: item.price.toString(),
       category: item.category,
-      image_url: item.image_url || ''
+      image_url: item.image_url || '',
+      active: item.active
     })
     setPreviewUrl(item.image_url || null)
     setSelectedFile(null)
@@ -299,10 +328,10 @@ export default function MenuClient() {
     setShowMenuForm(true)
   }
 
-  // Filter menu items by category
-  const filteredMenuItems = categoryFilter
-    ? menuItems.filter(item => item.category === categoryFilter)
-    : menuItems
+  // Filter menu items by category and active state
+  const filteredMenuItems = menuItems
+    .filter(item => categoryFilter ? item.category === categoryFilter : true)
+    .filter(item => activeFilter !== null ? item.active === activeFilter : true)
 
   // Open delete confirmation dialog
   const confirmDelete = (id: string) => {
@@ -314,6 +343,18 @@ export default function MenuClient() {
   const handleDeleteMenuItem = () => {
     if (!itemToDelete) return
     deleteMenuItemMutation.mutate(itemToDelete)
+  }
+
+  // Open active toggle confirmation dialog
+  const confirmActiveToggle = (id: string, currentActive: boolean) => {
+    setItemToToggle({ id, active: !currentActive })
+    setShowActiveDialog(true)
+  }
+
+  // Handle active toggle confirmation
+  const handleActiveToggle = () => {
+    if (!itemToToggle) return
+    updateActiveStateMutation.mutate(itemToToggle)
   }
 
   // Loading state
@@ -355,37 +396,80 @@ export default function MenuClient() {
       {/* Category Filter */}
       <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-admin-card-foreground">Categories</CardTitle>
+          <CardTitle className="text-admin-card-foreground">Filter Options</CardTitle>
           <CardDescription className="text-admin-muted-foreground">
-            Filter your menu by category
+            Filter your menu by category and status
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <button
-              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
-                categoryFilter === null 
-                  ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
-                  : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
-              }`}
-              onClick={() => setCategoryFilter(null)}
-            >
-              All
-            </button>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm text-admin-muted-foreground mb-2 block">Category</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
+                    categoryFilter === null 
+                      ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
+                      : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
+                  }`}
+                  onClick={() => setCategoryFilter(null)}
+                >
+                  All
+                </button>
+                
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
+                      categoryFilter === category 
+                        ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
+                        : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
+                    }`}
+                    onClick={() => setCategoryFilter(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
             
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
-                  categoryFilter === category 
-                    ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
-                    : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
-                }`}
-                onClick={() => setCategoryFilter(category)}
-              >
-                {category}
-              </button>
-            ))}
+            <div>
+              <Label className="text-sm text-admin-muted-foreground mb-2 block">Status</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
+                    activeFilter === null 
+                      ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
+                      : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
+                  }`}
+                  onClick={() => setActiveFilter(null)}
+                >
+                  All
+                </button>
+                <button
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
+                    activeFilter === true 
+                      ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
+                      : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
+                  }`}
+                  onClick={() => setActiveFilter(true)}
+                >
+                  <Check className="mr-1 h-3 w-3" />
+                  Active
+                </button>
+                <button
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-admin-ring cursor-pointer ${
+                    activeFilter === false 
+                      ? 'bg-admin-primary text-admin-primary-foreground border-transparent' 
+                      : 'border border-admin-border bg-transparent text-admin-card-foreground hover:bg-admin-accent/50'
+                  }`}
+                  onClick={() => setActiveFilter(false)}
+                >
+                  <EyeOff className="mr-1 h-3 w-3" />
+                  Hidden
+                </button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -582,6 +666,18 @@ export default function MenuClient() {
                   Upload an image for your menu item. Leave blank to use default image.
                 </p>
               </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="active-state"
+                  checked={menuForm.active}
+                  onCheckedChange={(checked) => setMenuForm({...menuForm, active: checked})}
+                  className={menuForm.active ? 'bg-admin-primary' : 'bg-admin-muted'}
+                />
+                <Label htmlFor="active-state" className="text-admin-card-foreground">
+                  {menuForm.active ? 'Item is active and visible to customers' : 'Item is hidden from customers'}
+                </Label>
+              </div>
             </div>
             <DialogFooter>
               <Button 
@@ -640,27 +736,68 @@ export default function MenuClient() {
         </DialogContent>
       </Dialog>
       
+      {/* Active Toggle Confirmation Dialog */}
+      <Dialog open={showActiveDialog} onOpenChange={setShowActiveDialog}>
+        <DialogContent className="bg-admin-card border-admin-border text-admin-card-foreground shadow-lg backdrop-blur-sm bg-opacity-95">
+          <DialogHeader>
+            <DialogTitle>
+              {itemToToggle?.active ? 'Activate Menu Item' : 'Deactivate Menu Item'}
+            </DialogTitle>
+            <DialogDescription className="text-admin-muted-foreground">
+              {itemToToggle?.active 
+                ? 'This item will be visible to customers. Do you want to proceed?' 
+                : 'This item will be hidden from customers. Do you want to proceed?'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowActiveDialog(false)}
+              className="border-admin-border text-admin-card-foreground hover:bg-admin-accent hover:text-admin-accent-foreground"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleActiveToggle}
+              disabled={updateActiveStateMutation.isPending}
+              className={itemToToggle?.active 
+                ? "bg-admin-primary text-admin-primary-foreground hover:bg-admin-primary/90" 
+                : "bg-admin-destructive text-admin-destructive-foreground hover:bg-admin-destructive/90"}
+            >
+              {updateActiveStateMutation.isPending 
+                ? 'Updating...' 
+                : itemToToggle?.active 
+                  ? 'Activate' 
+                  : 'Deactivate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Menu Items Section */}
       <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
           <div>
             <CardTitle className="text-admin-card-foreground">
-              Menu Items {categoryFilter ? `(${categoryFilter})` : ''}
+              Menu Items {categoryFilter ? `(${categoryFilter})` : ''}{activeFilter !== null ? ` (${activeFilter ? 'Active' : 'Hidden'})` : ''}
             </CardTitle>
             <CardDescription className="text-admin-muted-foreground">
               {filteredMenuItems.length} items in your menu
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            {categoryFilter && (
+            {(categoryFilter || activeFilter !== null) && (
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setCategoryFilter(null)}
+                onClick={() => {
+                  setCategoryFilter(null)
+                  setActiveFilter(null)
+                }}
                 className="h-8 text-admin-muted-foreground hover:text-admin-card-foreground"
               >
                 <X className="mr-2 h-4 w-4" />
-                Clear Filter
+                Clear Filters
               </Button>
             )}
             <Button 
@@ -671,7 +808,8 @@ export default function MenuClient() {
                   description: '',
                   price: '',
                   category: '',
-                  image_url: ''
+                  image_url: '',
+                  active: true
                 })
                 setShowMenuForm(true)
               }}
@@ -700,7 +838,8 @@ export default function MenuClient() {
                     description: '',
                     price: '',
                     category: '',
-                    image_url: ''
+                    image_url: '',
+                    active: true
                   })
                   setShowMenuForm(true)
                 }}
@@ -714,14 +853,21 @@ export default function MenuClient() {
               {filteredMenuItems.map((item) => (
                 <Card 
                   key={item.id} 
-                  className="overflow-hidden border border-admin-border bg-admin-card hover:shadow-md transition-all duration-200"
+                  className={`overflow-hidden border ${item.active ? 'border-admin-border' : 'border-admin-destructive/30'} bg-admin-card hover:shadow-md transition-all duration-200 ${!item.active ? 'opacity-70' : ''}`}
                 >
                   <div className="relative w-full h-48">
+                    {!item.active && (
+                      <div className="absolute top-0 right-0 z-10 m-2">
+                        <Badge variant="destructive" className="bg-admin-destructive text-admin-destructive-foreground">
+                          <EyeOff className="h-3 w-3 mr-1" /> Hidden
+                        </Badge>
+                      </div>
+                    )}
                     <Image
                       src={item.image_url || "/placeholder-hero.jpg"}
                       alt={item.name}
                       fill
-                      className="object-cover"
+                      className={`object-cover ${!item.active ? 'grayscale' : ''}`}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       onError={(e) => {
                         // Fallback to placeholder if image fails to load
@@ -746,27 +892,42 @@ export default function MenuClient() {
                       {item.description || "No description provided"}
                     </p>
                   </CardContent>
-                  <CardFooter className="flex justify-end gap-2 p-4 pt-0">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => startEditing(item)}
-                      disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
-                      className="border-admin-border text-admin-card-foreground hover:bg-admin-accent hover:text-admin-accent-foreground"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => confirmDelete(item.id)}
-                      disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
-                      className="bg-admin-destructive text-admin-destructive-foreground"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </Button>
+                  <CardFooter className="flex justify-between gap-2 p-4 pt-0">
+                    <div className="flex items-center space-x-2">
+                      <div className="text-xs text-admin-muted-foreground">
+                        {item.active ? 'Active' : 'Hidden'}
+                      </div>
+                      <Switch
+                        checked={item.active}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          confirmActiveToggle(item.id, item.active);
+                        }}
+                        className={item.active ? 'bg-admin-primary' : 'bg-admin-muted'}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => startEditing(item)}
+                        disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
+                        className="border-admin-border text-admin-card-foreground hover:bg-admin-accent hover:text-admin-accent-foreground"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => confirmDelete(item.id)}
+                        disabled={updateMenuItemMutation.isPending || deleteMenuItemMutation.isPending}
+                        className="bg-admin-destructive text-admin-destructive-foreground"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
                   </CardFooter>
                 </Card>
               ))}

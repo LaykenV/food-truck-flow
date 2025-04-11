@@ -3,6 +3,36 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isScheduledOpenServer, getTodayScheduleServer } from "@/lib/schedule-utils-server";
 
 /**
+ * Validates and formats a phone number.
+ * Converts different formats to a consistent format with dashes (e.g., 123-456-7890)
+ * @param phoneNumber The phone number to validate and format
+ * @returns The formatted phone number or null if invalid
+ */
+function validateAndFormatPhoneNumber(phoneNumber: string): string | null {
+  // Remove all non-digit characters
+  const digitsOnly = phoneNumber.replace(/\D/g, '');
+  
+  // Basic validation for US numbers (10 digits)
+  if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+    return null;
+  }
+  
+  // Format based on length - assuming US format for 10 digits
+  if (digitsOnly.length === 10) {
+    return `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+  } 
+  // For international numbers (assuming country code + 10 digits)
+  else if (digitsOnly.length > 10) {
+    const countryCode = digitsOnly.slice(0, digitsOnly.length - 10);
+    const nationalNumber = digitsOnly.slice(digitsOnly.length - 10);
+    return `+${countryCode}-${nationalNumber.slice(0, 3)}-${nationalNumber.slice(3, 6)}-${nationalNumber.slice(6)}`;
+  }
+  
+  // If we get here, just return the digits with basic formatting
+  return digitsOnly;
+}
+
+/**
  * POST /api/orders
  * 
  * Creates a new order in the database
@@ -23,15 +53,25 @@ export async function POST(request: NextRequest) {
       food_truck_id, 
       customer_name, 
       customer_email, 
+      customer_phone_number,
       items, 
       total_amount,
       pickup_time,
       is_asap 
     } = body;
     
-    if (!food_truck_id || !customer_name || !customer_email || !items || !total_amount) {
+    if (!food_truck_id || !customer_name || !customer_phone_number || !items || !total_amount) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate and format phone number
+    const formattedPhoneNumber = validateAndFormatPhoneNumber(customer_phone_number);
+    if (!formattedPhoneNumber) {
+      return NextResponse.json(
+        { error: 'Invalid phone number format' },
         { status: 400 }
       );
     }
@@ -123,6 +163,7 @@ export async function POST(request: NextRequest) {
         food_truck_id,
         customer_name,
         customer_email,
+        customer_phone_number: formattedPhoneNumber,
         items,
         total_amount,
         status: 'preparing', // Status must be one of: 'preparing', 'ready', 'completed'
