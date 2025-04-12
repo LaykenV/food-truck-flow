@@ -189,7 +189,7 @@ export default function FoodTruckNavbar({
                         alt={name} 
                         fill 
                         className="object-contain" 
-                        sizes="40px"
+                        sizes="60px"
                       />
                     </div>
                   ) : (

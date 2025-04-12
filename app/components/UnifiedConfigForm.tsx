@@ -25,6 +25,7 @@ import { ConfigHistoryDrawer } from './ConfigHistoryDrawer';
 import { useConfig } from './UnifiedConfigProvider';
 import { uploadImage } from '@/utils/storage-utils';
 import { createFilePreview, revokeFilePreview, isBlobUrl } from '@/utils/file-utils';
+import { ImageEditorModal } from './ImageEditorModal';
 
 // Props for the UnifiedConfigForm
 interface UnifiedConfigFormProps {
@@ -78,6 +79,13 @@ export function UnifiedConfigForm({
   const [activeTab, setActiveTab] = useState<string>("branding");
   const [statusMessage, setStatusMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Add new state variables for the image editor
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingFile, setEditingFile] = useState<File | null>(null);
+  const [editingFileUrl, setEditingFileUrl] = useState<string | null>(null);
+  const [editingFieldName, setEditingFieldName] = useState<'logo' | 'aboutImage' | 'heroImage' | null>(null);
+  const [editorConfig, setEditorConfig] = useState<{ aspect?: number; circularCrop?: boolean }>({});
 
   // Update form values when initialConfig changes
   useEffect(() => {
@@ -308,25 +316,112 @@ export function UnifiedConfigForm({
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Create a preview URL
-    const previewUrl = createFilePreview(file);
-    
-    // Update form values with the preview URL for immediate display
+    // Check if the field requires editing
+    if (fieldName === 'logo' || fieldName === 'aboutImage') {
+      // Revoke previous editing URL if any
+      if (editingFileUrl) {
+        revokeFilePreview(editingFileUrl);
+      }
+
+      const previewUrl = createFilePreview(file);
+      setEditingFile(file);
+      setEditingFileUrl(previewUrl);
+      setEditingFieldName(fieldName as 'logo' | 'aboutImage' | 'heroImage');
+
+      // Set config based on field
+      if (fieldName === 'logo') {
+        setEditorConfig({ aspect: 1, circularCrop: true });
+      } else if (fieldName === 'aboutImage') {
+        setEditorConfig({ aspect: 16 / 9, circularCrop: false });
+      }
+
+      setIsEditorOpen(true);
+
+      // Clear the input value so the same file can be selected again if needed
+      e.target.value = '';
+    } else {
+      // Original logic for fields that don't need the editor
+      const previewUrl = createFilePreview(file);
+      
+      // Update form values with the preview URL for immediate display
+      setFormValues(prev => ({
+        ...prev,
+        [fieldName]: previewUrl
+      }));
+      
+      // Stage the image for upload during form submission
+      setStagedImages(prev => {
+        // Remove any existing staged image for this field
+        const filtered = prev.filter(img => img.fieldName !== fieldName);
+        
+        // Revoke old preview if it was a blob
+        const oldImage = prev.find(img => img.fieldName === fieldName);
+        if (oldImage && isBlobUrl(oldImage.previewUrl)) {
+          revokeFilePreview(oldImage.previewUrl);
+        }
+        
+        // Add the new staged image
+        return [...filtered, { file, previewUrl, fieldName }];
+      });
+      
+      // Notify the user that the image will be uploaded when they save
+      toast.info(`Image selected. It will be uploaded when you save changes.`);
+    }
+  };
+
+  // Add handler for saving cropped image
+  const handleSaveCrop = (croppedImageBlob: Blob) => {
+    if (!editingFile || !editingFieldName || !editingFileUrl) return;
+
+    // Create a File object from the Blob
+    const croppedFile = new File([croppedImageBlob], editingFile.name, {
+      type: croppedImageBlob.type,
+    });
+
+    // Create a new preview URL for the cropped file
+    const croppedPreviewUrl = createFilePreview(croppedFile);
+
+    // Update form values with the cropped preview
     setFormValues(prev => ({
       ...prev,
-      [fieldName]: previewUrl
+      [editingFieldName]: croppedPreviewUrl,
     }));
-    
-    // Stage the image for upload during form submission
+
+    // Update staged images with the cropped file
     setStagedImages(prev => {
-      // Remove any existing staged image for this field
-      const filtered = prev.filter(img => img.fieldName !== fieldName);
-      // Add the new staged image
-      return [...filtered, { file, previewUrl, fieldName }];
+      // Find and revoke the previous preview URL for this field if it exists
+      const oldImage = prev.find(img => img.fieldName === editingFieldName);
+      if (oldImage && isBlobUrl(oldImage.previewUrl)) {
+        revokeFilePreview(oldImage.previewUrl);
+      }
+      // Remove existing entry for this field and add the new one
+      const filtered = prev.filter(img => img.fieldName !== editingFieldName);
+      return [...filtered, { file: croppedFile, previewUrl: croppedPreviewUrl, fieldName: editingFieldName }];
     });
-    
-    // Notify the user that the image will be uploaded when they save
-    toast.info(`Image selected. It will be uploaded when you save changes.`);
+
+    // Revoke the original (uncropped) preview URL
+    revokeFilePreview(editingFileUrl);
+
+    // Close editor and reset state
+    setIsEditorOpen(false);
+    setEditingFile(null);
+    setEditingFileUrl(null);
+    setEditingFieldName(null);
+    setEditorConfig({});
+
+    toast.success(`${editingFieldName === 'logo' ? 'Logo' : 'Image'} cropped successfully. Save changes to upload.`);
+  };
+
+  // Add handler for canceling crop
+  const handleCancelCrop = () => {
+    if (editingFileUrl) {
+      revokeFilePreview(editingFileUrl); // Clean up the unused original preview
+    }
+    setIsEditorOpen(false);
+    setEditingFile(null);
+    setEditingFileUrl(null);
+    setEditingFieldName(null);
+    setEditorConfig({});
   };
 
   // Format the last saved date (admin mode only)
@@ -492,12 +587,12 @@ export function UnifiedConfigForm({
               <div>
                 <Label htmlFor="logo">Logo</Label>
                 <div className="mt-1 flex items-center gap-4">
-                  <div className="w-16 h-16 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center">
+                  <div className="w-16 h-16 border rounded-full overflow-hidden bg-gray-50 flex items-center justify-center">
                     {formValues.logo ? (
                       <img 
                         src={formValues.logo} 
                         alt="Logo preview" 
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <ImageIcon className="w-8 h-8 text-gray-300" />
@@ -512,7 +607,7 @@ export function UnifiedConfigForm({
                       className="mt-1"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Upload a logo image (PNG or JPG, square format recommended)
+                      Upload a logo image (PNG or JPG, square format recommended for best circular crop)
                     </p>
                   </div>
                 </div>
@@ -621,12 +716,14 @@ export function UnifiedConfigForm({
                 <Label htmlFor="heroImage">Hero Background Image</Label>
                 <div className="mt-1">
                   {formValues.heroImage && (
-                    <div className="mb-2 rounded-md overflow-hidden border">
-                      <img 
-                        src={formValues.heroImage} 
-                        alt="Hero preview" 
-                        className="w-full h-32 object-cover"
-                      />
+                    <div className="mb-2 rounded-md overflow-hidden border w-full max-w-md">
+                      <div className="relative w-full aspect-video">
+                        <img 
+                          src={formValues.heroImage} 
+                          alt="Hero preview" 
+                          className="absolute w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
                   )}
                   <Input
@@ -636,7 +733,7 @@ export function UnifiedConfigForm({
                     onChange={(e) => handleFileSelect(e, 'heroImage')}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Upload a high-quality image for your hero background (recommended: 1920x1080px)
+                    Upload a high-quality image for your hero background (16:9 aspect ratio recommended)
                   </p>
                 </div>
               </div>
@@ -673,12 +770,14 @@ export function UnifiedConfigForm({
                 <Label htmlFor="aboutImage">About Image</Label>
                 <div className="mt-1">
                   {formValues.aboutImage && (
-                    <div className="mb-2 rounded-md overflow-hidden border">
-                      <img 
-                        src={formValues.aboutImage} 
-                        alt="About section preview" 
-                        className="w-full h-32 object-cover"
-                      />
+                    <div className="mb-2 rounded-md overflow-hidden border w-full max-w-md">
+                      <div className="relative w-full aspect-video">
+                        <img 
+                          src={formValues.aboutImage} 
+                          alt="About section preview" 
+                          className="absolute w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
                   )}
                   <Input
@@ -688,7 +787,7 @@ export function UnifiedConfigForm({
                     onChange={(e) => handleFileSelect(e, 'aboutImage')}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Upload an image for your about section (recommended: square format)
+                    Upload an image for your about section (16:9 aspect ratio recommended)
                   </p>
                 </div>
               </div>
@@ -840,6 +939,18 @@ export function UnifiedConfigForm({
             </div>
           </Alert>
         </div>
+      )}
+
+      {/* Render the ImageEditorModal */}
+      {editingFileUrl && (
+        <ImageEditorModal
+          isOpen={isEditorOpen}
+          onClose={handleCancelCrop}
+          imageSrc={editingFileUrl}
+          aspect={editorConfig.aspect}
+          circularCrop={editorConfig.circularCrop}
+          onSave={handleSaveCrop}
+        />
       )}
     </Card>
   );

@@ -87,7 +87,7 @@ export function AdminSidebar() {
           {(isLoading || error || !foodTruck?.configuration?.logo) ? (
             <Skeleton className="h-8 w-8 rounded-full" />
           ) : (
-            <div className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-admin-primary/20 shadow-sm">
+            <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-admin-primary/20 shadow-sm">
               <Image 
                 src={foodTruck.configuration.logo} 
                 alt={`${foodTruck.configuration.name ?? 'Food Truck'} Logo`} 

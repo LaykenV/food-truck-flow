@@ -72,7 +72,7 @@ template
     //order tracker - colors to order tracker
 
     admin edits list 
-    config - theme bleeding through to preview, preview mobile, about/logo photo sizing
+    config - theme bleeding through to preview, preview mobile, //about/logo photo sizing
     menu - professional photo with gemini, //active boolean
     //order - add phone number to order
     subscription - stripe
