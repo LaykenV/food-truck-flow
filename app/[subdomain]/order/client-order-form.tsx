@@ -72,7 +72,7 @@ export function ClientOrderForm({ foodTruck, subdomain }: ClientOrderFormProps) 
       }}
     >
       <div className="p-6 border-b" style={sectionBgStyle}>
-        <h2 className="text-xl font-bold" style={{ color: secondaryColor, opacity: 0.9 }}>
+        <h2 className="text-xl font-bold" style={{ color: '#000000', opacity: 0.8 }}>
           {isOpen ? "Delivery Information" : "Food Truck Status"}
         </h2>
       </div>

@@ -160,9 +160,10 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
                       className="group"
                       id="hero-menu-button"
                       style={{ 
-                        background: `linear-gradient(to right, ${secondaryColor}90, ${primaryColor}90)`,
-                        color: heroFont,
-                        border: `2px solid ${heroFont}`,
+                        background: heroFont,
+                        opacity: 0.8,
+                        color: secondaryColor,
+                        border: `2px solid ${secondaryColor}`,
                         fontWeight: 'bold',
                         fontSize: '1.4rem'
                       }}

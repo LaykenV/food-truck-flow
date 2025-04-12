@@ -117,10 +117,10 @@ export default async function FoodTruckOrderPage({
   const secondaryColor = config.secondaryColor || '#2EC4B6';
   
   // Create dynamic styles for the page
-  const linkStyle = { color: primaryColor };
+  const linkStyle = { color: '#000000', opacity: '0.8' };
   const iconBgStyle = { backgroundColor: `${secondaryColor}25` };
   const iconStyle = { color: secondaryColor };
-  const headingStyle = { color: secondaryColor, opacity: 0.8 };
+  const headingStyle = { color: 'secondaryColor', opacity: 0.8 };
   const accentStyle = { color: secondaryColor };
   
   // Create FoodEstablishment schema for the order process
@@ -201,7 +201,7 @@ export default async function FoodTruckOrderPage({
                   }}
                 >
                   <div className="p-6 border-b" style={{ backgroundColor: `${secondaryColor}10` }}>
-                    <h2 className="text-xl font-bold" style={{ color: secondaryColor, opacity: 0.9 }}>Order Summary</h2>
+                    <h2 className="text-xl font-bold" style={{ color: '#000000', opacity: 0.8 }}>Order Summary</h2>
                   </div>
                   <div className="p-0">
                     <Suspense fallback={<div className="p-6 text-center">Loading cart...</div>}>

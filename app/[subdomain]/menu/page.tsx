@@ -216,8 +216,8 @@ export default async function FoodTruckMenuPage({
               <div className="rounded-xl overflow-hidden" style={{ boxShadow: `0 4px 20px rgba(0, 0, 0, 0.05)` }}>
                 <div className="p-4 md:p-6 rounded-t-xl" style={sectionBgStyle}>
                   <div className="flex items-center">
-                    <Utensils className="h-6 w-6 mr-3" style={{ color: primaryColor }} />
-                    <h2 className="text-2xl font-bold" style={{ color: secondaryColor, opacity: '0.9' }}>Menu Items</h2>
+                    <Utensils className="h-6 w-6 mr-3" style={{ color: '#000000', opacity: '0.8' }} />
+                    <h2 className="text-2xl font-bold" style={{ color: '#000000', opacity: '0.8' }}>Menu Items</h2>
                   </div>
                 </div>
                 
@@ -240,7 +240,7 @@ export default async function FoodTruckMenuPage({
                   }}
                 >
                   <div className="p-4 border-b" style={{ backgroundColor: `${primaryColor}10` }}>
-                    <h2 className="text-xl font-bold" style={{ color: primaryColor, opacity: '0.9' }}>Your Order</h2>
+                    <h2 className="text-xl font-bold" style={{ color: '#000000', opacity: '0.8' }}>Your Order</h2>
                   </div>
                   <Cart foodTruckId={foodTruck.id} primaryColor={primaryColor} secondaryColor={secondaryColor} />
                 </div>

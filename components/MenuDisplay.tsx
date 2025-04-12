@@ -75,7 +75,7 @@ export function MenuDisplay({ items, primaryColor, secondaryColor }: MenuDisplay
               {/* Category heading with primary color */}
               <h3 
                 className="text-xl font-bold flex items-center pb-2 border-b" 
-                style={{ color: primaryColor, borderColor: `${primaryColor}30` }}
+                style={{ color: '#000000', opacity: '0.8', borderColor: `${primaryColor}30` }}
               >
                 {category}
               </h3>

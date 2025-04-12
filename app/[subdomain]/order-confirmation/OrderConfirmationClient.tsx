@@ -360,8 +360,8 @@ export function OrderConfirmationClient({
               <CheckCircle className="h-8 w-8" style={{ color: secondaryColor }} />
             </div>
             <CardTitle className="text-2xl font-bold">
-              <span style={{ color: primaryColor }}>Order </span>
-              <span style={{ color: primaryColor }}>Confirmed</span>
+              <span style={{ color: '#000000', opacity: '0.8' }}>Order </span>
+              <span style={{ color: '#000000', opacity: '0.8' }}>Confirmed</span>
             </CardTitle>
           </CardHeader>
           
@@ -474,7 +474,7 @@ export function OrderConfirmationClient({
               className="border hover:bg-transparent transition-colors hover:border-opacity-80"
               style={outlineButtonStyle}
             >
-              <Link href={`/${subdomain}/menu`}>
+              <Link href={`/${subdomain}/menu`} style={{ color: '#000000', opacity: '0.8' }}>
                 <ArrowLeft className="h-4 w-4 mr-2" style={{ color: secondaryColor }} />
                 Back to Menu
               </Link>

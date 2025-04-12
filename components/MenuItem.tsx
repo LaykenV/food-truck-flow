@@ -136,7 +136,7 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
         <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden mx-auto max-w-[calc(100%-2rem)] rounded-lg max-h-[90vh] flex flex-col">
           <div className="relative p-6 pb-3 flex items-center justify-center">
             {/* Price in top left */}
-            <div className="absolute left-6 top-6 text-lg font-medium" style={{ color: primaryColor, opacity: '0.8' }}>
+            <div className="absolute left-6 top-6 text-lg font-medium" style={{ color: '#000000', opacity: '0.8' }}>
               {formatCurrency(item.price)}
             </div>
             

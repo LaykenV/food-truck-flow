@@ -121,7 +121,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
                 {/* Item details */}
                 <div className="flex-1 grid gap-1">
                   <div className="font-semibold">{item.name}</div>
-                  <div className="text-sm font-medium" style={{ color: primaryColor }}>{formatCurrency(item.price)}</div>
+                  <div className="text-sm font-medium" style={{ color: '#000000', opacity: '0.8' }}>{formatCurrency(item.price)}</div>
                 </div>
                 
                 {/* Controls */}
@@ -234,7 +234,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
         
         <div className="flex items-center justify-between font-medium text-lg py-2">
           <div>Total</div>
-          <div className="font-bold" style={{ color: primaryColor }}>{formatCurrency(totalPrice)}</div>
+          <div className="font-bold" style={{ color: '#000000', opacity: '0.8' }}>{formatCurrency(totalPrice)}</div>
         </div>
       </CardContent>
       

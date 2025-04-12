@@ -217,7 +217,7 @@ export function OrderForm({
       {/* Contact Information */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name" style={{ color: primaryColor }}>Name</Label>
+          <Label htmlFor="name" style={{ color: '#000000', opacity: '0.8' }}>Name</Label>
           <Input
             id="name"
             name="name"
@@ -231,7 +231,7 @@ export function OrderForm({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="phone" style={{ color: primaryColor }}>Phone</Label>
+          <Label htmlFor="phone" style={{ color: '#000000', opacity: '0.8' }}>Phone</Label>
           <Input
             id="phone"
             name="phone"
@@ -250,7 +250,7 @@ export function OrderForm({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email" style={{ color: primaryColor }}>Email (optional)</Label>
+          <Label htmlFor="email" style={{ color: '#000000', opacity: '0.8' }}>Email (optional)</Label>
           <Input
             id="email"
             name="email"
@@ -296,7 +296,7 @@ export function OrderForm({
       <div className="space-y-4 rounded-lg p-4" style={{ backgroundColor: `${secondaryColor}10` }}>
         <h3 className="font-medium flex items-center gap-2">
           <span style={{ color: secondaryColor }}>●</span>
-          <span style={{ color: secondaryColor, opacity: 0.9 }}>Order Summary</span>
+          <span style={{ color: '#000000', opacity: 0.8 }}>Order Summary</span>
         </h3>
         <div className="space-y-2 text-sm">
           {foodTruckItems.length === 0 ? (
@@ -311,7 +311,7 @@ export function OrderForm({
               ))}
               <div className="border-t pt-2 mt-2 font-medium flex justify-between">
                 <span>Total</span>
-                <span style={{ color: primaryColor}}>{formatCurrency(totalPrice)}</span>
+                <span style={{ color: '#000000', opacity: '0.8' }}>{formatCurrency(totalPrice)}</span>
               </div>
             </>
           )}

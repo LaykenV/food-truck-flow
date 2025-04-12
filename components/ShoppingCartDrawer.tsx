@@ -107,8 +107,8 @@ export function ShoppingCartDrawer({
       <DrawerContent className="max-h-[90vh]">
         <DrawerHeader className="p-4 border-b" style={{ backgroundColor: `${primaryColor}10` }}>
           <DrawerTitle className="flex items-center justify-center gap-2">
-            <ShoppingCart className="h-5 w-5" style={{ color: primaryColor }} />
-            <span style={{ color: primaryColor }}>
+            <ShoppingCart className="h-5 w-5" style={{ color: '#000000', opacity: '0.8' }} />
+            <span style={{ color: '#000000', opacity: '0.8' }}>
               Your Cart ({itemCount} {itemCount === 1 ? 'item' : 'items'})
             </span>
           </DrawerTitle>
