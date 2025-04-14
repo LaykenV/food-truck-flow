@@ -26,6 +26,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMenuItems, getCategories, getFoodTruck } from '@/app/admin/clientQueries'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { createFilePreview, revokeFilePreview, isBlobUrl } from '@/utils/file-utils'
+import { ImageEditorModal } from '@/app/components/ImageEditorModal'
 
 interface MenuItemType {
   id: string;
@@ -74,11 +76,30 @@ export default function MenuClient() {
   const [showActiveDialog, setShowActiveDialog] = useState(false)
   const [itemToToggle, setItemToToggle] = useState<{id: string, active: boolean} | null>(null)
 
+  // Add new state variables for the image editor
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingFile, setEditingFile] = useState<File | null>(null);
+  const [editingFileUrl, setEditingFileUrl] = useState<string | null>(null);
+
   // React Query hooks for data fetching
   const { data: foodTruck, isLoading: isFoodTruckLoading } = useQuery({
     queryKey: ['foodTruck'],
     queryFn: getFoodTruck
   })
+
+  // Cleanup previews when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup any blob URLs when component unmounts
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
+      if (editingFileUrl && editingFileUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(editingFileUrl);
+      }
+    };
+  }, [previewUrl, editingFileUrl]);
 
   const { 
     data: menuItems = [], 
@@ -175,22 +196,68 @@ export default function MenuClient() {
     }
   })
 
-  // Handle file selection
+  // Handle file selection with image editor
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
-    setSelectedFile(file)
     
-    // Create preview URL
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
+      // Clean up previous preview URL if exists
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
       }
-      reader.readAsDataURL(file)
+      
+      // Open the image editor
+      const filePreviewUrl = createFilePreview(file);
+      setEditingFile(file);
+      setEditingFileUrl(filePreviewUrl);
+      setIsEditorOpen(true);
+      
+      // Clear file input value so same file can be selected again
+      e.target.value = '';
     } else {
-      setPreviewUrl(null)
+      setSelectedFile(null);
+      setPreviewUrl(null);
     }
   }
+  
+  // Add handler for saving cropped image
+  const handleSaveCrop = (croppedImageBlob: Blob) => {
+    if (!editingFile) return;
+    
+    // Create a File object from the Blob
+    const croppedFile = new File([croppedImageBlob], editingFile.name, {
+      type: croppedImageBlob.type,
+    });
+    
+    // Create a new preview URL for the cropped file
+    const croppedPreviewUrl = createFilePreview(croppedFile);
+    
+    // Update state with the cropped image
+    setSelectedFile(croppedFile);
+    setPreviewUrl(croppedPreviewUrl);
+    
+    // Revoke the original (uncropped) preview URL
+    if (editingFileUrl) {
+      revokeFilePreview(editingFileUrl);
+    }
+    
+    // Reset editor state
+    setIsEditorOpen(false);
+    setEditingFile(null);
+    setEditingFileUrl(null);
+    
+    toast.success('Image cropped successfully');
+  };
+  
+  // Add handler for canceling crop
+  const handleCancelCrop = () => {
+    if (editingFileUrl) {
+      revokeFilePreview(editingFileUrl);
+    }
+    setIsEditorOpen(false);
+    setEditingFile(null);
+    setEditingFileUrl(null);
+  };
   
   // Upload image to Supabase Storage
   const uploadImage = async (file: File): Promise<string> => {
@@ -481,8 +548,8 @@ export default function MenuClient() {
             <DialogTitle>{editingMenuItem ? 'Edit Menu Item' : 'Add Menu Item'}</DialogTitle>
             <DialogDescription className="text-admin-muted-foreground">
               {editingMenuItem 
-                ? 'Update the details of your menu item' 
-                : 'Fill in the details to add a new menu item to your food truck'}
+                ? 'Update the details of your menu item. Images will be cropped to a square format.' 
+                : 'Fill in the details to add a new menu item to your food truck. Images will be cropped to a square format.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={editingMenuItem ? handleUpdateMenuItem : handleAddMenuItem}>
@@ -614,7 +681,7 @@ export default function MenuClient() {
               
               <div className="space-y-2">
                 <Label htmlFor="image_url" className="text-admin-card-foreground">Image</Label>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center gap-2">
                   <Input
                     id="image_url"
                     value={menuForm.image_url}
@@ -629,42 +696,44 @@ export default function MenuClient() {
                     accept="image/*"
                     className="hidden"
                   />
-                  <div className="flex-1 flex items-center justify-center border-2 border-dashed border-admin-border rounded-md h-32 overflow-hidden relative">
-                    {previewUrl ? (
-                      <div className="relative w-full h-full">
-                        <Image
-                          src={previewUrl}
-                          alt="Preview"
-                          fill
-                          className="object-cover"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6 bg-admin-destructive text-admin-destructive-foreground"
-                          onClick={() => {
-                            setSelectedFile(null)
-                            setPreviewUrl(null)
-                            setMenuForm({...menuForm, image_url: ''})
-                          }}
+                  <div className="w-full max-w-[200px] mx-auto">
+                    <div className="flex items-center justify-center border-2 border-dashed border-admin-border rounded-md aspect-square overflow-hidden relative">
+                      {previewUrl ? (
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={previewUrl}
+                            alt="Preview"
+                            fill
+                            className="object-cover"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-6 w-6 bg-admin-destructive text-admin-destructive-foreground"
+                            onClick={() => {
+                              setSelectedFile(null)
+                              setPreviewUrl(null)
+                              setMenuForm({...menuForm, image_url: ''})
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div 
+                          className="flex flex-col items-center justify-center cursor-pointer h-full w-full p-4"
+                          onClick={() => fileInputRef.current?.click()}
                         >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div 
-                        className="flex flex-col items-center justify-center cursor-pointer h-full w-full"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <ImageIcon className="h-8 w-8 text-admin-muted-foreground" />
-                        <p className="text-sm text-admin-muted-foreground mt-2">Click to upload image</p>
-                      </div>
-                    )}
+                          <ImageIcon className="h-8 w-8 text-admin-muted-foreground" />
+                          <p className="text-sm text-admin-muted-foreground mt-2 text-center">Click to upload image</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  <p className="text-xs text-admin-muted-foreground text-center mt-1">
+                    Upload a square image for your menu item. Images will be cropped to 1:1 ratio.
+                  </p>
                 </div>
-                <p className="text-xs text-admin-muted-foreground">
-                  Upload an image for your menu item. Leave blank to use default image.
-                </p>
               </div>
               
               <div className="flex items-center space-x-2">
@@ -774,6 +843,18 @@ export default function MenuClient() {
         </DialogContent>
       </Dialog>
       
+      {/* Render the ImageEditorModal */}
+      {editingFileUrl && (
+        <ImageEditorModal
+          isOpen={isEditorOpen}
+          onClose={handleCancelCrop}
+          imageSrc={editingFileUrl}
+          aspect={1} // Force square aspect ratio (1:1)
+          circularCrop={false}
+          onSave={handleSaveCrop}
+        />
+      )}
+      
       {/* Menu Items Section */}
       <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
@@ -855,7 +936,7 @@ export default function MenuClient() {
                   key={item.id} 
                   className={`overflow-hidden border ${item.active ? 'border-admin-border' : 'border-admin-destructive/30'} bg-admin-card hover:shadow-md transition-all duration-200 ${!item.active ? 'opacity-70' : ''}`}
                 >
-                  <div className="relative w-full h-48">
+                  <div className="relative w-full aspect-square">
                     {!item.active && (
                       <div className="absolute top-0 right-0 z-10 m-2">
                         <Badge variant="destructive" className="bg-admin-destructive text-admin-destructive-foreground">

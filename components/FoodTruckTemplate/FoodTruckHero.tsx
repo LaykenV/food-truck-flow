@@ -25,7 +25,7 @@ export interface FoodTruckHeroProps {
   forceViewMode?: 'mobile' | 'desktop';
 }
 
-export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTruckHeroProps) {
+export default function FoodTruckHero({ config, displayMode, subdomain, forceViewMode }: FoodTruckHeroProps) {
   // Extract configuration data with defaults
   const {
     hero,
@@ -39,6 +39,26 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
   const heroTitle = hero?.title || name;
   const heroSubtitle = hero?.subtitle || tagline;
   const heroImage = hero?.image || '/images/food-truck-background.jpg';
+  
+  // Determine if we should show mobile view based on forceViewMode or screen size
+  const [isMobileView, setIsMobileView] = useState(forceViewMode === 'mobile');
+  
+  useEffect(() => {
+    if (forceViewMode) {
+      setIsMobileView(forceViewMode === 'mobile');
+    } else {
+      const checkMobileView = () => {
+        setIsMobileView(window.innerWidth < 768);
+      };
+      
+      checkMobileView();
+      window.addEventListener('resize', checkMobileView);
+      
+      return () => {
+        window.removeEventListener('resize', checkMobileView);
+      };
+    }
+  }, [forceViewMode]);
 
   // Handle button click based on display mode
   const handleButtonClick = (e: React.MouseEvent) => {
@@ -64,8 +84,8 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
 
   return (
     <>
-      {/* Mobile hero section - visible on small screens only */}
-      <section className={`md:hidden ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}>
+      {/* Mobile hero section - visible when isMobileView is true */}
+      <section className={`${!isMobileView ? 'hidden' : ''} ${displayMode === 'preview' ? '' : ''}`}>
         <div 
           className="relative w-full h-[50vh] overflow-hidden flex flex-col items-center justify-center"
           style={{ 
@@ -127,9 +147,9 @@ export default function FoodTruckHero({ config, displayMode, subdomain }: FoodTr
         </div>
       </section>
       
-      {/* Desktop hero (full screen) - hidden on small screens */}
+      {/* Desktop hero (full screen) - visible when isMobileView is false */}
       <section 
-        className={`hidden md:block relative min-h-[100vh] ${displayMode === 'preview' ? '-mt-20 pt-20' : ''}`}
+        className={`${isMobileView ? 'hidden' : ''} relative min-h-[100vh] ${displayMode === 'preview' ? '' : ''}`}
         style={{ 
           background: `linear-gradient(135deg, ${primaryColor}70, ${secondaryColor}70)` 
         }}

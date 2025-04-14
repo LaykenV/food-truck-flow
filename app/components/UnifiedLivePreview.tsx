@@ -107,10 +107,35 @@ export function UnifiedLivePreview({
         <div className="w-full max-w-[375px] mx-auto mobile-preview-container">
           <style jsx global>{`
             .mobile-preview-container .mobile-view,
+            .mobile-preview-container .forced-mobile-view,
             .mobile-preview-container {
               /* Force mobile styling */
               --container-width: 375px;
               max-width: var(--container-width);
+            }
+            
+            /* Force desktop styles to render as mobile when in the mobile preview */
+            .mobile-preview-container .desktop-view {
+              max-width: var(--container-width) !important;
+            }
+            
+            /* Override responsive classes to force mobile layout */
+            .mobile-preview-container .md\\:hidden {
+              display: block !important;
+            }
+            
+            .mobile-preview-container .md\\:block {
+              display: none !important;
+            }
+            
+            .mobile-preview-container .md\\:flex,
+            .mobile-preview-container .lg\\:flex {
+              display: none !important;
+            }
+            
+            .mobile-preview-container .forced-desktop-view {
+              /* Force desktop view to render as mobile inside mobile container */
+              max-width: var(--container-width) !important;
             }
             
             .mobile-preview-container h1 {
@@ -149,6 +174,27 @@ export function UnifiedLivePreview({
             .mobile-preview-container .hidden.lg\\:block,
             .mobile-preview-container .hidden.lg\\:flex {
               display: none !important;
+            }
+            
+            .mobile-preview-container .md\\:hidden {
+              display: block !important;
+            }
+            
+            .mobile-preview-container .md\\:flex {
+              display: flex !important;
+            }
+            
+            .mobile-preview-container .hidden.sm\\:block {
+              display: none !important;
+            }
+            
+            .mobile-preview-container .md\\:w-1\\/2,
+            .mobile-preview-container .lg\\:w-1\\/2,
+            .mobile-preview-container .md\\:w-1\\/3,
+            .mobile-preview-container .lg\\:w-1\\/3,
+            .mobile-preview-container .md\\:w-2\\/3,
+            .mobile-preview-container .lg\\:w-2\\/3 {
+              width: 100% !important;
             }
             
             .mobile-preview-container .md\\:px-6,

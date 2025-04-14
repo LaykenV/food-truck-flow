@@ -1,95 +1,20 @@
-set up stripe subscriptions
-sign up flow?
-
-when new user signs up, create food truck for them, carry over default config from landing page
-
-set up stripe in admin dashboard
-'publish' button to publish food truck - checks for stripe key, if not set up, prompts to set up
-
-add admin configs from dashboard with onboarding tour
-
-//fix landing page quirks
-//set up menu and order page
-//get settings tab back and redo each tab
-wire up each tab
-wire dashboard
-
-//wire menus tab and menu page 
-//wire orders tab
-
-//add user button and refactor tabs
-//dashboard
-//menu page and  mock orders
-//order actions
-//add notes? and pickup time
-//fix locations form and ui
-//primary color?
-//remove json 
-orders 2 sometimes and analytics too
-
-landing page
-v0
-new background picture
-change testimonials and footer
-
-admin dashboard
-v0
-update config to match new design
-orders 2 sometimes
-analytics too ^
-
-template
-    home page - //mapbox integration - //heroFont config, //find us scroll, //remove location
-    menu page - //make card full pic and modal with notes, ai photo modeling, //fonts
-    order page seo loading optimization - //only place order when open - //redesign cart 
-    //colors to order tracker
-    optimize everything
-
-    //test everything
-    //checklist for template
-    //combine caching
-
-    //caching on template
-    //set up tanstack query shared provider in layout. initial fetch?
-    //integrate into schedule
-    //integrate into menu
-    //make plan
-    //integrate into orders
-    //integrate into analytics
-   // integrate into config
-    //integrate into admin dashboard
-    //integrate into settings
-    //integrate into account
-
-    //apply theming and ui update to all admin routes. context.md
-
-    order cleanup
-
-    template ui updates
-    //menu - card full pic and modal with notes, ai photo modeling, fonts, colors 
-    //order - colors to order tracker
-    //order confirmation - colors to order tracker
-    //order tracker - colors to order tracker
-
-    admin edits list 
-    config - theme bleeding through to preview, preview mobile, //about/logo photo sizing
-    menu - professional photo with gemini, //active boolean
-    //order - add phone number to order
+admin
+    config - //theme bleeding through to preview, //preview mobile, 4o api for food truck photo
+    //menu - photo sizing
     subscription - stripe
 
-    go back through both
+    landing page redesign
+
 
     final ui check
+    go back through both
+
+    final checklist
+    test
+    deploy
+
+    set up domain dns - coming soon?
+    stripe for ordering - coming soon?
+
+
     
-    landing page
-
-set up stripe for subscriptions
-set up stripe for cart checkout - coming soon?
-//set up google maps
-photo sizing
-professional photo with gemini
-
-set up domain dns - coming soon?
-
-test?
-

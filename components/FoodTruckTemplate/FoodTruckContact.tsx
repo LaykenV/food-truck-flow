@@ -115,7 +115,7 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
             }}
           ></div>
           <div className="relative flex justify-center">
-            <div className="bg-[#f0f0f0] px-8">
+            <div className={displayMode === 'live' ? 'bg-[#f0f0f0] px-8' : 'bg-white px-8'}>
               <div 
                 className="w-16 h-16 rounded-full flex items-center justify-center"
                 style={{ 

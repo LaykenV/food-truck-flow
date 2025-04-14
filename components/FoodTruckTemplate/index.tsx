@@ -73,7 +73,7 @@ export default function FoodTruckTemplate({
 }: FoodTruckTemplateProps) {
   // Client-side state to prevent hydration mismatch
   const [isClient, setIsClient] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(forceViewMode === 'mobile');
   const [hasOrderTracker, setHasOrderTracker] = useState(false);
   
   // Use useEffect to set isClient to true after component mounts
@@ -82,10 +82,8 @@ export default function FoodTruckTemplate({
     
     // Set mobile view based on forceViewMode or window size
     const handleResize = () => {
-      if (forceViewMode === 'mobile') {
-        setIsMobileView(true);
-      } else if (forceViewMode === 'desktop') {
-        setIsMobileView(false);
+      if (forceViewMode) {
+        setIsMobileView(forceViewMode === 'mobile');
       } else {
         setIsMobileView(window.innerWidth < 768);
       }
@@ -128,8 +126,11 @@ export default function FoodTruckTemplate({
     );
   }
 
+  // Add mobile-specific classes based on forced view mode
+  const containerClasses = forceViewMode === 'mobile' ? 'mobile-view forced-mobile-view' : forceViewMode === 'desktop' ? 'desktop-view forced-desktop-view' : isMobileView ? 'mobile-view' : 'desktop-view';
+
   return (
-    <div className={`flex flex-col ${isMobileView ? 'mobile-view' : ''}`}>
+    <div className={`flex flex-col ${containerClasses}`}>
       {/* Navbar */}
       {/*<FoodTruckNavbar
         config={config}

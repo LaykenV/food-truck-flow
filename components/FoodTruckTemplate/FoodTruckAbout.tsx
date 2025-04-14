@@ -3,6 +3,8 @@
 import { DisplayMode } from '.';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface FoodTruckAboutProps {
   config: {
@@ -22,8 +24,29 @@ export interface FoodTruckAboutProps {
   forceViewMode?: 'mobile' | 'desktop';
 }
 
-export default function FoodTruckAbout({ config, displayMode }: FoodTruckAboutProps) {
+export default function FoodTruckAbout({ config, displayMode, forceViewMode }: FoodTruckAboutProps) {
   const { about, primaryColor, secondaryColor = '#4CB944' } = config;
+  
+  // State to track if mobile view should be used
+  const [isMobileView, setIsMobileView] = useState(forceViewMode === 'mobile');
+  
+  // Update isMobileView when forceViewMode changes or on screen resize
+  useEffect(() => {
+    if (forceViewMode) {
+      setIsMobileView(forceViewMode === 'mobile');
+    } else {
+      const checkMobileView = () => {
+        setIsMobileView(window.innerWidth < 1024); // Using lg breakpoint
+      };
+      
+      checkMobileView();
+      window.addEventListener('resize', checkMobileView);
+      
+      return () => {
+        window.removeEventListener('resize', checkMobileView);
+      };
+    }
+  }, [forceViewMode]);
   
   if (!about) return null;
 
@@ -49,22 +72,31 @@ export default function FoodTruckAbout({ config, displayMode }: FoodTruckAboutPr
           borderWidth: "1px",
           borderImage: `linear-gradient(to right, ${primaryColor || '#FF6B35'}, ${secondaryColor}) 1`,
         }}>
-          <div className="flex flex-col lg:flex-row">
+          <div className={cn(
+            "flex flex-col",
+            !isMobileView && "lg:flex-row"
+          )}>
             {about.image && (
-              <div className="w-full lg:w-1/2">
+              <div className={cn(
+                "w-full",
+                !isMobileView && "lg:w-1/2"
+              )}>
                 <div className="relative aspect-video h-full">
                   <Image 
                     src={about.image} 
                     alt={about.title || 'About Us'} 
                     fill
                     className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    sizes={isMobileView ? "100vw" : "(max-width: 1024px) 100vw, 50vw"}
                   />
                 </div>
               </div>
             )}
             
-            <div className="w-full lg:w-1/2 p-6 md:p-8 flex items-center">
+            <div className={cn(
+              "w-full p-6 md:p-8 flex items-center",
+              !isMobileView && "lg:w-1/2"
+            )}>
               {about.content && (
                 <div 
                   className="prose prose-lg max-w-none"

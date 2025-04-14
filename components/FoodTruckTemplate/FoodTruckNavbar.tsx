@@ -54,6 +54,8 @@ export default function FoodTruckNavbar({
   useEffect(() => {
     if (forceViewMode) {
       setIsMobileView(forceViewMode === 'mobile');
+      // When forceViewMode is set, don't add resize listeners
+      // to prevent screen size from overriding the forced mode
     } else {
       const checkMobileView = () => {
         setIsMobileView(window.innerWidth < 768);
@@ -78,9 +80,9 @@ export default function FoodTruckNavbar({
         : window;
         
       if (scrollableContainer) {
-        // For preview mode, check if scrollTop is exactly 0 to ensure transparency at the top
+        // For preview mode, check if scrollTop is greater than a small threshold
         const isScrolled = displayMode === 'preview'
-          ? (scrollableContainer as Element).scrollTop > 0
+          ? (scrollableContainer as Element).scrollTop > 10
           : window.scrollY > 10;
           
         setScrolled(isScrolled);
@@ -109,15 +111,13 @@ export default function FoodTruckNavbar({
       setTimeout(() => {
         handleScroll();
       }, 200);
-    } else {
-      window.addEventListener('scroll', handleScroll);
-    }
-    
-    return () => {
-      if (displayMode === 'preview') {
-        const mobileContainer = document.getElementById('preview-scroll-container');
-        const desktopContainer = document.getElementById('desktop-preview-scroll-container');
-        
+
+      // Add periodic check for scroll position in preview mode
+      const intervalId = setInterval(() => {
+        handleScroll();
+      }, 500); // Check every 500ms
+      
+      return () => {
         if (mobileContainer) {
           mobileContainer.removeEventListener('scroll', handleScroll);
         }
@@ -125,10 +125,16 @@ export default function FoodTruckNavbar({
         if (desktopContainer) {
           desktopContainer.removeEventListener('scroll', handleScroll);
         }
-      } else {
+        
+        clearInterval(intervalId);
+      };
+    } else {
+      window.addEventListener('scroll', handleScroll);
+      
+      return () => {
         window.removeEventListener('scroll', handleScroll);
-      }
-    };
+      };
+    }
   }, [displayMode]);
 
   // Navigation links
@@ -167,7 +173,7 @@ export default function FoodTruckNavbar({
     <>
       <header 
         className={cn(
-          `${displayMode === 'preview' ? 'sticky' : 'fixed'} top-0 left-0 right-0 z-50 transition-all duration-300`,
+          `${displayMode === 'preview' ? (forceViewMode === 'mobile' ? 'absolute mt-6' : 'absolute mt-8') : 'fixed'} top-0 left-0 right-0 z-50 transition-all duration-300`,
           scrolled || isNonHeroPage
             ? 'bg-background/95 backdrop-blur-sm shadow-sm py-2' 
             : 'bg-transparent py-4'

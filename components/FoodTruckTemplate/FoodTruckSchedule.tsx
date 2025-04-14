@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ScheduleCard, ScheduleDayGroup } from '@/components/ui/schedule-card';
 import { DisplayMode } from '.';
 import { useMemo } from 'react';
@@ -31,9 +31,29 @@ export interface FoodTruckScheduleProps {
   forceViewMode?: 'mobile' | 'desktop';
 }
 
-export default function FoodTruckSchedule({ config, displayMode }: FoodTruckScheduleProps) {
+export default function FoodTruckSchedule({ config, displayMode, forceViewMode }: FoodTruckScheduleProps) {
   // State for active card in mobile carousel
   const [activeCardIndex, setActiveCardIndex] = useState(0);
+  // State to track if mobile view should be used
+  const [isMobileView, setIsMobileView] = useState(forceViewMode === 'mobile');
+  
+  // Update isMobileView when forceViewMode changes or on screen resize
+  useEffect(() => {
+    if (forceViewMode) {
+      setIsMobileView(forceViewMode === 'mobile');
+    } else {
+      const checkMobileView = () => {
+        setIsMobileView(window.innerWidth < 768);
+      };
+      
+      checkMobileView();
+      window.addEventListener('resize', checkMobileView);
+      
+      return () => {
+        window.removeEventListener('resize', checkMobileView);
+      };
+    }
+  }, [forceViewMode]);
 
   // Extract configuration data with defaults
   const { schedule } = config;
@@ -169,14 +189,23 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
         {/* Side-scrolling container for mobile */}
         <div className="relative">
           <div 
-            className="flex overflow-x-auto pb-6 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 snap-x snap-mandatory md:overflow-x-visible md:pb-0 scrollbar-hide"
+            className={cn(
+              "flex overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide",
+              isMobileView 
+                ? "flex flex-row" 
+                : displayMode === 'preview'
+                  ? "md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:overflow-x-visible md:pb-0"
+                  : "md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:overflow-x-visible md:pb-0"
+            )}
             onScroll={handleScroll}
           >
             {/* Render grouped schedule days */}
             {groupedScheduleDays.map((group, groupIndex) => (
               <div 
                 key={groupIndex} 
-                className="min-w-[280px] w-[85vw] max-w-[340px] px-1 mr-3 md:mr-0 md:w-auto md:min-w-0 md:max-w-none snap-center flex-shrink-0"
+                className={cn(
+                  isMobileView ? "min-w-[280px] w-[85vw] max-w-[340px] px-1 mr-3 snap-center flex-shrink-0" : "md:w-auto md:min-w-0 md:max-w-none md:mr-0"
+                )}
               >
                 <ScheduleCard
                   group={group}
@@ -188,8 +217,8 @@ export default function FoodTruckSchedule({ config, displayMode }: FoodTruckSche
           </div>
           
           {/* Improved scroll indicators for mobile */}
-          {groupedScheduleDays.length > 1 && (
-            <div className="flex justify-center mt-4 md:hidden">
+          {groupedScheduleDays.length > 1 && isMobileView && (
+            <div className="flex justify-center mt-4">
               <div className="flex space-x-2">
                 {groupedScheduleDays.map((_, index) => (
                   <div 
