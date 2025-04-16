@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getFoodTruck } from "@/app/admin/clientQueries";
-import { updateSubscription, cancelSubscription } from "./actions";
+import { getFoodTruck, getSubscriptionData } from "@/app/admin/clientQueries";
+import { updateSubscription, createBillingPortalSession } from "./actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,19 +11,37 @@ import { Badge } from "@/components/ui/badge";
 import { Check, CreditCard, Gift, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 
+// Helper to format date
+const formatDate = (timestamp: number | null) => {
+  if (!timestamp) return 'N/A';
+  return new Date(timestamp).toLocaleDateString();
+};
+
 export default function SubscribeClient() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Fetch food truck data using React Query
-  const { data: foodTruck, isLoading, error } = useQuery({
+  // Fetch subscription data using React Query
+  const { data: subscription, isLoading: isLoadingSubscription, error: subscriptionError } = useQuery({
+    queryKey: ['subscriptionData'],
+    queryFn: getSubscriptionData
+  });
+  
+  // Fetch food truck data for other info
+  const { data: foodTruck, isLoading: isLoadingFoodTruck, error: foodTruckError } = useQuery({
     queryKey: ['foodTruck'],
     queryFn: getFoodTruck
   });
+
+  const isLoading = isLoadingSubscription || isLoadingFoodTruck;
+  const error = subscriptionError || foodTruckError;
   
-  const currentPlan = foodTruck?.subscription_plan || 'none';
-  const isSubscribed = !!foodTruck?.stripe_subscription_id;
+  // Use planName directly from the subscription data
+  const currentPlan = subscription?.planName || 'none';
+    
+  const isSubscribed = subscription?.status === 'active';
+  const isCancelling = subscription?.cancelAtPeriodEnd;
   
   // Mutation for updating subscription
   const updateSubscriptionMutation = useMutation({
@@ -31,12 +49,16 @@ export default function SubscribeClient() {
     onMutate: () => {
       setIsProcessing(true);
     },
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
-      
-      toast.success("Subscription updated successfully");
-      router.push('/admin/account');
+    onSuccess: (data) => {
+      // If we have a sessionUrl, redirect to Stripe Checkout
+      if (data?.sessionUrl) {
+        window.location.href = data.sessionUrl;
+      } else {
+        // Otherwise, invalidate the query and show a success message
+        queryClient.invalidateQueries({ queryKey: ['subscriptionData'] });
+        queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
+        toast.success("Subscription updated successfully");
+      }
     },
     onError: (error: Error) => {
       toast.error(`Error updating subscription: ${error.message}`);
@@ -44,21 +66,19 @@ export default function SubscribeClient() {
     }
   });
   
-  // Mutation for cancelling subscription
-  const cancelSubscriptionMutation = useMutation({
-    mutationFn: () => cancelSubscription(),
+  // Mutation for billing portal
+  const billingPortalMutation = useMutation({
+    mutationFn: () => createBillingPortalSession(),
     onMutate: () => {
       setIsProcessing(true);
     },
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
-      
-      toast.success("Subscription cancelled successfully");
-      router.push('/admin/account');
+    onSuccess: (data) => {
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     },
     onError: (error: Error) => {
-      toast.error(`Error cancelling subscription: ${error.message}`);
+      toast.error(`Error opening billing portal: ${error.message}`);
       setIsProcessing(false);
     }
   });
@@ -68,9 +88,9 @@ export default function SubscribeClient() {
     updateSubscriptionMutation.mutate(plan);
   };
   
-  // Handle subscription cancellation
-  const handleCancelSubscription = async () => {
-    cancelSubscriptionMutation.mutate();
+  // Handle manage billing
+  const handleManageBilling = async () => {
+    billingPortalMutation.mutate();
   };
   
   if (isLoading) {
@@ -146,8 +166,8 @@ export default function SubscribeClient() {
         </Card>
         
         {/* Pro Plan */}
-        <Card className={`bg-admin-card border-admin-border hover:shadow-md transition-all duration-200 ${currentPlan === 'pro' ? 'border-admin-primary border-2' : ''}`}>
-          <CardHeader className="pb-4">
+        <Card className={`bg-admin-card border-admin-border hover:shadow-md transition-all duration-200 ${currentPlan === 'pro' ? 'border-admin-primary border-2' : ''} relative`}>
+          <CardHeader className="pb-4 opacity-60">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Zap className="h-5 w-5 text-admin-primary" />
@@ -159,7 +179,7 @@ export default function SubscribeClient() {
             </div>
             <CardDescription className="text-admin-muted-foreground">For serious food truck businesses</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pb-6">
+          <CardContent className="space-y-4 pb-6 opacity-60">
             <div className="text-4xl font-bold text-admin-card-foreground">$49<span className="text-sm font-normal text-admin-muted-foreground">/month</span></div>
             <ul className="space-y-3 text-sm">
               <li className="flex items-center">
@@ -181,20 +201,13 @@ export default function SubscribeClient() {
             </ul>
           </CardContent>
           <CardFooter className="pt-2">
-            {currentPlan === 'pro' ? (
-              <Button variant="outline" className="w-full bg-admin-secondary/50 text-admin-secondary-foreground border-admin-border" disabled>
-                Current Plan
-              </Button>
-            ) : (
-              <Button
-                className="w-full bg-gradient-to-r from-[hsl(var(--admin-primary))] to-[hsl(var(--admin-gradient-end))] text-white hover:shadow-lg"
-                onClick={() => handleSubscription('pro')}
-                disabled={isProcessing}
-              >
-                <CreditCard className="mr-2 h-4 w-4" />
-                {isProcessing ? 'Processing...' : currentPlan === 'none' ? 'Subscribe' : 'Upgrade to Pro'}
-              </Button>
-            )}
+             <Button 
+              variant="outline" 
+              className="w-full bg-admin-secondary/50 text-admin-secondary-foreground border-admin-border" 
+              disabled
+            >
+              Coming Soon
+            </Button>
           </CardFooter>
         </Card>
       </div>
@@ -220,19 +233,35 @@ export default function SubscribeClient() {
                 <div className="bg-admin-secondary/30 p-3 rounded-md">
                   <h3 className="text-sm font-medium text-admin-card-foreground">Subscription ID</h3>
                   <p className="text-sm text-admin-muted-foreground mt-1 truncate">
-                    {foodTruck?.stripe_subscription_id || 'N/A'}
+                    {subscription?.subscriptionId || 'N/A'}
                   </p>
                 </div>
                 <div className="bg-admin-secondary/30 p-3 rounded-md">
                   <h3 className="text-sm font-medium text-admin-card-foreground">Status</h3>
-                  <p className="text-sm text-admin-muted-foreground mt-1">
-                    {isSubscribed ? 'Active' : 'Inactive'}
+                  <p className="text-sm text-admin-muted-foreground mt-1 flex items-center">
+                    {isSubscribed ? (
+                      <>
+                        <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
+                        {isCancelling ? 'Active (Cancels at period end)' : 'Active'}
+                      </>
+                    ) : (
+                      'Inactive'
+                    )}
                   </p>
                 </div>
                 <div className="bg-admin-secondary/30 p-3 rounded-md">
                   <h3 className="text-sm font-medium text-admin-card-foreground">Next Billing Date</h3>
                   <p className="text-sm text-admin-muted-foreground mt-1">
-                    {isSubscribed ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString() : 'N/A'}
+                    {formatDate(subscription?.currentPeriodEnd)}
+                  </p>
+                </div>
+                <div className="bg-admin-secondary/30 p-3 rounded-md">
+                  <h3 className="text-sm font-medium text-admin-card-foreground">Payment Method</h3>
+                  <p className="text-sm text-admin-muted-foreground mt-1">
+                    {subscription?.paymentMethod?.brand && subscription?.paymentMethod?.last4 
+                      ? `${subscription.paymentMethod.brand.charAt(0).toUpperCase() + subscription.paymentMethod.brand.slice(1)} •••• ${subscription.paymentMethod.last4}`
+                      : 'N/A'
+                    }
                   </p>
                 </div>
                 <div className="bg-admin-secondary/30 p-3 rounded-md">
@@ -245,25 +274,18 @@ export default function SubscribeClient() {
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-x-2 sm:space-y-0 pt-2">
+        <CardFooter className="pt-2">
           {isSubscribed ? (
-            <>
+            <div className="w-full flex justify-end">
               <Button 
                 variant="outline" 
-                disabled 
-                className="bg-admin-secondary/50 text-admin-secondary-foreground border-admin-border"
-              >
-                Manage Billing
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={handleCancelSubscription}
+                onClick={handleManageBilling}
                 disabled={isProcessing}
-                className="bg-admin-destructive text-admin-destructive-foreground hover:bg-admin-destructive/90"
+                className="bg-admin-secondary/50 border-admin-primary text-admin-secondary-foreground w-full sm:w-auto"
               >
-                {isProcessing ? 'Processing...' : 'Cancel Subscription'}
+                {isProcessing ? 'Processing...' : 'Manage Billing'}
               </Button>
-            </>
+            </div>
           ) : (
             <Button
               className="w-full sm:w-auto bg-gradient-to-r from-[hsl(var(--admin-primary))] to-[hsl(var(--admin-gradient-end))] text-white hover:shadow-lg"

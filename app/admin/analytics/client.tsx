@@ -334,7 +334,7 @@ export function AnalyticsClient() {
         <h3 className="text-xl font-bold text-admin-primary mb-2">Pro Feature</h3>
         <p className="text-admin-foreground mb-4">Upgrade to our Pro plan to unlock detailed analytics and gain valuable insights for your food truck business.</p>
         <a 
-          href="/admin/subscribe" 
+          href="/admin/account/subscribe" 
           className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground rounded-md hover:opacity-90 transition-opacity"
         >
           <span className="mr-2">Upgrade Now</span>
@@ -422,10 +422,10 @@ export function AnalyticsClient() {
             )}
           </div>
         </CardContent>
-        {isBasicPlan && <PremiumFeatureOverlay />}
+        {/* {isBasicPlan && <PremiumFeatureOverlay />} */}
       </Card>
 
-      {isBasicPlan && (
+      {/* {isBasicPlan && (
         <Card className="border border-admin-border shadow-md overflow-hidden">
           <div className="bg-gradient-to-r from-[hsl(var(--admin-primary)/0.1)] to-[hsl(var(--admin-gradient-end)/0.1)] p-6">
             <div className="flex flex-col md:flex-row items-center justify-between">
@@ -434,7 +434,7 @@ export function AnalyticsClient() {
                 <p className="text-admin-foreground/80">Get access to detailed sales trends, customer insights, and performance metrics to grow your food truck business.</p>
               </div>
               <a 
-                href="/admin/subscribe" 
+                href="/admin/account/subscribe" 
                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground font-medium rounded-md hover:opacity-90 transition-opacity shadow-sm"
               >
                 Upgrade to Pro
@@ -442,7 +442,7 @@ export function AnalyticsClient() {
             </div>
           </div>
         </Card>
-      )}
+      )} */}
     </div>
   )
 } 

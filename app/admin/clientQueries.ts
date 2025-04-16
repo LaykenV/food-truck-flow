@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
+import { getSubscriptionDataWithPlan } from './account/subscribe/actions';
 
 export async function getUser() {
   const supabase = createClient();
@@ -164,4 +165,9 @@ export async function getRecentOrders() {
   if (error) throw error;
   
   return data || [];
+}
+
+export async function getSubscriptionData() {
+  // Call the server action to get data including the plan name
+  return await getSubscriptionDataWithPlan();
 }

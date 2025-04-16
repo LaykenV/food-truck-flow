@@ -110,7 +110,7 @@ export default function SettingsClient() {
     e.preventDefault();
     
     if (!hasSubscription) {
-      router.push('/admin/subscribe');
+      router.push('/admin/account/subscribe');
       return;
     }
     
@@ -273,15 +273,15 @@ export default function SettingsClient() {
           <form onSubmit={handleUpdateDomainSettings} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="subdomain" className="text-admin-card-foreground">Subdomain</Label>
-              <div className="flex items-center">
+              <div className="flex items-center group">
                 <Input
                   id="subdomain"
                   value={subdomain}
                   onChange={(e) => setSubdomain(e.target.value)}
-                  className="rounded-r-none border-admin-border bg-admin-card text-admin-card-foreground"
+                  className="rounded-r-none border-r-0 border-admin-border bg-admin-card text-admin-card-foreground focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:ring-admin-primary focus-visible:border-admin-primary focus-visible:z-10"
                   autoComplete="off"
                 />
-                <span className="bg-admin-secondary px-3 py-2 border border-admin-border border-l-0 rounded-r-md text-admin-muted-foreground whitespace-nowrap">
+                <span className="bg-admin-secondary h-10 flex items-center px-3 border border-admin-border rounded-r-md text-admin-muted-foreground whitespace-nowrap group-focus-within:border-admin-primary">
                   .foodtruckflow.com
                 </span>
               </div>
@@ -293,33 +293,19 @@ export default function SettingsClient() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="customDomain" className="text-admin-card-foreground">Custom Domain</Label>
-                {foodTruck?.subscription_plan !== 'pro' && (
-                  <Badge variant="outline" className="text-xs bg-admin-secondary/50 border-admin-border text-admin-muted-foreground">Pro Feature</Badge>
-                )}
               </div>
               <Input
                 id="customDomain"
                 value={customDomain}
                 onChange={(e) => setCustomDomain(e.target.value)}
-                placeholder="yourdomain.com"
-                disabled={foodTruck?.subscription_plan !== 'pro'}
-                className={`border-admin-border bg-admin-card text-admin-card-foreground ${foodTruck?.subscription_plan !== 'pro' ? "opacity-50" : ""}`}
+                placeholder="Coming Soon"
+                disabled={true}
+                className="border-admin-border bg-admin-card text-admin-card-foreground opacity-50 cursor-not-allowed"
                 autoComplete="off"
               />
-              {foodTruck?.subscription_plan !== 'pro' ? (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 mt-1">
-                  <p className="text-xs text-admin-muted-foreground">
-                    Custom domains are available on the Pro plan.
-                  </p>
-                  <Button variant="link" size="sm" className="h-auto p-0 text-admin-primary hover:text-admin-primary/90" asChild>
-                    <Link href="/admin/account">Upgrade to Pro</Link>
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-xs text-admin-muted-foreground mt-1">
-                  Enter your custom domain to use instead of the subdomain.
-                </p>
-              )}
+              <p className="text-xs text-admin-muted-foreground mt-1">
+                Custom domain support is coming soon!
+              </p>
             </div>
             
             <Button 
@@ -351,38 +337,9 @@ export default function SettingsClient() {
           </div>
         </CardHeader>
         <CardContent className="pt-6 text-admin-card-foreground">
-          <form onSubmit={handleUpdateStripeApiKey} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="stripeKey" className="text-admin-card-foreground">Stripe API Key</Label>
-              <Input
-                id="stripeKey"
-                value={stripeApiKey}
-                onChange={(e) => setStripeApiKey(e.target.value)}
-                type="password"
-                placeholder={hasStripeKey ? "••••••••••••••••••••••" : "Enter your Stripe API key"}
-                className="border-admin-border bg-admin-card text-admin-card-foreground"
-                autoComplete="off"
-              />
-              <p className="text-xs text-admin-muted-foreground mt-1">
-                Your Stripe API key is required to process payments for your food truck.
-                {hasStripeKey && " Your key has been saved securely."}
-              </p>
-            </div>
-            <Button 
-              type="submit"
-              disabled={stripeMutation.isPending || !stripeApiKey}
-              className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
-            >
-              {stripeMutation.isPending ? (
-                <>
-                  <LucideLoader className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Stripe Settings"
-              )}
-            </Button>
-          </form>
+          <p className="text-sm text-admin-muted-foreground">
+            Stripe integration for seamless payments is coming soon.
+          </p>
         </CardContent>
       </Card>
     </div>

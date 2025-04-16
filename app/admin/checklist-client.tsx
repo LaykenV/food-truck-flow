@@ -176,7 +176,7 @@ export function ChecklistClient({ initialChecklist, markChecklistAsCompleted }: 
                 </Label>
                 {!initialChecklist.subscribed && (
                   <Button variant="admin-ghost" size="icon" className="h-5 w-5 text-admin-muted-foreground hover:text-admin-foreground hover:bg-admin-accent/50" asChild>
-                    <Link href="/admin/subscribe" title="Choose a Plan">
+                    <Link href="/admin/account/subscribe" title="Choose a Plan">
                       <LucideArrowUpRight className="h-3.5 w-3.5" />
                     </Link>
                   </Button>

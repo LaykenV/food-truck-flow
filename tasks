@@ -1,13 +1,20 @@
 admin
     config - //theme bleeding through to preview, //preview mobile, 4o api for food truck photo
     //menu - photo sizing
-    subscription - stripe
+    subscription - stripe, //create table, //keys, //price id and add to app
+    webhooks
+    //manage billing
+    //cancel
+    //next billing date?
+    change all subscription checks
+    other checklist
 
     landing page redesign
 
 
     final ui check
-    go back through both
+    go back through both 
+    menu modal img square
 
     final checklist
     test
