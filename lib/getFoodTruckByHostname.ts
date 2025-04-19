@@ -19,7 +19,7 @@ export async function getFoodTruckByHostname(hostname: string, isAdmin = false) 
   // Query the FoodTrucks table for the matching subdomain
   let query = supabase
     .from('FoodTrucks')
-    .select('id, configuration, subscription_plan, subdomain, custom_domain, published')
+    .select('id, configuration, subdomain, custom_domain, published')
     .or(`subdomain.eq."${subdomain}",custom_domain.eq."${hostname}"`)
   
   const { data, error } = await query.single();

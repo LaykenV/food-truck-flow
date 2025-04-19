@@ -23,7 +23,7 @@ import { createClient } from "@/utils/supabase/client"
 import { useSubscription } from '@supabase-cache-helpers/postgrest-react-query'
 import { reopenToday } from './actions'
 import { CloseForTodayDialog } from "./close-for-today-dialog"
-import { getFoodTruck, getAnalyticsData, getRecentOrders, getMenuItems } from './clientQueries'
+import { getFoodTruck, getAnalyticsData, getRecentOrders, getMenuItems, getSubscriptionData } from './clientQueries'
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from 'sonner'
 
@@ -98,6 +98,17 @@ export default function AdminDashboardClient() {
   } = useQuery({
     queryKey: ['menuItems'],
     queryFn: getMenuItems,
+    enabled: !!foodTruck?.id
+  })
+
+  // Fetch subscription data with React Query
+  const {
+    data: subscriptionData,
+    isLoading: isSubscriptionLoading,
+    error: subscriptionError
+  } = useQuery({
+    queryKey: ['subscriptionData'],
+    queryFn: getSubscriptionData,
     enabled: !!foodTruck?.id
   })
   
@@ -292,7 +303,7 @@ export default function AdminDashboardClient() {
     
     const hasCustomDomain = foodTruck?.custom_domain || !foodTruck.subdomain.startsWith('foodtruck-')
     
-    const isSubscribed = !!foodTruck?.stripe_subscription_id
+    const isSubscribed = subscriptionData?.status === 'active'
     
     // Calculate if all checklist items are completed
     const allChecklistItemsCompleted = !!hasProfileSetup && 

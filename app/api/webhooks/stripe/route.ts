@@ -9,6 +9,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('Received webhook request');
     // Get the signature from headers - using the proper headers() API
     const headersList = await headers();
     const signature = headersList.get('stripe-signature');
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
 
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      console.log(`Received webhook event: ${event.type}`);
     } catch (err: any) {
       console.error(`Webhook signature verification failed: ${err.message}`);
       return NextResponse.json(
@@ -63,6 +65,10 @@ export async function POST(req: NextRequest) {
     const { customer: customerId } = event?.data?.object as {
         customer: string; // Sadly TypeScript does not know this
     };
+
+    console.log(`Event: ${JSON.stringify(event.data.object)}`);
+
+    console.log(`Customer ID: ${customerId}`);
 
     if (typeof customerId !== 'string') {
         console.error('Customer ID is not a string');

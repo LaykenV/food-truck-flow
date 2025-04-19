@@ -13,8 +13,15 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
 
   const handleOAuthSignIn = async (provider: "google" | "facebook") => {
     setIsLoading(provider);
-    await signInWithOAuthAction(provider);
-    setIsLoading(null);
+    try {
+      await signInWithOAuthAction(provider);
+    } catch (err) {
+      console.error("OAuth sign-in failed:", err);
+      // Optionally show an error message to the user here
+    } finally {
+      // Ensure loading state is always reset
+      setIsLoading(null);
+    }
   };
 
   const actionText = mode === "sign-in" ? "Sign in" : "Sign up";
@@ -23,10 +30,10 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
     <div className="flex flex-col gap-2 w-full">
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-muted-foreground/30" />
+          <span className="w-full border-t border-[hsl(var(--admin-border))]" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-background px-2 text-muted-foreground">
+          <span className="bg-background px-2 text-[hsl(var(--admin-foreground)/0.6)]">
             Or continue with
           </span>
         </div>
@@ -34,12 +41,12 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
       <Button
         type="button"
         variant="outline"
-        className="flex items-center justify-center gap-2"
+        className="flex items-center justify-center gap-2 border-[hsl(var(--admin-border))] hover:bg-[hsl(var(--admin-background))] hover:border-[hsl(var(--admin-primary)/0.5)]"
         onClick={() => handleOAuthSignIn("google")}
         disabled={isLoading !== null}
       >
         {isLoading === "google" ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(var(--admin-primary))] border-t-transparent" />
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -71,12 +78,12 @@ export function OAuthButtons({ mode }: OAuthButtonsProps) {
       <Button
         type="button"
         variant="outline"
-        className="flex items-center justify-center gap-2"
+        className="flex items-center justify-center gap-2 border-[hsl(var(--admin-border))] hover:bg-[hsl(var(--admin-background))] hover:border-[hsl(var(--admin-primary)/0.5)]"
         onClick={() => handleOAuthSignIn("facebook")}
         disabled={isLoading !== null}
       >
         {isLoading === "facebook" ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(var(--admin-primary))] border-t-transparent" />
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"

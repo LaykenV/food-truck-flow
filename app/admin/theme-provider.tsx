@@ -9,7 +9,7 @@ interface AdminThemeProviderProps {
 
 export function AdminThemeProvider({ children }: AdminThemeProviderProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       {children}
     </ThemeProvider>
   )

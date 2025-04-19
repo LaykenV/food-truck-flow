@@ -51,7 +51,6 @@ export type AnalyticsData = {
     orders: number
     revenue: number
   }[]
-  subscriptionPlan: string
 }
 
 // Time range selector type
@@ -174,7 +173,6 @@ export function AnalyticsClient() {
 
   // Process analytics data
   const analyticsData = analyticsResult?.analyticsData || [];
-  const subscriptionPlan = analyticsResult?.subscriptionPlan || 'basic';
   
   // Calculate totals for all time
   const totalOrders = analyticsData?.reduce((sum, day) => sum + (day.orders_placed || 0), 0) || 0;
@@ -324,26 +322,6 @@ export function AnalyticsClient() {
     ],
   };
 
-  // Check if user is on basic plan
-  const isBasicPlan = subscriptionPlan === 'basic';
-
-  // Premium feature overlay component
-  const PremiumFeatureOverlay = () => (
-    <div className="absolute inset-0 backdrop-blur-md bg-admin-background/30 flex flex-col items-center justify-center z-10 rounded-lg">
-      <div className="bg-admin-card p-6 rounded-lg shadow-lg text-center max-w-md border border-admin-border">
-        <h3 className="text-xl font-bold text-admin-primary mb-2">Pro Feature</h3>
-        <p className="text-admin-foreground mb-4">Upgrade to our Pro plan to unlock detailed analytics and gain valuable insights for your food truck business.</p>
-        <a 
-          href="/admin/account/subscribe" 
-          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground rounded-md hover:opacity-90 transition-opacity"
-        >
-          <span className="mr-2">Upgrade Now</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        </a>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Time Range Selector */}
@@ -422,27 +400,7 @@ export function AnalyticsClient() {
             )}
           </div>
         </CardContent>
-        {/* {isBasicPlan && <PremiumFeatureOverlay />} */}
       </Card>
-
-      {/* {isBasicPlan && (
-        <Card className="border border-admin-border shadow-md overflow-hidden">
-          <div className="bg-gradient-to-r from-[hsl(var(--admin-primary)/0.1)] to-[hsl(var(--admin-gradient-end)/0.1)] p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="mb-4 md:mb-0">
-                <h3 className="text-xl font-bold text-admin-foreground mb-2">Unlock Premium Analytics</h3>
-                <p className="text-admin-foreground/80">Get access to detailed sales trends, customer insights, and performance metrics to grow your food truck business.</p>
-              </div>
-              <a 
-                href="/admin/account/subscribe" 
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground font-medium rounded-md hover:opacity-90 transition-opacity shadow-sm"
-              >
-                Upgrade to Pro
-              </a>
-            </div>
-          </div>
-        </Card>
-      )} */}
     </div>
   )
 } 

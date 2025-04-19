@@ -219,9 +219,7 @@ export const createFoodTruckForUser = async (userId: string) => {
         subdomain: subdomain,
         custom_domain: null,
         configuration: configuration,
-        subscription_plan: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
         stripe_api_key: null,
         published: false
       }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from "@tanstack/react-query";
-import { getFoodTruck, getUser } from "@/app/admin/clientQueries";
+import { getFoodTruck, getUser, getSubscriptionData } from "@/app/admin/clientQueries";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +27,21 @@ export default function AccountClient() {
     queryFn: getFoodTruck
   });
 
+  const {
+    data: subscriptionData,
+    isLoading: isSubscriptionLoading,
+    error: subscriptionError
+  } = useQuery({
+    queryKey: ['subscriptionData'],
+    queryFn: getSubscriptionData
+  });
+
   // Get email and display name from user data
   const email = user?.email || 'No email found';
   const displayName = user?.user_metadata?.name || null;
   
-  const hasSubscription = !!foodTruck?.stripe_subscription_id;
-  const currentPlan = foodTruck?.subscription_plan || 'none';
+  const hasSubscription = subscriptionData?.status === 'active';
+  const currentPlan = subscriptionData?.planName || 'none';
 
   const isLoading = isUserLoading || isFoodTruckLoading;
   const error = userError || foodTruckError;
@@ -70,7 +79,7 @@ export default function AccountClient() {
             <p className="font-medium text-admin-card-foreground">Current Plan:</p>
             {hasSubscription ? (
               <Badge className="bg-gradient-to-r from-[hsl(var(--admin-primary))] to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground">
-                {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                {currentPlan}
               </Badge>
             ) : (
               <Badge variant="secondary" className="bg-admin-secondary text-admin-secondary-foreground">

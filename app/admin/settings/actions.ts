@@ -5,7 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 
 // Publish website with optional Stripe API key setting
-export async function publishWebsite(stripeApiKey?: string) {
+export async function publishWebsite() {
   const supabase = await createClient();
   
   // Get current user
@@ -16,14 +16,9 @@ export async function publishWebsite(stripeApiKey?: string) {
   }
   
   // Prepare update data
-  const updateData: { published: boolean; stripe_api_key?: string } = {
+  const updateData: { published: boolean } = {
     published: true
   };
-  
-  // If a Stripe API key was provided, include it in the update
-  if (stripeApiKey) {
-    updateData.stripe_api_key = stripeApiKey;
-  }
   
   // Update the food truck
   const { data, error } = await supabase
@@ -48,8 +43,7 @@ export async function publishWebsite(stripeApiKey?: string) {
 // Update domain settings
 export async function updateDomainSettings(
   subdomain: string, 
-  customDomain?: string,
-  subscriptionPlan?: string
+  customDomain?: string
 ) {
   const supabase = await createClient();
   
@@ -62,13 +56,8 @@ export async function updateDomainSettings(
   
   // Prepare update data
   const updateData: { subdomain: string; custom_domain?: string } = {
-    subdomain
+    subdomain,
   };
-  
-  // Only include custom_domain if on pro plan
-  if (subscriptionPlan === 'pro' && customDomain) {
-    updateData.custom_domain = customDomain;
-  }
   
   // Update the food truck
   const { data, error } = await supabase
@@ -91,7 +80,7 @@ export async function updateDomainSettings(
 }
 
 // Update Stripe API key
-export async function updateStripeApiKey(stripeApiKey: string) {
+export async function updateStripeApiKey(apiKey: string) {
   const supabase = await createClient();
   
   // Get current user
@@ -104,7 +93,7 @@ export async function updateStripeApiKey(stripeApiKey: string) {
   // Update the food truck
   const { data, error } = await supabase
     .from('FoodTrucks')
-    .update({ stripe_api_key: stripeApiKey })
+    .update({ stripe_api_key: apiKey })
     .eq('user_id', user.id)
     .select('subdomain')
     .single();

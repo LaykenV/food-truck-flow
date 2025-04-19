@@ -1,24 +1,24 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { AuthModalsWithConfig } from '@/components/auth-modals-with-config';
+import { AuthModals } from '@/components/auth-modals';
 
 export function AuthButtons() {
   return (
     <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-      <AuthModalsWithConfig 
+      <AuthModals 
         initialView="sign-up" 
         trigger={
-          <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-white">
+          <Button size="lg" className="bg-[hsl(var(--admin-primary))] hover:bg-[hsl(var(--admin-primary)/0.9)] text-[hsl(var(--admin-primary-foreground))]">
             Get Started
           </Button>
         }
       />
       
-      <AuthModalsWithConfig 
+      <AuthModals 
         initialView="sign-in" 
         trigger={
-          <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+          <Button size="lg" variant="outline" className="border-[hsl(var(--admin-primary))] text-[hsl(var(--admin-primary))] hover:bg-[hsl(var(--admin-primary)/0.1)]">
             Sign In
           </Button>
         }

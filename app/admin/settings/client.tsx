@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { LucideGlobe, LucideCreditCard, LucideLoader } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { getFoodTruck } from "@/app/admin/clientQueries";
+import { getFoodTruck, getSubscriptionData } from "@/app/admin/clientQueries";
 import { publishWebsite, updateDomainSettings, updateStripeApiKey } from "./actions";
 
 // FoodTruck type definition
@@ -22,8 +22,6 @@ interface FoodTruck {
   custom_domain: string | null;
   published: boolean;
   stripe_api_key: string | null;
-  stripe_subscription_id: string | null;
-  subscription_plan: string | null;
   [key: string]: any; // For any other properties
 }
 
@@ -34,7 +32,6 @@ export default function SettingsClient() {
   // State for form fields
   const [subdomain, setSubdomain] = useState('');
   const [customDomain, setCustomDomain] = useState('');
-  const [stripeApiKey, setStripeApiKey] = useState('');
   
   // Fetch food truck data with React Query
   const { 
@@ -44,6 +41,11 @@ export default function SettingsClient() {
   } = useQuery({
     queryKey: ['foodTruck'],
     queryFn: getFoodTruck
+  });
+
+  const { data: subscriptionData, isLoading: isSubscriptionLoading } = useQuery({
+    queryKey: ['subscriptionData'],
+    queryFn: getSubscriptionData
   });
   
   // Use effect to update form values when food truck data changes
@@ -57,19 +59,14 @@ export default function SettingsClient() {
   // Computed properties
   const isPublished = foodTruck?.published || false;
   const hasStripeKey = !!foodTruck?.stripe_api_key;
-  const hasSubscription = !!foodTruck?.stripe_subscription_id;
+  const hasSubscription = subscriptionData?.status === 'active';
   
   // Publish website mutation
   const publishMutation = useMutation({
-    mutationFn: (apiKey?: string) => publishWebsite(apiKey),
+    mutationFn: () => publishWebsite(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
       toast.success("Website published successfully!");
-      
-      // Clear the API key input if it was used
-      if (stripeApiKey) {
-        setStripeApiKey('');
-      }
     },
     onError: (error: Error) => {
       toast.error(`Failed to publish website: ${error.message}`);
@@ -78,30 +75,16 @@ export default function SettingsClient() {
   
   // Domain settings mutation
   const domainMutation = useMutation({
-    mutationFn: ({ subdomain, customDomain, subscriptionPlan }: { 
+    mutationFn: ({ subdomain, customDomain }: { 
       subdomain: string; 
       customDomain?: string; 
-      subscriptionPlan?: string 
-    }) => updateDomainSettings(subdomain, customDomain, subscriptionPlan),
+    }) => updateDomainSettings(subdomain, customDomain),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
       toast.success("Domain settings updated successfully!");
     },
     onError: (error: Error) => {
       toast.error(`Failed to update domain settings: ${error.message}`);
-    }
-  });
-  
-  // Stripe API key mutation
-  const stripeMutation = useMutation({
-    mutationFn: (apiKey: string) => updateStripeApiKey(apiKey),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
-      toast.success("Stripe API key updated successfully!");
-      setStripeApiKey(''); // Clear the input field
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update Stripe API key: ${error.message}`);
     }
   });
   
@@ -114,12 +97,7 @@ export default function SettingsClient() {
       return;
     }
     
-    // If they don't have a Stripe API key yet but provided one, save it and publish
-    if (!hasStripeKey && stripeApiKey) {
-      publishMutation.mutate(stripeApiKey);
-    } else {
-      publishMutation.mutate(undefined);
-    }
+    publishMutation.mutate();
   };
   
   const handleUpdateDomainSettings = (e: React.FormEvent) => {
@@ -127,23 +105,11 @@ export default function SettingsClient() {
     
     domainMutation.mutate({
       subdomain,
-      customDomain: foodTruck?.subscription_plan === 'pro' ? customDomain : undefined,
-      subscriptionPlan: foodTruck?.subscription_plan || undefined
+      customDomain: customDomain 
     });
   };
   
-  const handleUpdateStripeApiKey = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!stripeApiKey) {
-      toast.error("Please enter a valid Stripe API key.");
-      return;
-    }
-    
-    stripeMutation.mutate(stripeApiKey);
-  };
-  
-  if (isLoading) {
+  if (isLoading || isSubscriptionLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <LucideLoader className="h-8 w-8 animate-spin text-admin-primary" />
@@ -190,49 +156,15 @@ export default function SettingsClient() {
             <p className="text-sm text-admin-muted-foreground mb-4">
               {!hasSubscription
                 ? "You need to subscribe to a plan before publishing."
-                : !hasStripeKey 
-                  ? "You need to set up your Stripe API key before publishing." 
-                  : "Your website is ready to be published."}
+                : "Your website is ready to be published."}
             </p>
           )}
         </CardContent>
         <CardFooter className="border-t border-admin-border pt-4">
           {!hasSubscription ? (
             <Button variant="default" asChild className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground">
-              <Link href="/admin/account">Manage Subscription</Link>
+              <Link href="/admin/account/subscribe">Manage Subscription</Link>
             </Button>
-          ) : !hasStripeKey ? (
-            <form onSubmit={handlePublishWebsite} className="w-full space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="stripeApiKey" className="text-admin-card-foreground">Stripe API Key</Label>
-                <Input
-                  id="stripeApiKey"
-                  value={stripeApiKey}
-                  onChange={(e) => setStripeApiKey(e.target.value)}
-                  type="password"
-                  required
-                  className="border-admin-border bg-admin-card text-admin-card-foreground"
-                  autoComplete="off"
-                />
-                <p className="text-xs text-admin-muted-foreground">
-                  Your Stripe API key is required to process payments for your food truck.
-                </p>
-              </div>
-              <Button 
-                type="submit"
-                disabled={publishMutation.isPending || !stripeApiKey}
-                className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
-              >
-                {publishMutation.isPending ? (
-                  <>
-                    <LucideLoader className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save API Key & Publish Website"
-                )}
-              </Button>
-            </form>
           ) : (
             <form onSubmit={handlePublishWebsite} className="w-full">
               <Button 
@@ -310,7 +242,7 @@ export default function SettingsClient() {
             
             <Button 
               type="submit"
-              disabled={domainMutation.isPending || (!subdomain && (!customDomain || foodTruck?.subscription_plan !== 'pro'))}
+              disabled={domainMutation.isPending || !subdomain}
               className="w-full sm:w-auto bg-admin-primary hover:bg-admin-primary/90 text-admin-primary-foreground"
             >
               {domainMutation.isPending ? (

@@ -6,8 +6,7 @@ admin
     //manage billing
     //cancel
     //next billing date?
-    change all subscription checks
-    other checklist
+    //change all subscription checks
 
     landing page redesign
 
@@ -19,6 +18,8 @@ admin
     final checklist
     test
     deploy
+    stripe webhooks, disable cash app pay, limit one subscription
+
 
     set up domain dns - coming soon?
     stripe for ordering - coming soon?

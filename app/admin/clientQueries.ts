@@ -92,7 +92,7 @@ export async function getAnalyticsData() {
   // Get the food truck ID for the current user
   const { data: foodTruck } = await supabase
     .from('FoodTrucks')
-    .select('id, subscription_plan')
+    .select('id')
     .eq('user_id', user?.id)
     .single();
   
@@ -107,7 +107,6 @@ export async function getAnalyticsData() {
   
   return {
     analyticsData: analyticsData || [],
-    subscriptionPlan: foodTruck.subscription_plan
   };
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signInAction, signUpAction, signInWithOAuthAction } from "@/app/actions";
+import { signInAction, signUpAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import Link from "next/link";
 

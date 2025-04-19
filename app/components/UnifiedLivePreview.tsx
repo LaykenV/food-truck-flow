@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import FoodTruckTemplate from '../../components/FoodTruckTemplate';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, Smartphone, Monitor } from 'lucide-react';
-import { AuthModalsWithConfig } from '@/components/auth-modals-with-config';
+import { AuthModals } from '@/components/auth-modals';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FoodTruckNavbar from '@/components/FoodTruckTemplate/FoodTruckNavbar';
 
@@ -300,7 +300,7 @@ export function UnifiedLivePreview({
           {/* CTA Button - Only show if requested */}
           {showSignUpButton && (
             <div className="p-4 flex justify-center">
-              <AuthModalsWithConfig 
+              <AuthModals 
                 initialView="sign-up" 
                 trigger={
                   <Button 
