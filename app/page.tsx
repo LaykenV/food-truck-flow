@@ -8,13 +8,13 @@ import { Header } from './components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 import { AuthModals } from "@/components/auth-modals";
-
 export default function Home() {
+
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[hsl(var(--admin-gradient-start)/0.45)] to-[hsl(var(--admin-gradient-end)/0.45)]">
-      {/* Header */}
-      <Header /> 
-      
+      <div className="min-h-screen bg-gradient-to-r from-[hsl(var(--admin-gradient-start)/0.45)] to-[hsl(var(--admin-gradient-end)/0.45)]">
+        {/* Header */}
+        <Header /> 
+        
       {/* Hero Section with Background Image */}
       <HeroSection />
 

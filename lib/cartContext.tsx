@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
 // Define the menu item type
 export type MenuItem = {
   id: string;

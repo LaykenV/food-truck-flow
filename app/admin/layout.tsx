@@ -5,6 +5,7 @@ import { AdminHeader } from '@/components/admin-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AdminThemeProvider } from './theme-provider';
 
 export default function AdminLayout({
   children,
@@ -15,6 +16,7 @@ export default function AdminLayout({
   
   return (
     <QueryClientProvider client={queryClient}>
+      {/* <AdminThemeProvider> */}
         <SidebarProvider>
           <AdminSidebar />  
           <SidebarInset className="bg-admin-background text-admin-foreground min-h-[100dvh] relative">
@@ -30,6 +32,7 @@ export default function AdminLayout({
           </SidebarInset>
           <Toaster />
         </SidebarProvider>
+      {/* </AdminThemeProvider> */}
     </QueryClientProvider>
   )
 } 

@@ -59,6 +59,7 @@
     --admin-ring: 226 70% 55.5%; /* Indigo Ring */
     --admin-gradient-start: 226 70% 55.5%; /* Indigo Start */
     --admin-gradient-end: 250 84% 67%; /* Violet End */
+    --admin-primary-rgb: 70, 95, 230; /* RGB values for admin-primary */
   }
 
   .dark {
@@ -116,6 +117,10 @@
     --admin-ring: 226 80% 70%; /* Brighter ring to match primary */
     --admin-gradient-start: 226 70% 15%; /* Darker but more saturated indigo for gradient start */
     --admin-gradient-end: 250 60% 20%; /* Darker but more saturated violet for gradient end */
+    --admin-primary-rgb: 119, 133, 237; /* RGB values for admin-primary in dark mode */
+  }
+  .theme {
+    --animate-aurora: aurora 8s ease-in-out infinite alternate;
   }
 }
 

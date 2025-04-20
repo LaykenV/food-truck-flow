@@ -78,7 +78,7 @@ export function Header() {
               trigger={
                 <Button 
                   variant={isScrolled ? "outline" : "secondary"} 
-                  className={isScrolled ? "border-[hsl(var(--admin-primary))] text-[hsl(var(--admin-primary))]" : "text-white bg-transparent border-white hover:bg-white hover:bg-opacity-10"}
+                  className={isScrolled ? "border-[hsl(var(--admin-primary))] text-[hsl(var(--admin-primary))] bg-transparent" : "text-white bg-transparent border-white hover:bg-white hover:bg-opacity-10"}
                 >
                   Sign In
                 </Button>
