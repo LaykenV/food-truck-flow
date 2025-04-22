@@ -12,11 +12,22 @@ admin
     - see demo site
     - redesign nav bar
 
-    set .dark on landing page and light on subdomain
-    seperate providers for landing and admin?
+    //set .dark on landing page and light on subdomain
+    //seperate providers for landing and admin?
 
-    features section
+    //features section
+    //generate 3d food truck model, Manage online orders, Set your schedule and locations, custom menu items, website template, choose your subdomain and publish
 
+    //pricing section
+
+    //testimonials section
+
+    cta and footer
+    header scroll
+    sign in floating button mobile
+    screenshots for features
+    gen food truck img x3
+    set up demo site
 
 
     final ui check
@@ -31,6 +42,9 @@ admin
 
     set up domain dns - coming soon?
     stripe for ordering - coming soon?
+
+    export schedule
+    add testimonial tab
 
 
     
