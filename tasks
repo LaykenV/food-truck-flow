@@ -22,29 +22,36 @@ admin
 
     //testimonials section
 
-    cta and footer
-    header scroll
-    sign in floating button mobile
-    screenshots for features
-    gen food truck img x3
+    //cta and footer
+    //header scroll
+    gen food truck img x3 landing page, demo site, default
     set up demo site
+    screenshots for features
 
+    redo markdown
+    faq section
 
-    final ui check
-    go back through both 
-    menu modal img square
+    clean up code
 
-    final checklist
+    final ui check go back through both 
+
+    final security checklist
     test
     deploy
     stripe webhooks, disable cash app pay, limit one subscription
+    4o api for gen
 
 
-    set up domain dns - coming soon?
-    stripe for ordering - coming soon?
+    set up domain dns - coming soon
+    stripe for ordering - coming soon
+
+    after shipping:
 
     export schedule
     add testimonial tab
+    checklist subscription check and style
+    clean up orders table
+
 
 
     

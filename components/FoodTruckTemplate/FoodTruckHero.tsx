@@ -155,7 +155,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain, forceVie
         }}
       >
         {/* Hero Content - Two column layout */}
-        <div className="container relative z-10 mx-auto px-4 py-12 h-full">
+        <div className="w-full lg:w-[90%] mx-auto relative z-10 px-4 py-12 h-full">
           <div className="flex flex-row items-center h-full py-8">
             {/* Left column - Text content */}
             <div className="w-full md:w-1/2 pr-4 pt-8">

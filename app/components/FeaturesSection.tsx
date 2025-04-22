@@ -86,7 +86,7 @@ export function FeaturesSection() {
 
   return (
     <section id="features" className="py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full lg:w-[90%] mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-[hsl(var(--admin-foreground))] sm:text-4xl">All-in-One Solution</h2>
           <p className="mt-4 text-lg text-[hsl(var(--admin-foreground)/0.8)] max-w-3xl mx-auto">

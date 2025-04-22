@@ -199,7 +199,7 @@ export default async function FoodTruckMenuPage({
         {/* Spacer for navbar */}
         <div className="h-16"></div>
         
-        <div className="container mx-auto px-4 md:py-8 pb-20 lg:pb-8">
+        <div className="w-full lg:w-[90%] mx-auto px-4 md:py-8 pb-20 lg:pb-8">
           
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* ShoppingCartDrawer for Mobile */}

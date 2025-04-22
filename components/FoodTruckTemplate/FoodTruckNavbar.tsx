@@ -182,7 +182,7 @@ export default function FoodTruckNavbar({
           width: displayMode === 'preview' ? '100%' : 'auto',
         }}
       >
-        <div className="container mx-auto px-4">
+        <div className="w-full lg:w-[90%] mx-auto px-4">
           <div className="flex items-center justify-between">
             {/* Logo and Name */}
             <div className={isMobileView ? "flex-1 flex justify-center" : ""}>

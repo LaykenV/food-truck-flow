@@ -10,7 +10,7 @@ import { ExternalLink } from 'lucide-react';
 export function HeroSection() {
   return (
     <section className="relative h-screen py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-r from-[hsl(var(--admin-gradient-end))] to-[hsl(var(--admin-gradient-start))]">
-      <div className="max-w-7xl mx-auto h-full flex flex-col">
+      <div className="w-full lg:w-[90%] mx-auto h-full flex flex-col">
         {/* Mobile and desktop layout container */}
         <div className="flex flex-col items-center md:items-start lg:flex-row lg:items-center lg:justify-between flex-1">
           {/* Image container - top on mobile, right on desktop */}

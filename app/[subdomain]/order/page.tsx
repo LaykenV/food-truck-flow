@@ -150,7 +150,7 @@ export default async function FoodTruckOrderPage({
         {/* Spacer for navbar */}
         <div className="h-16"></div>
         
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full lg:w-[90%] mx-auto px-4 py-8">
             <Link 
               href={`/${subdomain}/menu`} 
               className="inline-flex items-center hover:underline transition-colors"
@@ -173,7 +173,7 @@ export default async function FoodTruckOrderPage({
         )}
         
         {/* Order Content */}
-        <div className="container mx-auto px-4 pb-12">
+        <div className="w-full lg:w-[90%] mx-auto px-4 pb-12">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="w-full lg:w-2/3">
               <Suspense fallback={<OrderFormSkeleton />}>

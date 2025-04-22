@@ -145,7 +145,7 @@ export function MenuItem({ item, primaryColor = '#FF6B35', secondaryColor = '#2E
           </div>
           
           {/* Square image after header - with max height */}
-          <div className="relative w-full aspect-square max-h-[300px]">
+          <div className="relative w-full aspect-square overflow-hidden">
             {imageSource ? (
               <Image 
                 src={imageSource} 

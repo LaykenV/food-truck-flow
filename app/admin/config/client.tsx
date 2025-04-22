@@ -82,7 +82,7 @@ export function AdminConfigClient() {
     <ConfigProvider initialConfig={config} onSave={handleSaveConfig}>
       <div className="space-y-6">
         <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
-          <CardContent className="p-0">
+          <CardContent className="pt-6">
             <AdminConfigWrapper 
               initialConfig={config} 
               onSave={handleSaveConfig} 

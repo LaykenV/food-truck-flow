@@ -18,13 +18,21 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? 'bg-[hsl(var(--admin-background))] shadow-md py-2' : 'bg-transparent py-4'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full lg:w-[90%] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center">
@@ -34,30 +42,24 @@ export function Header() {
           </Link>
 
           {/* Centered Desktop Navigation Links */}
-          <nav className="hidden md:flex flex-1 justify-center items-center space-x-12 mx-8">
+          <nav className="hidden md:flex flex-1 justify-center items-center space-x-16 mx-8">
             <Link 
               href="#features" 
+              onClick={(e) => handleSmoothScroll(e, 'features')}
               className={`text-sm font-medium ${
                 isScrolled ? 'text-[hsl(var(--admin-foreground))] hover:text-[hsl(var(--admin-foreground/0.8))]' : 'text-white hover:text-gray-200'
               }`}
             >
-              Features
+              Features Section
             </Link>
             <Link 
               href="#pricing" 
+              onClick={(e) => handleSmoothScroll(e, 'pricing')}
               className={`text-sm font-medium ${
                 isScrolled ? 'text-[hsl(var(--admin-foreground))] hover:text-[hsl(var(--admin-foreground/0.8))]' : 'text-white hover:text-gray-200'
               }`}
             >
-              Pricing
-            </Link>
-            <Link 
-              href="#testimonials" 
-              className={`text-sm font-medium ${
-                isScrolled ? 'text-[hsl(var(--admin-foreground))] hover:text-[hsl(var(--admin-foreground/0.8))]' : 'text-white hover:text-gray-200'
-              }`}
-            >
-              Testimonials
+              Pricing Section
             </Link>
             <Link 
               href="/demo"
