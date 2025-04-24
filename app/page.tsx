@@ -5,6 +5,7 @@ import { HeroSection } from './components/HeroSection';
 import { TestimonialsSection } from './components/TestimonialsSection';
 import { FeaturesSection } from './components/FeaturesSection';
 import { PricingSection } from './components/PricingSection';
+import { FAQSection } from './components/FAQSection';
 import { Button } from '@/components/ui/button';
 import { Header } from './components/Header';
 import { Check } from 'lucide-react';
@@ -29,6 +30,9 @@ export default function Home() {
 
       {/* Testimonials Section */}
       <TestimonialsSection />
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 ">

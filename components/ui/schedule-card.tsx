@@ -68,14 +68,14 @@ export function ScheduleCard({
               backgroundColor: `color-mix(in srgb, ${secondaryColor} 20%, white)` 
             }}
           >
-            <MapPin 
+            <Calendar 
               className="h-4 w-4" 
               style={{ color: secondaryColor }}
             />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-bold text-lg sm:text-xl leading-tight truncate">
-              {firstDay.location || 'Location'}
+              {group.dayRange}
             </h3>
             {isClosed ? (
               <Badge 
@@ -110,7 +110,7 @@ export function ScheduleCard({
           </p>
         )}
         
-        {/* Day Range Display */}
+        {/* Location Display */}
         <div className="flex items-center mb-4">
           <div 
             className="p-2 rounded-full mr-3 shrink-0"
@@ -118,14 +118,14 @@ export function ScheduleCard({
               backgroundColor: `color-mix(in srgb, ${secondaryColor} 20%, white)` 
             }}
           >
-            <Calendar 
+            <MapPin 
               className="h-4 w-4" 
               style={{ color: secondaryColor }}
             />
           </div>
           <div className="min-w-0">
-            <p className="font-medium text-base sm:text-lg truncate">
-              {group.dayRange}
+            <p className="text-base sm:text-lg truncate">
+              {firstDay.location || 'Location'}
             </p>
           </div>
         </div>

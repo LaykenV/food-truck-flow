@@ -9,15 +9,15 @@ import { ExternalLink } from 'lucide-react';
 
 export function HeroSection() {
   return (
-    <section className="relative h-screen py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-r from-[hsl(var(--admin-gradient-end))] to-[hsl(var(--admin-gradient-start))]">
+    <section className="relative min-h-screen py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-r from-[hsl(var(--admin-gradient-end))] to-[hsl(var(--admin-gradient-start))]">
       <div className="w-full lg:w-[90%] mx-auto h-full flex flex-col">
         {/* Mobile and desktop layout container */}
         <div className="flex flex-col items-center md:items-start lg:flex-row lg:items-center lg:justify-between flex-1">
           {/* Image container - top on mobile, right on desktop */}
-          <div className="w-full mb-6 mt-10 md:w-4/5 md:mx-auto lg:mb-0 lg:order-2 lg:w-1/2 flex justify-center lg:justify-end">
-            <div className="relative w-4/5 sm:w-2/3 md:w-3/4 lg:w-5/6 aspect-square bg-admin-gradient-end rounded-lg">
+          <div className="w-full mb-6 mt-5 md:mt-15 md:w-4/5 md:mx-auto lg:mb-0 lg:order-2 lg:w-1/2 flex justify-center lg:justify-end">
+            <div className="relative w-full aspect-square bg-admin-gradient-end rounded-lg">
               <Image
-                src="/images/test.png"
+                src="/images/edit6.png"
                 alt="Food Truck"
                 fill
                 priority

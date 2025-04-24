@@ -24,22 +24,33 @@ admin
 
     //cta and footer
     //header scroll
-    gen food truck img x3 landing page, demo site, default
-    set up demo site
-    screenshots for features
+    //gen food truck img x3 landing page, demo site, default
+    //set up demo site
+
+    //gen food truck with api
+    //modal for generated model laptop
+    //gen modal button
+
+    //faq section
+
+    save loading state config
+    config live update
+
+    clean up code, combine tables
 
     redo markdown
-    faq section
-
-    clean up code
 
     final ui check go back through both 
+
+    screenshots for features
+
 
     final security checklist
     test
     deploy
     stripe webhooks, disable cash app pay, limit one subscription
-    4o api for gen
+    
+    marketing tool
 
 
     set up domain dns - coming soon

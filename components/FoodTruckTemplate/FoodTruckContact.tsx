@@ -206,7 +206,7 @@ export default function FoodTruckContact({ config, displayMode }: FoodTruckConta
                   style={{ color: secondaryColor }}
                 />
               </div>
-              <h4 className="font-bold text-xl mb-2 text-foreground">{contact?.email || "info@foodtruck.co"}</h4>
+              <h4 className="font-bold text-l mb-2 text-foreground">{contact?.email || "info@foodtruck.co"}</h4>
               <p className="text-muted-foreground text-base md:text-lg">Email us anytime</p>
             </a>
           </div>

@@ -26,6 +26,7 @@ import { useConfig } from './UnifiedConfigProvider';
 import { uploadImage } from '@/utils/storage-utils';
 import { createFilePreview, revokeFilePreview, isBlobUrl } from '@/utils/file-utils';
 import { ImageEditorModal } from './ImageEditorModal';
+import { GenerateModelModal } from './GenerateModelModal';
 
 // Props for the UnifiedConfigForm
 interface UnifiedConfigFormProps {
@@ -86,6 +87,9 @@ export function UnifiedConfigForm({
   const [editingFileUrl, setEditingFileUrl] = useState<string | null>(null);
   const [editingFieldName, setEditingFieldName] = useState<'logo' | 'aboutImage' | 'heroImage' | null>(null);
   const [editorConfig, setEditorConfig] = useState<{ aspect?: number; circularCrop?: boolean }>({});
+
+  // State for AI Model Generation Modal
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
 
   // Update form values when initialConfig changes
   useEffect(() => {
@@ -365,7 +369,9 @@ export function UnifiedConfigForm({
       });
       
       // Notify the user that the image will be uploaded when they save
-      toast.info(`Image selected. It will be uploaded when you save changes.`);
+      if (fieldName !== 'heroImage') {
+        toast.info(`Image selected. It will be uploaded when you save changes.`);
+      }
     }
   };
 
@@ -422,6 +428,36 @@ export function UnifiedConfigForm({
     setEditingFileUrl(null);
     setEditingFieldName(null);
     setEditorConfig({});
+  };
+
+  // Add handler for AI Model Generation Completion
+  const handleModelGenerated = (generatedBlob: Blob) => {
+    // Create a File object from the Blob
+    const file = new File([generatedBlob], "generated-truck-model.png", { type: "image/png" });
+
+    // Create a preview URL
+    const previewUrl = createFilePreview(file);
+
+    // Update form state with the new preview URL
+    setFormValues(prev => ({ ...prev, heroImage: previewUrl }));
+
+    // Update staged images
+    setStagedImages(prev => {
+      // Find and revoke the previous preview URL for the hero image if it exists and is a blob
+      const oldImage = prev.find(img => img.fieldName === 'heroImage');
+      if (oldImage && isBlobUrl(oldImage.previewUrl)) {
+        revokeFilePreview(oldImage.previewUrl);
+      }
+      // Remove any existing entry for 'heroImage' and add the new one
+      const filtered = prev.filter(img => img.fieldName !== 'heroImage');
+      return [...filtered, { file, previewUrl, fieldName: 'heroImage' }];
+    });
+
+    // Close the modal
+    setIsGenerateModalOpen(false);
+
+    // Show success toast
+    toast.success("3D model generated successfully! Save changes to upload.");
   };
 
   // Format the last saved date (admin mode only)
@@ -713,28 +749,31 @@ export function UnifiedConfigForm({
               </div>
               
               <div>
-                <Label htmlFor="heroImage">Hero Background Image</Label>
-                <div className="mt-1">
-                  {formValues.heroImage && (
-                    <div className="mb-2 rounded-md overflow-hidden border w-full max-w-md">
-                      <div className="relative w-full aspect-video">
-                        <img 
-                          src={formValues.heroImage} 
-                          alt="Hero preview" 
-                          className="absolute w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <Input
-                    id="hero-image-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileSelect(e, 'heroImage')}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Upload a high-quality image for your hero background (16:9 aspect ratio recommended)
-                  </p>
+                <Label>AI Generated Food Truck Model</Label>
+                <div className="mt-1 p-4 border border-admin-border rounded-md bg-admin-card/50 flex flex-col items-center sm:flex-row sm:items-start gap-4">
+                  <div className="flex-1 flex flex-col items-center sm:items-start space-y-2">
+                     <p className="text-sm text-admin-muted-foreground text-center sm:text-left">
+                       Generate a unique 3D cartoon-style model of your truck based on a photo.
+                       This will replace the current hero image.
+                     </p>
+                     {/* Display current heroImage if it exists */}
+                     {formValues.heroImage && (
+                       <div className="rounded-md overflow-hidden border border-admin-border w-40 sm:w-52 aspect-square relative bg-muted/30">
+                         <img
+                           src={formValues.heroImage}
+                           alt="Current truck model preview"
+                           className="absolute w-full h-full object-contain" // Use contain for square model
+                         />
+                       </div>
+                     )}
+                   </div>
+                  <Button 
+                    type="button" // Prevent form submission
+                    onClick={() => setIsGenerateModalOpen(true)} 
+                    className="mt-2 sm:mt-0 w-full sm:w-auto shrink-0 bg-gradient-to-r from-[hsl(var(--admin-gradient-start))] to-[hsl(var(--admin-gradient-end))] text-admin-primary-foreground hover:opacity-90 shadow-sm hover:shadow-md transition-all duration-200"
+                  >
+                    Generate Model
+                  </Button>
                 </div>
               </div>
             </div>
@@ -952,6 +991,13 @@ export function UnifiedConfigForm({
           onSave={handleSaveCrop}
         />
       )}
+
+      {/* Render the AI Model Generation Modal */}
+      <GenerateModelModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        onGenerateComplete={handleModelGenerated}
+      />
     </Card>
   );
 }

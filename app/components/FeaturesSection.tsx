@@ -40,7 +40,7 @@ const features = [
   {
     title: "Generate 3D Food Truck Model",
     description: "Create a unique 3D model of your truck to showcase on your website.",
-    imageUrl: "/placeholder-3d.png", // Replace with actual image path
+    imageUrl: "/images/exampleTruck.png", // Replace with actual image path
      icon: (
       <svg className="w-6 h-6 text-[hsl(var(--admin-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )
@@ -99,7 +99,7 @@ export function FeaturesSection() {
           {/* Image Display (Left on Desktop, Top on Mobile) */}
           <div className="lg:w-1/2 mb-8 lg:mb-0">
              {/* Using padding-top for 16:9 ratio */}
-            <div className="relative w-full overflow-hidden rounded-xl shadow-lg border border-[hsl(var(--admin-border))] bg-[hsl(var(--admin-card))]" style={{ paddingTop: '56.25%' }}> {/* 9 / 16 = 0.5625 */}
+            <div className="relative w-full overflow-hidden rounded-xl shadow-lg  bg-transparent" style={{ paddingTop: '56.25%' }}> {/* 9 / 16 = 0.5625 */}
               <img
                 src={features[selectedFeatureIndex].imageUrl}
                 alt={`${features[selectedFeatureIndex].title} preview`}
