@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,7 @@ import {
   Phone, 
   Save, 
   Share2,
+  RotateCcw,
 } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
@@ -27,6 +28,32 @@ import { uploadImage } from '@/utils/storage-utils';
 import { createFilePreview, revokeFilePreview, isBlobUrl } from '@/utils/file-utils';
 import { ImageEditorModal } from './ImageEditorModal';
 import { GenerateModelModal } from './GenerateModelModal';
+import { ConfigProvider } from './UnifiedConfigProvider';
+
+// Helper debounce hook
+function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: number): (...args: Parameters<T>) => void {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedCallback = useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return debouncedCallback;
+}
 
 // Props for the UnifiedConfigForm
 interface UnifiedConfigFormProps {
@@ -52,27 +79,30 @@ export function UnifiedConfigForm({
   userId
 }: UnifiedConfigFormProps) {
   const { config: contextConfig, setConfig: setContextConfig } = useConfig();
-  const configToUse = initialConfig || contextConfig;
+  const configToInitializeWith = initialConfig || contextConfig;
   
   const [formValues, setFormValues] = useState({
-    name: configToUse.name || '',
-    tagline: configToUse.tagline || '',
-    logo: configToUse.logo || '',
-    primaryColor: configToUse.primaryColor || '#FF6B35',
-    secondaryColor: configToUse.secondaryColor || '#4CB944',
-    heroFont: configToUse.heroFont || '#FFFFFF',
-    heroImage: configToUse.hero?.image || '',
-    heroTitle: configToUse.hero?.title || '',
-    heroSubtitle: configToUse.hero?.subtitle || '',
-    aboutTitle: configToUse.about?.title || '',
-    aboutContent: configToUse.about?.content || '',
-    aboutImage: configToUse.about?.image || '',
-    contactEmail: configToUse.contact?.email || '',
-    contactPhone: configToUse.contact?.phone || '',
-    socialTwitter: configToUse.socials?.twitter || '',
-    socialInstagram: configToUse.socials?.instagram || '',
-    socialFacebook: configToUse.socials?.facebook || '',
+    name: configToInitializeWith.name || '',
+    tagline: configToInitializeWith.tagline || '',
+    logo: configToInitializeWith.logo || '',
+    primaryColor: configToInitializeWith.primaryColor || '#FF6B35',
+    secondaryColor: configToInitializeWith.secondaryColor || '#4CB944',
+    heroFont: configToInitializeWith.heroFont || '#FFFFFF',
+    heroImage: configToInitializeWith.hero?.image || '',
+    heroTitle: configToInitializeWith.hero?.title || '',
+    heroSubtitle: configToInitializeWith.hero?.subtitle || '',
+    aboutTitle: configToInitializeWith.about?.title || '',
+    aboutContent: configToInitializeWith.about?.content || '',
+    aboutImage: configToInitializeWith.about?.image || '',
+    contactEmail: configToInitializeWith.contact?.email || '',
+    contactPhone: configToInitializeWith.contact?.phone || '',
+    socialTwitter: configToInitializeWith.socials?.twitter || '',
+    socialInstagram: configToInitializeWith.socials?.instagram || '',
+    socialFacebook: configToInitializeWith.socials?.facebook || '',
   });
+
+  // State to store the original config (last saved state) for reset functionality
+  const [originalConfig, setOriginalConfig] = useState<FoodTruckConfig>(configToInitializeWith);
 
   // Store staged image files that will be uploaded on form submit
   const [stagedImages, setStagedImages] = useState<StagedImage[]>([]);
@@ -91,33 +121,65 @@ export function UnifiedConfigForm({
   // State for AI Model Generation Modal
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
 
-  // Update form values when initialConfig changes
+  // State to track if there are unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // --- Effect to update internal state when initialConfig changes ---
   useEffect(() => {
-    if (initialConfig) {
-      setFormValues({
-        name: initialConfig.name || '',
-        tagline: initialConfig.tagline || '',
-        logo: initialConfig.logo || '',
-        primaryColor: initialConfig.primaryColor || '#FF6B35',
-        secondaryColor: initialConfig.secondaryColor || '#4CB944',
-        heroFont: initialConfig.heroFont || '#FFFFFF',
-        heroImage: initialConfig.hero?.image || '',
-        heroTitle: initialConfig.hero?.title || '',
-        heroSubtitle: initialConfig.hero?.subtitle || '',
-        aboutTitle: initialConfig.about?.title || '',
-        aboutContent: initialConfig.about?.content || '',
-        aboutImage: initialConfig.about?.image || '',
-        contactEmail: initialConfig.contact?.email || '',
-        contactPhone: initialConfig.contact?.phone || '',
-        socialTwitter: initialConfig.socials?.twitter || '',
-        socialInstagram: initialConfig.socials?.instagram || '',
-        socialFacebook: initialConfig.socials?.facebook || '',
-      });
-      
-      // Clear any staged images when initialConfig changes
-      setStagedImages([]);
+    // Prevent resetting form values if a save is in progress or if initialConfig hasn't changed
+    // Using JSON.stringify for simple deep comparison, avoid adding lodash for one function
+    const stringifiedInitialConfig = initialConfig ? JSON.stringify(initialConfig) : null;
+    const stringifiedOriginalConfig = JSON.stringify(originalConfig);
+
+    if (isSaving || isSubmitting || !initialConfig || stringifiedInitialConfig === stringifiedOriginalConfig) {
+      return;
     }
-  }, [initialConfig]);
+    
+    // Update both formValues and originalConfig when initialConfig changes (e.g., after save)
+    const newFormState = {
+      name: initialConfig.name || '',
+      tagline: initialConfig.tagline || '',
+      logo: initialConfig.logo || '',
+      primaryColor: initialConfig.primaryColor || '#FF6B35',
+      secondaryColor: initialConfig.secondaryColor || '#4CB944',
+      heroFont: initialConfig.heroFont || '#FFFFFF',
+      heroImage: initialConfig.hero?.image || '',
+      heroTitle: initialConfig.hero?.title || '',
+      heroSubtitle: initialConfig.hero?.subtitle || '',
+      aboutTitle: initialConfig.about?.title || '',
+      aboutContent: initialConfig.about?.content || '',
+      aboutImage: initialConfig.about?.image || '',
+      contactEmail: initialConfig.contact?.email || '',
+      contactPhone: initialConfig.contact?.phone || '',
+      socialTwitter: initialConfig.socials?.twitter || '',
+      socialInstagram: initialConfig.socials?.instagram || '',
+      socialFacebook: initialConfig.socials?.facebook || '',
+    };
+    setFormValues(newFormState);
+    setOriginalConfig(initialConfig); // Update originalConfig to reflect the new saved state
+    
+  }, [initialConfig, isSaving, isSubmitting, originalConfig]); 
+
+  // --- Effect to calculate if there are unsaved changes ---
+  useEffect(() => {
+    // Compare current form state (constructed into a config) with the originalConfig
+    const currentConfigFromForm = createConfigFromFormValues(formValues);
+    // Use stringify for simple comparison, ignoring function differences
+    setHasUnsavedChanges(
+      JSON.stringify(currentConfigFromForm) !== JSON.stringify(originalConfig)
+    );
+  }, [formValues, originalConfig]); // Re-calculate whenever form or original changes
+
+  // --- Helper to update both formValues and context ---
+  const updateStateAndContext = (newFormValues: typeof formValues) => {
+     setFormValues(newFormValues);
+     // Construct the full config object to update the context
+     const newConfig = createConfigFromFormValues(newFormValues);
+     setContextConfig(newConfig);
+  };
+
+  // --- Debounced version for text inputs ---
+  const debouncedUpdateStateAndContext = useDebounce(updateStateAndContext, 300);
 
   // Cleanup previews when component unmounts
   useEffect(() => {
@@ -157,38 +219,39 @@ export function UnifiedConfigForm({
     });
   };
 
-  // Create a new config object from form values
-  const createConfigFromFormValues = (): FoodTruckConfig => {
+  // Create a new config object from form values (can optionally take updated values)
+  const createConfigFromFormValues = (currentFormValues = formValues): FoodTruckConfig => {
     return {
-      name: formValues.name,
-      tagline: formValues.tagline,
-      logo: formValues.logo,
-      primaryColor: formValues.primaryColor,
-      secondaryColor: formValues.secondaryColor,
-      heroFont: formValues.heroFont,
+      name: currentFormValues.name,
+      tagline: currentFormValues.tagline,
+      logo: currentFormValues.logo,
+      primaryColor: currentFormValues.primaryColor,
+      secondaryColor: currentFormValues.secondaryColor,
+      heroFont: currentFormValues.heroFont,
       hero: {
-        image: formValues.heroImage,
-        title: formValues.heroTitle,
-        subtitle: formValues.heroSubtitle
+        image: currentFormValues.heroImage,
+        title: currentFormValues.heroTitle,
+        subtitle: currentFormValues.heroSubtitle
       },
       about: {
-        title: formValues.aboutTitle,
-        content: formValues.aboutContent,
-        image: formValues.aboutImage
+        title: currentFormValues.aboutTitle,
+        content: currentFormValues.aboutContent,
+        image: currentFormValues.aboutImage
       },
       contact: {
-        email: formValues.contactEmail,
-        phone: formValues.contactPhone
+        email: currentFormValues.contactEmail,
+        phone: currentFormValues.contactPhone
       },
       socials: {
-        twitter: formValues.socialTwitter,
-        instagram: formValues.socialInstagram,
-        facebook: formValues.socialFacebook
+        twitter: currentFormValues.socialTwitter,
+        instagram: currentFormValues.socialInstagram,
+        facebook: currentFormValues.socialFacebook
       },
+      // Ensure schedule data is preserved from the original/context config
       schedule: {
-        title: configToUse.schedule?.title || 'Weekly Schedule',
-        description: configToUse.schedule?.description || 'Find us at these locations throughout the week',
-        days: configToUse.schedule?.days || []
+        title: originalConfig.schedule?.title || 'Weekly Schedule',
+        description: originalConfig.schedule?.description || 'Find us at these locations throughout the week',
+        days: originalConfig.schedule?.days || []
       }
     };
   };
@@ -263,6 +326,9 @@ export function UnifiedConfigForm({
     } catch (error) {
       console.error('Error uploading images:', error);
       toast.error('Failed to upload one or more images');
+      // **Important**: If upload fails, revert context state back to what's in formValues *before* upload attempt
+      // This prevents the preview from showing broken/missing image URLs
+      setContextConfig(createConfigFromFormValues(formValues));
     } finally {
       toast.dismiss(loadingToastId);
     }
@@ -283,12 +349,13 @@ export function UnifiedConfigForm({
         await onSave(updatedConfig);
         // The parent component will handle the success toast
       } else {
-        // Client mode - use the context's setConfig function
-        setContextConfig(updatedConfig);
+        // Client mode - NO LONGER using context's setConfig here.
+        // The context is already up-to-date due to live updates.
+        // We might still want a success message.
         setStatusMessage('success');
         
-        // Update the context config to trigger a preview update
-        setContextConfig(updatedConfig);
+        // Set the *originalConfig* to the new state after successful client-side "save"
+        setOriginalConfig(updatedConfig);
         
         // Clear status message after 3 seconds
         setTimeout(() => {
@@ -304,15 +371,28 @@ export function UnifiedConfigForm({
     }
   };
 
-  // Handle input changes
+  // Handle input changes (debounced for text/textarea)
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormValues(prev => ({
-      ...prev,
+    const newFormValues = {
+      ...formValues,
       [name]: value
-    }));
+    };
+    setFormValues(newFormValues); // Update local state immediately for responsiveness
+    debouncedUpdateStateAndContext(newFormValues); // Debounced update for context/preview
+  };
+
+  // Handle color input changes (immediate update)
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+     const newFormValues = {
+       ...formValues,
+       [name]: value
+     };
+     // Update local state and context immediately for color changes
+     updateStateAndContext(newFormValues);
   };
 
   // Handle file selection with preview
@@ -344,14 +424,15 @@ export function UnifiedConfigForm({
       // Clear the input value so the same file can be selected again if needed
       e.target.value = '';
     } else {
-      // Original logic for fields that don't need the editor
+      // Original logic for fields that don't need the editor (e.g., heroImage if not using AI gen)
       const previewUrl = createFilePreview(file);
       
       // Update form values with the preview URL for immediate display
-      setFormValues(prev => ({
-        ...prev,
-        [fieldName]: previewUrl
-      }));
+      const newFormValues = {
+         ...formValues,
+         [fieldName]: previewUrl
+      };
+      setFormValues(newFormValues); // Update local state immediately
       
       // Stage the image for upload during form submission
       setStagedImages(prev => {
@@ -368,6 +449,9 @@ export function UnifiedConfigForm({
         return [...filtered, { file, previewUrl, fieldName }];
       });
       
+      // Update context immediately with the preview URL
+      updateStateAndContext(newFormValues);
+
       // Notify the user that the image will be uploaded when they save
       if (fieldName !== 'heroImage') {
         toast.info(`Image selected. It will be uploaded when you save changes.`);
@@ -388,10 +472,12 @@ export function UnifiedConfigForm({
     const croppedPreviewUrl = createFilePreview(croppedFile);
 
     // Update form values with the cropped preview
-    setFormValues(prev => ({
-      ...prev,
+    const newFormValues = {
+      ...formValues,
       [editingFieldName]: croppedPreviewUrl,
-    }));
+    };
+    // Update local state immediately
+    setFormValues(newFormValues);
 
     // Update staged images with the cropped file
     setStagedImages(prev => {
@@ -414,6 +500,9 @@ export function UnifiedConfigForm({
     setEditingFileUrl(null);
     setEditingFieldName(null);
     setEditorConfig({});
+
+    // Update context immediately with the cropped image preview
+    updateStateAndContext(newFormValues);
 
     toast.success(`${editingFieldName === 'logo' ? 'Logo' : 'Image'} cropped successfully. Save changes to upload.`);
   };
@@ -439,7 +528,9 @@ export function UnifiedConfigForm({
     const previewUrl = createFilePreview(file);
 
     // Update form state with the new preview URL
-    setFormValues(prev => ({ ...prev, heroImage: previewUrl }));
+    const newFormValues = { ...formValues, heroImage: previewUrl };
+    // Update local state immediately
+    setFormValues(newFormValues);
 
     // Update staged images
     setStagedImages(prev => {
@@ -455,6 +546,9 @@ export function UnifiedConfigForm({
 
     // Close the modal
     setIsGenerateModalOpen(false);
+
+    // Update context immediately with the generated model preview
+    updateStateAndContext(newFormValues);
 
     // Show success toast
     toast.success("3D model generated successfully! Save changes to upload.");
@@ -510,7 +604,58 @@ export function UnifiedConfigForm({
     };
     
     setFormValues(updatedFormValues);
+    // Also update the context when restoring from history
+    updateStateAndContext(updatedFormValues);
+
     toast.info('Restored configuration from history. Click Save to apply changes.');
+  };
+
+  // --- Handle Resetting Changes ---
+  const handleReset = () => {
+    if (!hasUnsavedChanges) return; // Should already be disabled, but double-check
+
+    // Confirmation dialog
+    if (!window.confirm('Are you sure you want to discard all unsaved changes?')) {
+      return;
+    }
+
+    // 1. Revert formValues state to originalConfig
+    const originalFormValues = {
+        name: originalConfig.name || '',
+        tagline: originalConfig.tagline || '',
+        logo: originalConfig.logo || '',
+        primaryColor: originalConfig.primaryColor || '#FF6B35',
+        secondaryColor: originalConfig.secondaryColor || '#4CB944',
+        heroFont: originalConfig.heroFont || '#FFFFFF',
+        heroImage: originalConfig.hero?.image || '',
+        heroTitle: originalConfig.hero?.title || '',
+        heroSubtitle: originalConfig.hero?.subtitle || '',
+        aboutTitle: originalConfig.about?.title || '',
+        aboutContent: originalConfig.about?.content || '',
+        aboutImage: originalConfig.about?.image || '',
+        contactEmail: originalConfig.contact?.email || '',
+        contactPhone: originalConfig.contact?.phone || '',
+        socialTwitter: originalConfig.socials?.twitter || '',
+        socialInstagram: originalConfig.socials?.instagram || '',
+        socialFacebook: originalConfig.socials?.facebook || '',
+    };
+    setFormValues(originalFormValues);
+
+    // 2. Reset context state to originalConfig
+    setContextConfig(originalConfig);
+
+    // 3. Clean up any staged image previews (blob URLs)
+    stagedImages.forEach(staged => {
+      if (isBlobUrl(staged.previewUrl)) {
+        revokeFilePreview(staged.previewUrl);
+      }
+    });
+
+    // 4. Clear staged images state
+    setStagedImages([]);
+
+    // 5. Provide user feedback
+    toast.info('Changes have been reset to the last saved state.');
   };
 
   return (
@@ -554,6 +699,18 @@ export function UnifiedConfigForm({
                 onSelectVersion={handleSelectVersion} 
                 currentConfig={createConfigFromFormValues()}
               />
+
+              {/* Desktop Reset Button (Admin Mode) */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleReset}
+                disabled={!hasUnsavedChanges || isSaving || isSubmitting}
+                className="h-9"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset
+              </Button>
             </div>
           )}
         </div>
@@ -666,7 +823,7 @@ export function UnifiedConfigForm({
                         name="primaryColor"
                         type="color"
                         value={formValues.primaryColor}
-                        onChange={handleInputChange}
+                        onChange={handleColorChange}
                         className="w-full h-10"
                       />
                     </div>
@@ -684,7 +841,7 @@ export function UnifiedConfigForm({
                         name="secondaryColor"
                         type="color"
                         value={formValues.secondaryColor}
-                        onChange={handleInputChange}
+                        onChange={handleColorChange}
                         className="w-full h-10"
                       />
                     </div>
@@ -742,7 +899,7 @@ export function UnifiedConfigForm({
                     name="heroFont"
                     type="color"
                     value={formValues.heroFont}
-                    onChange={handleInputChange}
+                    onChange={handleColorChange}
                     className="w-full h-10"
                   />
                 </div>
@@ -906,7 +1063,16 @@ export function UnifiedConfigForm({
       
       {/* Client mode submit button */}
       {!onSave && (
-        <CardFooter className="flex justify-end border-t border-admin-border pt-4">
+        <CardFooter className="flex justify-end border-t border-admin-border pt-4 gap-2">
+          {/* Client Reset Button */}
+          <Button 
+            variant="outline" 
+            onClick={handleReset}
+            disabled={!hasUnsavedChanges || isSaving || isSubmitting}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset Changes
+          </Button>
           <Button
             onClick={handleSubmitChanges}
             disabled={isSaving}
@@ -957,6 +1123,17 @@ export function UnifiedConfigForm({
             onSelectVersion={handleSelectVersion} 
             currentConfig={createConfigFromFormValues()}
           />
+
+          {/* Mobile Reset Button (Admin Mode) */}
+          <Button 
+            variant="outline" 
+            onClick={handleReset}
+            disabled={!hasUnsavedChanges || isSaving || isSubmitting}
+            className="w-full"
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset Changes
+          </Button>
         </CardFooter>
       )}
 
@@ -1004,7 +1181,11 @@ export function UnifiedConfigForm({
 
 // Backward compatibility components
 export function ConfigForm() {
-  return <UnifiedConfigForm />;
+  return (
+    <ConfigProvider> 
+       <UnifiedConfigForm />
+    </ConfigProvider>
+  );
 }
 
 export function AdminConfigForm(props: Omit<UnifiedConfigFormProps, 'mode'>) {

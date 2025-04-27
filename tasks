@@ -33,21 +33,17 @@ admin
 
     //faq section
 
-    save loading state config
-    config live update
+    //save loading state config
+    //config live update
 
-    clean up code, combine tables
+    clean up code/redo markdown/security checklist/test of each page
 
-    redo markdown
-
-    final ui check go back through both 
 
     screenshots for features
 
+    deploy and domain name setup
 
-    final security checklist
-    test
-    deploy
+    subdomain setup
     stripe webhooks, disable cash app pay, limit one subscription
     
     marketing tool

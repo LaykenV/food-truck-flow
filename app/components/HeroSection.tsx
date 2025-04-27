@@ -47,11 +47,11 @@ export function HeroSection() {
             <p className="mt-4 md:mt-5 lg:mt-6 text-lg text-[hsl(var(--admin-primary-foreground)/0.9)]">
               The ultimate platform for food truck owners to create stunning websites, manage online orders, and create an online presence.
             </p>
-            <div className="mt-6 md:mt-6 lg:mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <div className="mt-6 md:mt-6 lg:mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-stretch">
               <AuthModals 
                 initialView="sign-in" 
                 trigger={
-                  <Button className="px-6 py-3 md:px-7 md:py-3.5 lg:px-8 lg:py-4 bg-[hsl(var(--admin-primary-foreground))] text-[hsl(var(--admin-primary))] rounded-md font-medium shadow-lg hover:bg-[hsl(var(--admin-primary-foreground)/0.9)] transition-colors text-center">
+                  <Button className="px-6 py-3 md:px-7 md:py-3.5 lg:px-8 lg:py-4 bg-[hsl(var(--admin-primary-foreground))] text-[hsl(var(--admin-primary))] rounded-md font-medium shadow-lg hover:bg-[hsl(var(--admin-primary-foreground)/0.9)] transition-colors text-center flex items-center justify-center w-full h-auto">
                     Login
                   </Button>
                 }
@@ -59,15 +59,18 @@ export function HeroSection() {
               <AuthModals 
                 initialView="sign-up" 
                 trigger={
-                  <Button className="px-6 py-3 md:px-7 md:py-3.5 lg:px-8 lg:py-4 bg-transparent text-white border-2 border-white rounded-md font-medium shadow-lg hover:bg-white hover:bg-opacity-10 transition-colors text-center">
+                  <Button className="px-6 py-3 md:px-7 md:py-3.5 lg:px-8 lg:py-4 bg-transparent text-white border-2 border-white rounded-md font-medium shadow-lg hover:bg-white hover:bg-opacity-10 transition-colors text-center flex items-center justify-center w-full h-auto">
                     Sign Up Free
                   </Button>
                 }
               />
-              <Link href="https://demo.foodtruckflow.com" target="_blank" rel="noopener noreferrer" className="hidden md:flex">
-                <Button className="px-6 py-3 md:px-7 md:py-3.5 lg:px-8 lg:py-4 bg-[hsl(var(--admin-primary))] text-[hsl(var(--admin-primary-foreground))] rounded-md font-medium shadow-lg hover:bg-[hsl(var(--admin-primary)/0.9)] transition-colors">
-                  Visit Demo Website
-                  <ExternalLink className="ml-2 h-4 w-4" />
+              <Link href="/demo" target="_blank" rel="noopener noreferrer" className="hidden md:flex">
+                <Button className="px-5 py-2 bg-[hsl(var(--admin-primary))] text-[hsl(var(--admin-primary-foreground))] rounded-md font-medium shadow-lg hover:bg-[hsl(var(--admin-primary)/0.9)] transition-colors flex flex-col items-center justify-start gap-0 h-auto">
+                  <div className="flex items-center">
+                    <span className='text-lg'>Visit Demo Website</span>
+                    <ExternalLink className="ml-2 h-6 w-6" />
+                  </div>
+                  <span className="text-s opacity-80 text-left w-full">(Place an order!)</span>
                 </Button>
               </Link>
             </div>

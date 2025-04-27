@@ -9,17 +9,17 @@ import { ArrowUpRight, Smartphone, Monitor } from 'lucide-react';
 import { AuthModals } from '@/components/auth-modals';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FoodTruckNavbar from '@/components/FoodTruckTemplate/FoodTruckNavbar';
+import { useConfig } from './UnifiedConfigProvider';
 
 // Props for the LivePreview
 interface LivePreviewProps {
-  config: FoodTruckConfig;
   showSignUpButton?: boolean;
 }
 
 export function UnifiedLivePreview({ 
-  config,
   showSignUpButton = false
 }: LivePreviewProps) {
+  const { config } = useConfig();
   const [isMounted, setIsMounted] = useState(false);
   const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [isMobileDevice, setIsMobileDevice] = useState(false);
@@ -321,6 +321,6 @@ export function UnifiedLivePreview({
 
 // For backward compatibility
 export { UnifiedLivePreview as LivePreview };
-export function AdminLivePreview({ config }: { config: FoodTruckConfig }) {
-  return <UnifiedLivePreview config={config} />;
+export function AdminLivePreview() {
+  return <UnifiedLivePreview />;
 } 

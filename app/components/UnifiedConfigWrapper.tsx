@@ -29,31 +29,11 @@ export function ConfigWrapper({
   const { config: contextConfig, setConfig } = useConfig();
   
   // Use a more structured approach to state management
-  const [localConfig, setLocalConfig] = useState<FoodTruckConfig>(
-    initialConfig || contextConfig
-  );
   const [activeTab, setActiveTab] = useState<string>("config");
   
-  // Update local config when initialConfig changes from parent
-  useEffect(() => {
-    if (initialConfig) {
-      setLocalConfig(initialConfig);
-      // Also update the context config to ensure the preview is updated
-      setConfig(initialConfig);
-    }
-  }, [initialConfig, setConfig]);
-
-  // Memoized function to handle config changes from the form
-  const handleConfigUpdate = useCallback((updatedConfig: FoodTruckConfig) => {
-    // Update both local state and context
-    setLocalConfig(updatedConfig);
-    setConfig(updatedConfig);
-  }, [setConfig]);
-
   // Handle saving the configuration
   const handleSaveConfig = async (newConfig: FoodTruckConfig) => {
     // First update local and context state for immediate preview
-    handleConfigUpdate(newConfig);
     
     // If no onSave provided, we're done (client-side only changes)
     if (!onSave) return;
@@ -102,9 +82,6 @@ export function ConfigWrapper({
       
       // Save to backend
       await onSave(completeConfig);
-      
-      // Update state with the complete config after successful save
-      handleConfigUpdate(completeConfig);
     } catch (error) {
       console.error('Error saving configuration:', error);
       toast.error('Failed to save configuration. Please try again.');
@@ -134,7 +111,7 @@ export function ConfigWrapper({
           
           <TabsContent value="config" className="space-y-4 pb-8">
             <UnifiedConfigForm
-              initialConfig={localConfig}
+              initialConfig={initialConfig || contextConfig}
               onSave={handleSaveConfig}
               isSaving={isSaving}
               lastSaved={lastSaved}
@@ -151,7 +128,7 @@ export function ConfigWrapper({
                 Here's how your website will appear to visitors
               </p>
             </div>
-            <AdminLivePreview config={localConfig} />
+            <AdminLivePreview />
           </TabsContent>
         </Tabs>
       </div>
@@ -161,7 +138,7 @@ export function ConfigWrapper({
         {/* Config Form Section */}
         <div className="w-full">
           <UnifiedConfigForm
-            initialConfig={localConfig}
+            initialConfig={initialConfig || contextConfig}
             onSave={handleSaveConfig}
             isSaving={isSaving}
             lastSaved={lastSaved}
@@ -182,7 +159,7 @@ export function ConfigWrapper({
                 </p>
               </div>
               <div className="flex justify-center w-full">
-                <AdminLivePreview config={localConfig} />
+                <AdminLivePreview />
               </div>
             </CardContent>
           </Card>
