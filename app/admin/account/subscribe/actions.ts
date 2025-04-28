@@ -38,7 +38,7 @@ export async function updateSubscription(plan: string) {
   }
   
   // Get or create Stripe customer ID
-  const stripeCustomerId = await getStripeCustomerIdFromUserId(foodTruck.id);
+  const stripeCustomerId = await getStripeCustomerIdFromUserId(foodTruck.id, user.email || '', user.user_metadata.name || '');
   
   // Get the price ID for the selected plan
   const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
@@ -85,7 +85,7 @@ export async function createBillingPortalSession() {
   }
   
   // Get Stripe customer ID
-  const stripeCustomerId = await getStripeCustomerIdFromUserId(foodTruck.id);
+  const stripeCustomerId = await getStripeCustomerIdFromUserId(foodTruck.id, user.email || '', user.user_metadata.name || '');
   
   // Create a billing portal session
   const portalSession = await stripe.billingPortal.sessions.create({

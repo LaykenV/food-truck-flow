@@ -92,7 +92,7 @@ export async function syncStripeDataToSupabase(stripeCustomerId: string) {
 /**
  * Helper function to get a stripe customer ID from a user ID
  */
-export async function getStripeCustomerIdFromUserId(userId: string): Promise<string> {
+export async function getStripeCustomerIdFromUserId(userId: string, email: string, name: string): Promise<string> {
   const supabase = await getServiceRoleClient();
   
   // Get stripe_customer_id
@@ -109,13 +109,10 @@ export async function getStripeCustomerIdFromUserId(userId: string): Promise<str
   
   // If no Stripe customer exists, create one and update the user
   if (!stripeCustomerId) {
-    const  { data: { user } }  = await supabase.auth.getUser();
-    
-    if (!user) throw new Error('User not found');
     
     const customer = await stripe.customers.create({
-      email: user?.email,
-      name: user?.user_metadata?.name,
+      email: email,
+      name: name,
       metadata: { userId },
     });
     
