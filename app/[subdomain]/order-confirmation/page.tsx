@@ -1,8 +1,9 @@
 'use server';
 
-import { getFoodTruckData } from '@/lib/fetch-food-truck';
+import { getFoodTruckData, getFoodTruckDataByUserId } from '@/lib/fetch-food-truck';
 import { notFound } from 'next/navigation';
 import { OrderConfirmationClient } from './OrderConfirmationClient';
+import { createClient } from '@/utils/supabase/server';
 
 export default async function OrderConfirmationPage({
   params,
@@ -17,9 +18,25 @@ export default async function OrderConfirmationPage({
   const orderId = id || null;
   
   // Fetch the food truck data using the cached function
-  const foodTruck = await getFoodTruckData(subdomain);
+  let foodTruck = await getFoodTruckData(subdomain);
+
+  // If no food truck is found, try to get it by user id
+  if (!foodTruck) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
+      if (foodTruckByUserId) {
+        foodTruck = foodTruckByUserId;
+      } else {
+        notFound();
+      }
+    } else {
+      notFound();
+    }
+  }
   
-  // If no food truck is found, return 404
+  // If no food truck is found after fallback, return 404
   if (!foodTruck) {
     notFound();
   }
