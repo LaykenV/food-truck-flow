@@ -110,8 +110,10 @@ export async function POST(request: NextRequest) {
       .select('configuration')
       .eq('id', food_truck_id)
       .single();
+    console.log('Food truck data:', foodTruck);
     
     if (!foodTruck) {
+      console.error('Food truck not found for ID:', food_truck_id);
       return NextResponse.json(
         { error: 'Food truck not found' },
         { status: 404 }

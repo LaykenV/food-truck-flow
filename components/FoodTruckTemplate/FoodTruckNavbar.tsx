@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Menu, X } from 'lucide-react';
+import { ShoppingCart, Menu, X, LucideTruck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/lib/cartContext';
 import { DisplayMode } from './index';
@@ -200,10 +200,10 @@ export default function FoodTruckNavbar({
                     </div>
                   ) : (
                     <div 
-                      className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold"
+                      className="h-10 w-10 rounded-full flex items-center justify-center"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      {name.charAt(0)}
+                       <LucideTruck className="h-6 w-6 text-white" />
                     </div>
                   )}
                   <span 

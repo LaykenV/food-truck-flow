@@ -12,17 +12,17 @@ export function getDefaultConfig(): FoodTruckConfig {
     tagline: 'Tasty meals on wheels',
     logo: '',
     primaryColor: '#FF6B35',
-    secondaryColor: '#4CB944',
+    secondaryColor: '#49D0B9',
     heroFont: '#FFFFFF',
     hero: {
-      image: '/images/placeholder-hero.jpg',
+      image: '/images/defaultTruck.png',
       title: 'Delicious Food Truck',
       subtitle: 'Serving the best street food in town'
     },
     about: {
       title: 'About Our Food Truck',
       content: 'Tell your story here...',
-      image: ''
+      image: 'https://jnkvsjlpvaqqftuejjgh.supabase.co/storage/v1/object/public/about-images/ef635e4e-e867-4891-9971-1a64c37cc0f6/kzn5unzxl8.png'
     },
     contact: {
       email: '',
@@ -36,36 +36,7 @@ export function getDefaultConfig(): FoodTruckConfig {
     schedule: {
       title: 'Weekly Schedule',
       description: 'Find us at these locations throughout the week',
-      days: [
-        {
-          day: 'Monday',
-          location: 'Downtown',
-          address: '123 Main St',
-          openTime: '11:00',
-          closeTime: '14:00'
-        },
-        {
-          day: 'Wednesday',
-          location: 'Business District',
-          address: '456 Market Ave',
-          openTime: '11:00',
-          closeTime: '14:00'
-        },
-        {
-          day: 'Friday',
-          location: 'Food Truck Friday',
-          address: '789 Park Blvd',
-          openTime: '17:00',
-          closeTime: '21:00'
-        },
-        {
-          day: 'Saturday',
-          location: 'Farmers Market',
-          address: '321 Harvest Lane',
-          openTime: '09:00',
-          closeTime: '13:00'
-        }
-      ]
+      days: []
     }
   };
 }

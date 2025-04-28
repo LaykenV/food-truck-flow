@@ -11,7 +11,7 @@ import { Header } from './components/Header';
 import { Check } from 'lucide-react';
 import { AuthModals } from "@/components/auth-modals";
 import { ExternalLink } from 'lucide-react';
-
+import { TestFeaturesSection } from '@/test';
 export default function Home() {
 
   return (

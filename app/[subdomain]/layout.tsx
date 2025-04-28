@@ -1,4 +1,4 @@
-import { getFoodTruckData } from '@/lib/fetch-food-truck';
+import { getFoodTruckData, getFoodTruckDataByUserId } from '@/lib/fetch-food-truck';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { CartProvider } from '@/lib/cartContext';
@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/sonner';
 import FoodTruckNavbar from '@/components/FoodTruckTemplate/FoodTruckNavbar';
 import { trackPageView } from '@/lib/track-page-view';
 import { OrderStatusTrackerWrapper } from '@/components/OrderStatusTrackerWrapper';
+import { createClient } from '@/utils/supabase/server';
 
 // Helper function to generate JSON-LD script tag
 function JsonLdScript({ data }: { data: object }) {
@@ -27,15 +28,25 @@ export async function generateMetadata({
   const { subdomain } = await params;
   
   // Fetch the food truck data
-  const foodTruck = await getFoodTruckData(subdomain);
+  let foodTruck = await getFoodTruckData(subdomain);
   
   if (!foodTruck) {
-    return {
-      title: 'Food Truck Not Found',
-    };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
+      if (foodTruckByUserId) {
+        foodTruck = foodTruckByUserId;
+      } else {
+        notFound();
+      }
+    } else {
+      notFound();
+    }
   }
   
-  const config = foodTruck.configuration || {};
+  const config = foodTruck?.configuration || {};
+  console.log('Config:', config);
   const name = config.name || 'Food Truck';
   const tagline = config.tagline || 'Delicious food on wheels';
   
@@ -69,9 +80,25 @@ export default async function FoodTruckLayout({
   const { subdomain } = await params;
   
   // Fetch the food truck data
-  const foodTruck = await getFoodTruckData(subdomain);
+  let foodTruck = await getFoodTruckData(subdomain);
   
-  // If no food truck is found, return 404
+  // If no food truck is found, try to get it by user id
+  if (!foodTruck) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
+      if (foodTruckByUserId) {
+        console.log('Food truck found by user id');
+        foodTruck = foodTruckByUserId;
+      } else {
+        notFound();
+      }
+    } else {
+      notFound();
+    }
+  }
+
   if (!foodTruck) {
     notFound();
   }

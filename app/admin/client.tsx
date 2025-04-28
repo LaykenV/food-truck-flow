@@ -296,7 +296,7 @@ export default function AdminDashboardClient() {
     const hasProfileSetup = hasCustomName && (hasLogo || hasContactInfo)
     
     const hasCustomColors = (foodTruck?.configuration?.primaryColor && foodTruck.configuration.primaryColor !== '#FF6B35') || 
-                          (foodTruck?.configuration?.secondaryColor && foodTruck.configuration.secondaryColor !== '#4CB944')
+                          (foodTruck?.configuration?.secondaryColor && foodTruck.configuration.secondaryColor !== '#49D0B9')
     
     // Check if there are any menu items using the fetched data
     const hasMenuItems = menuItems.length > 0

@@ -1,6 +1,7 @@
 import { getFoodTruckByHostname } from './getFoodTruckByHostname';
 import { unstable_cacheTag, unstable_cacheLife } from 'next/cache';
 import { createClient } from '@/utils/supabase/client';
+import { createClient as createClientServer } from '@/utils/supabase/server';
 
 export async function getFoodTruckData(subdomain: string, isAdmin = false) {
   'use cache';
@@ -20,6 +21,14 @@ export async function getFoodTruckData(subdomain: string, isAdmin = false) {
   
   return foodTruck;
 };
+
+export async function getFoodTruckDataByUserId(userId: string) {
+  
+  const supabase = createClient();
+  const { data, error } = await supabase.from('FoodTrucks').select('*').eq('user_id', userId).single();
+  console.log('Food truck data by user id:', data);
+  return data;
+}
 
 // Internal function to fetch menu items (moved from getMenuItems.ts)
 async function getMenuItemsInternal(foodTruckId: string) {

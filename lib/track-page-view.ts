@@ -38,7 +38,7 @@ export async function trackPageView(foodTruckId: string) {
           page_views: 1
         });
     }
-    
+    console.log('Page view tracked for food truck:', foodTruckId);
     return true;
   } catch (error) {
     console.error('Error tracking page view:', error);

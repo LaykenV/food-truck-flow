@@ -12,8 +12,9 @@ export default async function OrderConfirmationPage({
   searchParams: { id?: string }
 }) {
   // Get the subdomain from the params
-  const { subdomain } = params;
-  const orderId = searchParams.id || null;
+  const { subdomain } = await params;
+  const { id } = await searchParams;
+  const orderId = id || null;
   
   // Fetch the food truck data using the cached function
   const foodTruck = await getFoodTruckData(subdomain);

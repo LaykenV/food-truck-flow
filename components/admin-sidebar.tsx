@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LucideHome, LucideSettings, LucideShoppingCart, LucideBarChart, LucideMenu, LucideCreditCard, LucideLogOut, LucideUser, LucideCalendar } from 'lucide-react'
+import { LucideHome, LucideSettings, LucideShoppingCart, LucideBarChart, LucideMenu, LucideCreditCard, LucideLogOut, LucideUser, LucideCalendar, LucideTruck } from 'lucide-react'
 import Image from 'next/image'
 
 import { cn } from '@/lib/utils'
@@ -84,8 +84,16 @@ export function AdminSidebar() {
     >
       <SidebarHeader className="px-3 py-3 h-14 bg-admin-primary/5 flex items-center">
         <div className="flex items-center gap-3 px-2 w-full">
-          {(isLoading || error || !foodTruck?.configuration?.logo) ? (
-            <Skeleton className="h-8 w-8 rounded-full" />
+          {isLoading ? (
+            <Skeleton className="h-10 w-10 rounded-full" />
+          ) : error || !foodTruck?.configuration?.logo ? (
+             <div className="relative h-10 w-10 flex items-center justify-center rounded-full ring-2 ring-admin-primary/20 shadow-sm bg-admin-secondary">
+               {error ? (
+                 <p className="text-xs text-admin-destructive">?</p>
+               ) : (
+                 <LucideTruck className="h-5 w-5 text-admin-muted-foreground" />
+               )}
+             </div>
           ) : (
             <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-admin-primary/20 shadow-sm">
               <Image 

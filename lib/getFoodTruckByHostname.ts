@@ -24,10 +24,14 @@ export async function getFoodTruckByHostname(hostname: string, isAdmin = false) 
   
   const { data, error } = await query.single();
 
+  console.log('Food truck data:', data);
+
   //if published is false, check if food truck id is the current user's id
   if (data && !data.published) {
     const user = await supabase.auth.getUser();
+    console.log('User data:', user.data);
     if (user.data.user?.id !== data.id) {
+      console.log('Food truck not published and not current user', data.id, user.data.user?.id);
       return null;
     }
   }

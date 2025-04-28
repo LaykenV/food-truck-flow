@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef, UIEvent } from 'react';
+import React, { useState, useRef, UIEvent, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { motion } from "framer-motion";
 
 // Placeholder data for features - replace image URLs with actual paths
 const features = [
@@ -40,7 +41,7 @@ const features = [
   {
     title: "Generate 3D Food Truck Model",
     description: "Create a unique 3D model of your truck to showcase on your website.",
-    imageUrl: "/images/exampleTruck.png", // Replace with actual image path
+    imageUrl: "/images/defaultTruck.png", // Replace with actual image path
      icon: (
       <svg className="w-6 h-6 text-[hsl(var(--admin-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )
@@ -57,7 +58,18 @@ const features = [
 
 export function FeaturesSection() {
   const [selectedFeatureIndex, setSelectedFeatureIndex] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  // Reset image loaded state when feature changes
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [selectedFeatureIndex]);
 
   // Handle scroll events for carousel
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
@@ -87,8 +99,8 @@ export function FeaturesSection() {
   return (
     <section id="features" className="py-16 px-4 sm:px-6 lg:px-8">
       <div className="w-full lg:w-[90%] mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[hsl(var(--admin-foreground))] sm:text-4xl">All-in-One Solution</h2>
+        <div className="text-center mb-16">
+          <h2 className="text-5xl font-bold text-[hsl(var(--admin-foreground))]">All-in-One <span className="text-[hsl(var(--admin-primary))]">Solution</span></h2>
           <p className="mt-4 text-lg text-[hsl(var(--admin-foreground)/0.8)] max-w-3xl mx-auto">
             Everything you need to establish your online presence, streamline operations, and grow your business.
           </p>
@@ -97,17 +109,55 @@ export function FeaturesSection() {
         {/* New Image Preview Section */}
         <div className="lg:flex lg:items-center lg:gap-12">
           {/* Image Display (Left on Desktop, Top on Mobile) */}
-          <div className="lg:w-1/2 mb-8 lg:mb-0">
-             {/* Using padding-top for 16:9 ratio */}
-            <div className="relative w-full overflow-hidden rounded-xl shadow-lg  bg-transparent" style={{ paddingTop: '56.25%' }}> {/* 9 / 16 = 0.5625 */}
-              <img
-                src={features[selectedFeatureIndex].imageUrl}
-                alt={`${features[selectedFeatureIndex].title} preview`}
-                className="absolute top-0 left-0 w-full h-full object-cover"
-                // Add loading state or placeholder if needed
-              />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 0.95 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="lg:w-1/2 mb-8 lg:mb-0"
+          >
+            <div className="relative w-full overflow-hidden rounded-xl shadow-2xl bg-[hsl(var(--admin-card))] border border-[hsl(var(--admin-border))]" style={{ paddingTop: '56.25%' }}>
+              {/* Decorative elements */}
+              <div className="absolute -inset-0.5 bg-[hsl(var(--admin-primary))] rounded-lg opacity-10 blur-xl"></div>
+
+              {/* Loading state */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--admin-card))]">
+                  <div className="w-12 h-12 rounded-full border-4 border-[hsl(var(--admin-primary)/0.2)] border-t-[hsl(var(--admin-primary))] animate-spin"></div>
+                </div>
+              )}
+
+              {/* Feature image */}
+              <motion.div
+                key={selectedFeatureIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: imageLoaded ? 1 : 0 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0"
+              >
+                <img
+                  src={features[selectedFeatureIndex].imageUrl}
+                  alt={`${features[selectedFeatureIndex].title} preview`}
+                  className={`absolute top-0 left-0 w-full h-full ${features[selectedFeatureIndex].imageUrl === '/images/defaultTruck.png' ? 'object-contain' : 'object-cover'}`}
+                  onLoad={() => setImageLoaded(true)}
+                />
+              </motion.div>
+
+              {/* Feature title overlay */}
+              <div className="hidden lg:block absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[hsl(var(--admin-background)/0.9)] to-transparent p-4">
+                <motion.div
+                  key={`title-${selectedFeatureIndex}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="text-xl font-bold text-white">{features[selectedFeatureIndex].title}</h3>
+                  <p className="text-sm text-[hsl(var(--admin-foreground)/0.8)]">
+                    {features[selectedFeatureIndex].description}
+                  </p>
+                </motion.div>
+              </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Feature Interaction Area (Right Grid on Desktop, Scrollable Cards on Mobile) */}
           <div className="lg:w-1/2 relative">
