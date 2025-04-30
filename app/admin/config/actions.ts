@@ -6,9 +6,59 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { FoodTruckConfig } from "@/components/FoodTruckTemplate";
 import { getDefaultConfig } from '@/utils/config-utils';
 
+// Helper function to validate the FoodTruckConfig object
+function validateFoodTruckConfig(config: FoodTruckConfig): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // Basic validation: Check if name exists and is a non-empty string
+  if (!config.name || typeof config.name !== 'string' || config.name.trim() === '') {
+    errors.push('Food truck name is required and cannot be empty.');
+  }
+
+  // Add more validation rules here based on FoodTruckConfig type
+  // Example: Validate color format (simple hex check)
+  const hexColorRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+  if (config.primaryColor && !hexColorRegex.test(config.primaryColor)) {
+    errors.push('Primary color must be a valid hex code (e.g., #FF0000).');
+  }
+  if (config.secondaryColor && !hexColorRegex.test(config.secondaryColor)) {
+    errors.push('Secondary color must be a valid hex code (e.g., #00FF00).');
+  }
+
+  // Example: Validate email format (simple check)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (config.contact?.email && !emailRegex.test(config.contact.email)) {
+    errors.push('Contact email must be a valid email address.');
+  }
+  
+  // Example: Validate schedule days structure if present
+  if (config.schedule?.days && Array.isArray(config.schedule.days)) {
+    config.schedule.days.forEach((day, index) => {
+      if (!day.day || typeof day.day !== 'string' || day.day.trim() === '') {
+        errors.push(`Schedule day ${index + 1}: Day name is required.`);
+      }
+      if (day.coordinates) {
+        if (typeof day.coordinates.lat !== 'number' || typeof day.coordinates.lng !== 'number') {
+          errors.push(`Schedule day ${index + 1}: Coordinates latitude and longitude must be numbers.`);
+        }
+      }
+    });
+  }
+  
+
+  return { isValid: errors.length === 0, errors };
+}
+
 // Save configuration to the database
 export async function saveConfiguration(config: FoodTruckConfig) {
   try {
+    // Validate the incoming configuration
+    const { isValid, errors } = validateFoodTruckConfig(config);
+    if (!isValid) {
+      // Join errors for a comprehensive message, or handle them differently
+      throw new Error(`Invalid configuration: ${errors.join(' ')}`);
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     

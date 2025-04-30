@@ -36,16 +36,31 @@ admin
     //save loading state config
     //config live update
 
-    default config for new truck
+    //default config for new truck
 
     clean up code/redo markdown/security checklist/test of each page
+    help me analyze this page and all corresponding files and make sure they're good to deploy to production. Give me a high level overview of the page and the data flow. Give me a list of any security risks or concerns, potential issues, and ways to improve, optimize, etc. do not write any code, just return the analysis.
+
+    go through each page and read code and make sure it's good
+    //landing page - auth rate limiting
+    //dashboard - timezone
+    config - gen rate limiting
+    schedule
+    menu
+    ordering
+    account
+    settings
+    template landing
+    menu
+    order
+    ordercon
 
 
     screenshots for features
 
     deploy and domain name setup
 
-    subdomain setup
+    //subdomain setup 
     stripe webhooks, disable cash app pay, limit one subscription
     
     marketing tool
@@ -56,8 +71,11 @@ admin
 
     after shipping:
 
+    timezone handling isScheduledOpen, AdminDashboardClient, TimeAvailabilityDisplay
+
     export schedule
     add testimonial tab
+    add QR code tab
     checklist subscription check and style
     clean up orders table
 

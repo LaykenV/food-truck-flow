@@ -276,20 +276,6 @@ export function OrderForm({
             secondaryColor={secondaryColor}
           />
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="notes" style={{ color: secondaryColor, opacity: 0.9 }}>Additional Order Notes (optional)</Label>
-          <Textarea
-            id="notes"
-            name="notes"
-            placeholder="Any special requests or instructions for the entire order"
-            value={formData.notes}
-            onChange={handleChange}
-            rows={3}
-            className="border-gray-300 focus:border-transparent"
-            style={focusRingStyle}
-          />
-        </div>
       </div>
       
       {/* Order Summary */}

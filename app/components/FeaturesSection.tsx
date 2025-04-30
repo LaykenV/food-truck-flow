@@ -3,7 +3,7 @@
 import React, { useState, useRef, UIEvent, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motion } from "framer-motion";
-
+import Image from 'next/image';
 // Placeholder data for features - replace image URLs with actual paths
 const features = [
   {
@@ -134,11 +134,12 @@ export function FeaturesSection() {
                 transition={{ duration: 0.5 }}
                 className="absolute inset-0"
               >
-                <img
+                <Image
                   src={features[selectedFeatureIndex].imageUrl}
                   alt={`${features[selectedFeatureIndex].title} preview`}
                   className={`absolute top-0 left-0 w-full h-full ${features[selectedFeatureIndex].imageUrl === '/images/defaultTruck.png' ? 'object-contain' : 'object-cover'}`}
                   onLoad={() => setImageLoaded(true)}
+                  fill
                 />
               </motion.div>
 

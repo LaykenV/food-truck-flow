@@ -104,7 +104,7 @@ export function ChecklistClient({ initialChecklist, markChecklistAsCompleted }: 
                 )}
               </div>
               <p className="text-sm text-admin-muted-foreground">
-                Choose colors, layout, and design elements
+                Choose colors to customize your website
               </p>
             </div>
           </div>

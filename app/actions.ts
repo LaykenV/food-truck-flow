@@ -80,11 +80,6 @@ export const signInAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-in", error.message);
   }
 
-  // If sign-in is successful, check if the user has a food truck and create one if not
-  if (data && data.user) {
-    await createFoodTruckForUser(data.user.id);
-  }
-
   return redirect("/admin");
 };
 

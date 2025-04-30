@@ -15,7 +15,6 @@ export async function middleware(request: NextRequest) {
     if (url.pathname.startsWith('/admin') || 
         url.pathname.startsWith('/api') || 
         url.pathname === '/' ||
-        url.pathname === '/subscribe' ||
         url.pathname.startsWith('/_next') ||
         url.pathname.startsWith('/sign-in')) {
       // Continue with session management
@@ -87,3 +86,4 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+

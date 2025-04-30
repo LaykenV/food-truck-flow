@@ -172,7 +172,7 @@ function SignUpForm({ message, onClose }: AuthFormProps) {
             type="password"
             name="password"
             placeholder="Create a password"
-            minLength={6}
+            minLength={8}
             required
             className="mt-1 w-full"
           />

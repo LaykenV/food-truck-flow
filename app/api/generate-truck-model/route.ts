@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { Readable } from 'stream';
-
+import { createClient } from '@/utils/supabase/server';
 // Ensure the API key is set in environment variables
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Helper function to convert ReadableStream to Buffer
 async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
@@ -27,6 +30,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
   }
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data: subscriptionData, error: subscriptionError } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (subscriptionError) {
+    console.error('Error fetching subscription data:', subscriptionError);
+    return NextResponse.json({ error: 'Error fetching subscription data.' }, { status: 500 });
+  }
+
+  if (subscriptionData?.status !== 'active') {
+    return NextResponse.json({ error: 'You must be a paid subscriber to generate a 3D model.' }, { status: 403 });
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get('truckImage') as File | null;
@@ -35,12 +60,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No image file provided.' }, { status: 400 });
     }
 
-    // Basic validation (optional: add size/more type checks)
-    if (!file.type.startsWith('image/')) {
-        return NextResponse.json({ error: 'Invalid file type. Please upload an image.' }, { status: 400 });
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds the limit of 5MB.' }, { status: 400 });
     }
 
-    console.log(`Generating 3D model for: ${file}`);
+    // Validate file type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: `Invalid file type: ${file.type}. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}` }, 
+        { status: 400 } 
+      );
+    }
+
+    console.log(`Generating 3D model for: ${file.name}, type: ${file.type}, size: ${file.size}`);
 
     const systemPrompt = `Generate a high-resolution 3D cartoon-style render of the food-truck shown in the reference image.
 

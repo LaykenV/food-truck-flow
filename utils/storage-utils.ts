@@ -1,5 +1,8 @@
 import { createClient } from "@/utils/supabase/client";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 /**
  * Uploads an image to Supabase Storage and returns the public URL
  * @param file - The file to upload
@@ -12,6 +15,20 @@ export async function uploadImage(
   bucket: string, 
   userId: string
 ): Promise<string | null> {
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    console.error('File size exceeds the limit of 5MB.');
+    // Consider throwing an error or returning a specific error message/code
+    return null; 
+  }
+
+  // Validate file type
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    console.error(`Invalid file type: ${file.type}. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}`);
+    // Consider throwing an error or returning a specific error message/code
+    return null;
+  }
+
   try {
     const supabase = createClient();
     
