@@ -32,41 +32,61 @@ function validateAndFormatPhoneNumber(phoneNumber: string): string | null {
   return digitsOnly;
 }
 
+// Define Item structure from client request
+interface RequestItem {
+  id: string;
+  quantity: number;
+  notes?: string;
+  // Other fields sent by client like name/price are ignored for validation
+}
+
+// Define structure for Menu items fetched from DB
+interface MenuItem {
+  id: string;
+  price: number;
+  // Other fields like name, description, etc.
+}
+
 /**
  * POST /api/orders
- * 
+ *
  * Creates a new order in the database
- * 
- * In the future, this will integrate with Stripe:
- * 1. Get the food truck's Stripe API key from the database
- * 2. Create a Stripe payment intent using the food truck's API key
- * 3. Process the payment
- * 4. On successful payment, create the order in the database
+ * Validates items, calculates total price server-side, checks open status.
+ *
+ * Future: Integrate with Stripe for payments.
  */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const body = await request.json();
-    
-    // Validate required fields
-    const { 
-      food_truck_id, 
-      customer_name, 
-      customer_email, 
+
+    // Validate required fields (excluding total_amount now)
+    const {
+      food_truck_id,
+      customer_name,
+      customer_email, // optional but good practice to handle
       customer_phone_number,
-      items, 
-      total_amount,
+      items: requestItems, // Rename to avoid confusion with DB items
       pickup_time,
-      is_asap 
+      is_asap
+    }: {
+      food_truck_id: string;
+      customer_name: string;
+      customer_email?: string;
+      customer_phone_number: string;
+      items: RequestItem[];
+      pickup_time?: string;
+      is_asap?: boolean;
     } = body;
-    
-    if (!food_truck_id || !customer_name || !customer_phone_number || !items || !total_amount) {
+
+    // Basic presence validation (total_amount is removed)
+    if (!food_truck_id || !customer_name || !customer_phone_number || !requestItems) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
-    
+
     // Validate and format phone number
     const formattedPhoneNumber = validateAndFormatPhoneNumber(customer_phone_number);
     if (!formattedPhoneNumber) {
@@ -75,123 +95,206 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
-    // Validate items format
-    if (!Array.isArray(items) || items.length === 0) {
+
+    // Validate items format and quantity
+    if (!Array.isArray(requestItems) || requestItems.length === 0) {
       return NextResponse.json(
         { error: 'Items must be a non-empty array' },
         { status: 400 }
       );
     }
-    
-    // Validate pickup time if provided
-    if (pickup_time && !is_asap) {
-      const pickupDate = new Date(pickup_time);
+    // Ensure quantities are valid numbers > 0
+    if (requestItems.some(item => typeof item.quantity !== 'number' || item.quantity <= 0 || !Number.isInteger(item.quantity))) {
+       return NextResponse.json(
+           { error: 'Invalid item quantity detected' },
+           { status: 400 }
+       );
+    }
+
+    // Validate customer name (example: check length)
+    if (customer_name.trim().length === 0 || customer_name.length > 100) {
+      return NextResponse.json(
+        { error: 'Invalid customer name' },
+        { status: 400 }
+      );
+    }
+
+
+    // Validate pickup time format and ensure it's not in the past
+    let parsedPickupTime: Date | null = null;
+    if (pickup_time && is_asap === false) { // Only validate if a specific time is requested
+      parsedPickupTime = new Date(pickup_time);
       const now = new Date();
-      
-      if (isNaN(pickupDate.getTime())) {
+
+      if (isNaN(parsedPickupTime.getTime())) {
         return NextResponse.json(
           { error: 'Invalid pickup time format' },
           { status: 400 }
         );
       }
-      
-      if (pickupDate < now) {
+
+      // Allow a small buffer (e.g., 1 min) for clock differences
+      if (parsedPickupTime.getTime() < now.getTime() - 60000) {
         return NextResponse.json(
           { error: 'Pickup time cannot be in the past' },
           { status: 400 }
         );
       }
     }
-    
-    // Fetch the food truck data
-    const { data: foodTruck } = await supabase
+
+    // Fetch the food truck data (including schedule for validation)
+    const { data: foodTruck, error: ftError } = await supabase
       .from('FoodTrucks')
-      .select('configuration')
+      .select('configuration') // Select only what's needed
       .eq('id', food_truck_id)
       .single();
-    console.log('Food truck data:', foodTruck);
-    
-    if (!foodTruck) {
-      console.error('Food truck not found for ID:', food_truck_id);
+
+    if (ftError || !foodTruck) {
+      console.error('Error fetching food truck or not found:', ftError);
       return NextResponse.json(
         { error: 'Food truck not found' },
         { status: 404 }
       );
     }
-    
-    // Check if the food truck is currently open
+
+    // Check if the food truck is generally open based on schedule
+    // Note: This assumes schedule-utils handle timezone correctly
     const scheduleData = foodTruck.configuration?.schedule?.days || [];
     const todaySchedule = getTodayScheduleServer(scheduleData);
     const isCurrentlyOpen = isScheduledOpenServer(todaySchedule);
-    
+
     if (!isCurrentlyOpen) {
       return NextResponse.json(
         { error: 'Food truck is currently closed. Orders cannot be placed at this time.' },
         { status: 400 }
       );
     }
-    
-    // TODO: In the future, get the food truck's Stripe API key and process payment
-    // const { data: foodTruck } = await supabase
-    //   .from('FoodTrucks')
-    //   .select('stripe_api_key')
-    //   .eq('id', food_truck_id)
-    //   .single();
-    
-    // if (!foodTruck?.stripe_api_key) {
-    //   return NextResponse.json(
-    //     { error: 'Food truck is not configured for payments' },
-    //     { status: 400 }
-    //   );
+
+    // Further validation for specific pickup time if provided
+    if (parsedPickupTime) {
+      // TODO: Implement a check using schedule-utils-server to see if parsedPickupTime
+      // is within the allowed ordering window (e.g., > 15 mins before close).
+      // Example placeholder:
+      // const isValidPickupTime = checkPickupTimeValidity(parsedPickupTime, todaySchedule);
+      // if (!isValidPickupTime) {
+      //   return NextResponse.json(
+      //     { error: 'Selected pickup time is outside of ordering hours.' },
+      //     { status: 400 }
+      //   );
+      // }
+       console.warn("Pickup time validation against schedule window not yet fully implemented.");
+    }
+
+    // --- Server-side Price Calculation ---
+    const itemIds = requestItems.map(item => item.id);
+
+    // Fetch menu items from DB to get current prices
+    const { data: menuItems, error: menuError } = await supabase
+        .from('Menus')
+        .select('id, price, name') // Select only needed fields
+        .eq('food_truck_id', food_truck_id)
+        .in('id', itemIds);
+
+    if (menuError) {
+        console.error('Error fetching menu items:', menuError);
+        return NextResponse.json({ error: 'Could not verify items' }, { status: 500 });
+    }
+
+    // Check if all requested items were found for this food truck
+    if (!menuItems || menuItems.length !== itemIds.length) {
+        console.warn('Mismatch between requested items and found menu items. Req:', itemIds, 'Found:', menuItems?.map(i => i.id));
+        return NextResponse.json({ error: 'One or more items are invalid or unavailable' }, { status: 400 });
+    }
+
+    // Create a price map for quick lookup
+    const priceMap = new Map<string, number>();
+    menuItems.forEach(item => {
+        if (typeof item.price === 'number') {
+            priceMap.set(item.id, item.price);
+        } else {
+            // Handle cases where price might not be a number unexpectedly
+             console.error(`Invalid price type for menu item ${item.id}: ${item.price}`);
+             // Decide how to handle: throw error, default price, skip item?
+             // For now, we'll throw an error to be safe.
+             throw new Error(`Invalid price configured for item ${item.id}`);
+        }
+    });
+
+
+    // Calculate total server-side and prepare items for insertion
+    let serverCalculatedTotal = 0;
+    const orderItemsForDB = requestItems.map(reqItem => {
+        const price = priceMap.get(reqItem.id);
+        if (price === undefined) {
+            // This should theoretically not happen if the length check above passed, but safety first.
+             console.error(`Price not found for item ${reqItem.id} after initial fetch.`);
+             throw new Error(`Configuration error: price unavailable for item ${reqItem.id}`);
+        }
+        serverCalculatedTotal += price * reqItem.quantity;
+
+        // Return structure suitable for 'Orders.items' JSON column
+        return {
+            id: reqItem.id,
+            name: menuItems.find(item => item.id === reqItem.id)?.name || '',
+            price: price, // Store the price used for calculation
+            quantity: reqItem.quantity,
+            notes: reqItem.notes || ''
+        };
+    });
+
+    // Optional: Add minimum order value check
+    // const minimumOrderValue = foodTruck.configuration?.minimumOrderValue || 0;
+    // if (serverCalculatedTotal < minimumOrderValue) {
+    //    return NextResponse.json(
+    //        { error: `Minimum order value is ${formatCurrency(minimumOrderValue)}` },
+    //        { status: 400 }
+    //    );
     // }
-    
-    // Process payment with Stripe using the food truck's API key
-    // const stripe = new Stripe(foodTruck.stripe_api_key);
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: Math.round(total_amount * 100), // Convert to cents
-    //   currency: 'usd',
-    //   metadata: {
-    //     food_truck_id,
-    //     customer_name,
-    //     customer_email
-    //   }
-    // });
-    
-    // Create the order in the database
-    const { data, error } = await supabase
+
+    // --- End Server-side Price Calculation ---
+
+
+    // TODO: Stripe Payment Integration would go here, using serverCalculatedTotal
+
+    // Create the order using server-calculated total and validated items
+    const { data: insertedOrder, error: insertError } = await supabase
       .from('Orders')
       .insert({
         food_truck_id,
-        customer_name,
-        customer_email,
+        customer_name: customer_name.trim(), // Store trimmed name
+        customer_email: customer_email || null, // Handle optional email
         customer_phone_number: formattedPhoneNumber,
-        items,
-        total_amount,
-        status: 'preparing', // Status must be one of: 'preparing', 'ready', 'completed'
-        pickup_time: pickup_time || null,
-        is_asap: is_asap !== undefined ? is_asap : true,
+        items: orderItemsForDB, // Use the validated/priced items
+        total_amount: serverCalculatedTotal, // Use server-calculated total
+        status: 'preparing',
+        pickup_time: parsedPickupTime ? parsedPickupTime.toISOString() : null,
+        is_asap: is_asap === undefined ? true : is_asap, // Default is_asap to true if not provided
       })
-      .select('id')
+      .select('id') // Select only the ID
       .single();
-    
-    if (error) {
-      console.error('Error creating order:', error);
+
+    console.log(insertedOrder)
+
+    if (insertError) {
+      console.error('Error creating order:', insertError);
       return NextResponse.json(
-        { error: 'Failed to create order' },
+        { error: 'Failed to create order. ' + insertError.message },
         { status: 500 }
       );
     }
-    
-    return NextResponse.json({ 
-      success: true, 
-      orderId: data.id 
+
+    // Return success with the order ID
+    return NextResponse.json({
+      success: true,
+      orderId: insertedOrder.id
     });
-    
-  } catch (error) {
-    console.error('Error processing order:', error);
+
+  } catch (error: any) {
+    console.error('Critical error processing order:', error);
+    // Ensure a generic error is returned for unexpected issues
     return NextResponse.json(
-      { error: 'Internal server error' },
+      // Provide a more specific message if it's a known error type, otherwise generic
+      { error: error.message || 'Internal server error processing order' },
       { status: 500 }
     );
   }

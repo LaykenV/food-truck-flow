@@ -15,6 +15,27 @@ export async function addMenuItem(
   }
 ) {
   try {
+    // Input Validation
+    if (!menuData.name || typeof menuData.name !== 'string') {
+      throw new Error('Invalid menu item name')
+    }
+    if (!menuData.description || typeof menuData.description !== 'string') {
+      throw new Error('Invalid menu item description')
+    }
+    if (menuData.price == null || typeof menuData.price !== 'number' || menuData.price < 0) {
+      throw new Error('Invalid menu item price')
+    }
+    if (!menuData.category || typeof menuData.category !== 'string') {
+      throw new Error('Invalid menu item category')
+    }
+    if (typeof menuData.active !== 'boolean') {
+      throw new Error('Invalid menu item active state')
+    }
+    // Optional: Basic check for image_url, could be enhanced
+    if (menuData.image_url && typeof menuData.image_url !== 'string') {
+        throw new Error('Invalid menu item image URL');
+    }
+
     const supabase = await createClient()
     
     // Get the current user's food truck ID
@@ -81,6 +102,30 @@ export async function updateMenuItem(
   }
 ) {
   try {
+    // Input Validation
+    if (!id || typeof id !== 'string') {
+        throw new Error('Invalid menu item ID');
+    }
+    if (!menuData.name || typeof menuData.name !== 'string') {
+      throw new Error('Invalid menu item name')
+    }
+    if (!menuData.description || typeof menuData.description !== 'string') {
+      throw new Error('Invalid menu item description')
+    }
+    if (menuData.price == null || typeof menuData.price !== 'number' || menuData.price < 0) {
+      throw new Error('Invalid menu item price')
+    }
+    if (!menuData.category || typeof menuData.category !== 'string') {
+      throw new Error('Invalid menu item category')
+    }
+    if (typeof menuData.active !== 'boolean') {
+      throw new Error('Invalid menu item active state')
+    }
+    // Optional: Basic check for image_url, could be enhanced
+    if (menuData.image_url && typeof menuData.image_url !== 'string') {
+        throw new Error('Invalid menu item image URL');
+    }
+
     const supabase = await createClient()
     
     // Get the current user's food truck ID
@@ -109,6 +154,7 @@ export async function updateMenuItem(
         active: menuData.active
       })
       .eq('id', id)
+      .eq('food_truck_id', foodTrucks.id)
     
     if (error) throw error
     
@@ -129,6 +175,11 @@ export async function updateMenuItem(
 // Delete a menu item
 export async function deleteMenuItem(id: string) {
   try {
+    // Input Validation
+    if (!id || typeof id !== 'string') {
+        throw new Error('Invalid menu item ID');
+    }
+
     const supabase = await createClient()
     
     // Get the current user's food truck ID
@@ -150,7 +201,7 @@ export async function deleteMenuItem(id: string) {
       .from('Menus')
       .delete()
       .eq('id', id)
-    
+      .eq('food_truck_id', foodTrucks.id)
     if (error) throw error
     
     // Revalidate the cache tag for this food truck's menu items
@@ -199,6 +250,14 @@ export async function updateMenuItemActiveState(
   active: boolean
 ) {
   try {
+    // Input Validation
+    if (!id || typeof id !== 'string') {
+        throw new Error('Invalid menu item ID');
+    }
+    if (typeof active !== 'boolean') {
+      throw new Error('Invalid active state')
+    }
+
     const supabase = await createClient()
     
     // Get the current user's food truck ID
@@ -220,6 +279,7 @@ export async function updateMenuItemActiveState(
       .from('Menus')
       .update({ active })
       .eq('id', id)
+      .eq('food_truck_id', foodTrucks.id)
     
     if (error) throw error
     

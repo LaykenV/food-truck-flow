@@ -131,12 +131,9 @@ export function OrderForm({
           customer_phone_number: formData.phone,
           items: foodTruckItems.map(item => ({
             id: item.id,
-            name: item.name,
-            price: item.price,
             quantity: item.quantity,
-            notes: item.notes || '' // Include item notes
+            notes: item.notes || ''
           })),
-          total_amount: totalPrice,
           pickup_time: pickupInfo.time ? pickupInfo.time.toISOString() : null,
           is_asap: pickupInfo.isAsap
         }),

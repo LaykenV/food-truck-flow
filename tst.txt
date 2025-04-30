@@ -1,81 +1,72 @@
 
-Okay, let's break down the configuration management system based on the provided files.
+Okay, let's break down the `app/[subdomain]/order` page and its related components.
 
-**High-Level Overview**
+**High-Level Overview & Data Flow**
 
-This set of components and functions provides a user interface for configuring a food truck's web presence. It allows users (likely administrators or truck owners) to customize branding (name, logo, colors), hero section content, about information, contact details, and social media links. The system features:
-
-1.  **Live Preview:** Real-time updates reflect changes in a simulated mobile or desktop view.
-2.  **Image Handling:** Uploading, previewing, cropping (for logo and about images), and AI-based generation (for the hero truck model).
-3.  **State Management:** Client-side state is managed using React Context (`UnifiedConfigProvider`) and local component state (`useState`), allowing different components (form, preview) to share and react to the configuration data.
-4.  **Persistence:** Configuration is saved to a backend (presumably Supabase based on the actions) via server actions.
-5.  **History:** Users can view past saved configurations and restore previous versions or bookmark the current state.
-
-**Data Flow Summary**
-
-1.  **Initialization:**
-    *   The admin page (`app/admin/config/page.tsx`) likely fetches the existing configuration on the server using a query similar to `getFoodTruck` (although the page file itself wasn't provided, this is inferred from context).
-    *   This `initialConfig` is passed down through `UnifiedConfigWrapper`.
-    *   `UnifiedConfigProvider` initializes its state with this `initialConfig` or `getDefaultConfig`.
-    *   `UnifiedConfigForm` initializes its local `formValues` and `originalConfig` state based on the provider's initial state or the `initialConfig` prop.
-2.  **User Interaction & State Update:**
-    *   User modifies form fields in `UnifiedConfigForm`.
-    *   `handleInputChange`, `handleColorChange`, `handleFileSelect` update the local `formValues` state *immediately* for UI responsiveness.
-    *   For text inputs, a *debounced* function (`debouncedUpdateStateAndContext`) updates the shared context via `setContextConfig`.
-    *   For color inputs and file selections (including cropping/generation results), `updateStateAndContext` updates the shared context *immediately*.
-    *   Image selections create local blob previews (`createFilePreview`) shown in the form and stage the `File` object for later upload in `stagedImages`. Image editing/generation updates these staged files.
-3.  **Live Preview:**
-    *   `UnifiedLivePreview` consumes the shared configuration directly from `useConfig`.
-    *   It re-renders the `FoodTruckTemplate` whenever the context `config` changes, reflecting the user's modifications in near real-time. It uses CSS overrides to simulate mobile/desktop views within its container.
-4.  **Saving:**
-    *   User clicks "Save Changes" (or "Apply Changes" in client mode).
-    *   `handleSubmitChanges` in `UnifiedConfigForm` is called.
-    *   It first calls `uploadStagedImages` which iterates through `stagedImages`, uploads each file to Supabase storage via `uploadImage`, updates the configuration object with the returned public URLs, and cleans up blob previews (`revokeFilePreview`).
-    *   The updated configuration object (with image URLs) is then passed to the `onSave` prop.
-    *   In `UnifiedConfigWrapper`, the `handleSaveConfig` function receives this config and calls the `onSave` prop passed to *it* (which likely calls the `saveConfiguration` server action).
-    *   `saveConfiguration` validates the user, finds or creates the `FoodTrucks` record, updates it with the new config, and revalidates Next.js cache tags/paths.
-    *   The `UnifiedConfigForm` receives the newly saved config via its `initialConfig` prop changing, triggering an effect to update its internal `formValues` and `originalConfig`.
-5.  **History:**
-    *   `ConfigHistoryDrawer` fetches past configurations using the `getConfigurationHistory` server action when opened.
-    *   Selecting a version triggers `onSelectVersion`, passing the chosen config back to `UnifiedConfigForm`.
-    *   `handleSelectVersion` in the form updates `formValues` and the shared context (`updateStateAndContext`), effectively reverting the form and preview to the selected historical state.
-    *   Bookmarking calls `bookmarkConfiguration` with the *current* form state (`currentConfig` prop).
+1.  **Request:** A user navigates to `/[subdomain]/order`.
+2.  **Layout (`app/[subdomain]/layout.tsx`):**
+    *   Fetches core food truck data (config, schedule, etc.) using `getFoodTruckData` from `lib/fetch-food-truck.ts`. This data likely includes name, colors, logo, and the full schedule.
+    *   Handles cases where the food truck isn't found (potentially checking by logged-in user ID as a fallback, then showing `notFound`).
+    *   Sets up global context providers like `CartProvider` and renders the `FoodTruckNavbar` and `OrderStatusTrackerWrapper`.
+    *   Renders the `page.tsx` component as `children`.
+3.  **Page (`app/[subdomain]/order/page.tsx`):**
+    *   This is a Server Component. It re-fetches the food truck data (potentially redundant if the layout already has it, consider passing it down).
+    *   It determines the *initial* open status by calling `getTodayScheduleServer` and `isScheduledOpenServer` from `lib/schedule-utils-server.ts` using the fetched schedule data.
+    *   It renders the `OpenStatusProvider`, passing the initial open status, today's schedule, and `foodTruckId`.
+    *   Inside the provider, it renders the `ClientOrderForm`.
+4.  **Open Status (`app/[subdomain]/order/open-status-provider.tsx`):**
+    *   This client component takes the initial open status and schedule.
+    *   It establishes a Supabase real-time subscription to the `FoodTrucks` table, specifically listening for `UPDATE` events on the current `foodTruckId`.
+    *   When an update is received, it re-evaluates the open status using the *same server-side utility functions* (`getTodayScheduleServer`, `isScheduledOpenServer`) with the new schedule data from the payload.
+    *   It provides the `isOpen` status and `todaySchedule` via context to its children.
+5.  **Client Form Logic (`app/[subdomain]/order/client-order-form.tsx`):**
+    *   Uses the `useOpenStatus` hook to get the current `isOpen` status.
+    *   Conditionally renders either:
+        *   `OrderForm`: If `isOpen` is true. It passes necessary props like colors, `foodTruckId`, `subdomain`, and the calculated `closingTimeISO`.
+        *   `ClosedStatus`: If `isOpen` is false. It passes the `todaySchedule` and colors.
+6.  **Order Form (`components/OrderForm.tsx`):**
+    *   Handles user input for name, phone, optional email, and pickup time (`PickupTimeSelector`).
+    *   Displays an order summary based on items from `useCart` filtered by `foodTruckId`.
+    *   On submission:
+        *   Validates inputs (basic).
+        *   Sends a POST request to `/api/orders` with customer details, cart items (including price/quantity), total price from the cart context, and pickup time info.
+        *   On success: Clears the cart, stores the returned `orderId` in a cookie (`activeOrders`), triggers a custom event (`orderStatusUpdate`), and redirects to the confirmation page.
+7.  **Closed Status Display (`app/[subdomain]/order/closed-status.tsx`):**
+    *   Displays an informative message explaining *why* the truck is closed based on the `todaySchedule` data (e.g., not scheduled today, manually closed, outside hours, nearing closing time).
+8.  **API Route (`app/api/orders/route.ts`):**
+    *   Receives the POST request from `OrderForm`.
+    *   **(CRITICAL)** Should perform server-side validation of all data (especially recalculating total price based on DB item prices).
+    *   Inserts the order into the `Orders` table in Supabase.
+    *   Returns the new `orderId`.
 
 **Security Risks & Concerns**
 
-1.  **Server-Side Input Validation:** The `saveConfiguration` action accepts the `config: FoodTruckConfig` object directly from the client. There's no explicit server-side validation of this object's structure or content (e.g., ensuring colors are valid hex codes, strings aren't excessively long, URLs are well-formed). Maliciously crafted config objects could potentially be saved.
-2.  **File Upload Security:**
-    *   **Type/Size Limits:** `uploadImage` relies on the client-side `accept="image/*"` attribute. There are no explicit server-side checks on file type or size, potentially allowing users to upload very large files or non-image files disguised with an image extension.
-    *   **Content Scanning:** Uploaded files aren't scanned for malware.
-    *   **Public URLs:** `uploadImage` returns public Supabase storage URLs. Ensure this is the intended behavior for all image types (logo, hero, about). If any should be private, access control needs adjustment.
-3.  **API Endpoint Security (`/api/generate-truck-model`):** This endpoint (used by `GenerateModelModal`) needs robust security:
-    *   **Authentication/Authorization:** Ensure only authenticated users can call it.
-    *   **Input Validation:** Strictly validate the uploaded `truckImage` (file type, size limits, perhaps basic image integrity checks).
-    *   **Rate Limiting:** Prevent abuse by limiting requests per user.
-    *   **Resource Exhaustion:** The AI generation process could be resource-intensive. Protect against denial-of-service.
-4.  **Cross-Site Scripting (XSS):** While React helps, ensure user-provided strings (name, tagline, titles, content, social URLs) are properly handled when rendered in the `FoodTruckTemplate`. Pay special attention if any configuration values are used in `dangerouslySetInnerHTML` or injected into CSS/styles. Social media URLs should be validated.
-5.  **Authorization Checks:** Server actions (`saveConfiguration`, `getConfigurationHistory`, `bookmarkConfiguration`) rely on `createClient()` and Supabase RLS for authorization. Ensure RLS policies are correctly configured to prevent users from accessing or modifying other users' data/history. `getFoodTruck` correctly filters by `user_id`.
-6.  **Data Exposure:** `getFoodTruck` uses `select('*')`. While maybe necessary now, review if all columns are truly needed on the client. Avoid exposing sensitive data unintentionally.
+1.  **Price Tampering (CRITICAL):** `OrderForm.tsx` sends `totalPrice` from the client-side `useCart` context to the `/api/orders` route. The API route **MUST** ignore this value and recalculate the total price based on the `items` array and current prices fetched securely from the database server-side. Failure to do so allows users to arbitrarily set their order total.
+2.  **Input Validation (Server-Side):** The `/api/orders` route must rigorously validate *all* incoming data:
+    *   Ensure `food_truck_id` is valid and matches the context (e.g., subdomain).
+    *   Ensure all `item.id`s exist, belong to the specified `food_truck_id`, and are currently available/orderable.
+    *   Validate `customer_name`, `customer_email` (format), and `customer_phone_number` (format, length) server-side. Sanitize inputs to prevent XSS if displayed elsewhere.
+    *   Validate `pickup_time` (is it within open hours? Is it in the future? Does it respect cutoffs?).
+3.  **Supabase Client Usage (`lib/fetch-food-truck.ts`):**
+    *   `getFoodTruckDataByUserId` uses `createClient()` (client-side Supabase). If this function is intended for server-side use (as it seems in `layout.tsx`), it should use `createClientServer()` to ensure proper authentication context and avoid exposing the anon key unnecessarily.
+    *   `getMenuItemsInternal` also uses `createClient()`. If `getFoodTruckData` (which calls it) is always run server-side, this should also use `createClientServer()`.
+4.  **Information Exposure (Minor):** The real-time channel name in `OpenStatusProvider` includes `Date.now()`. While unlikely to be a major risk, it's slightly unconventional and adds unnecessary potential entropy. A simpler name like `open-status-${foodTruckId}` might suffice if potential conflicts are handled correctly (e.g., ensuring proper channel cleanup).
 
-**Potential Issues**
+**Potential Issues & Edge Cases**
 
-1.  **State Synchronization Complexity:** The interplay between `initialConfig` prop, local `formValues`, shared context `config`, and `originalConfig` state is complex and managed via multiple `useEffect` hooks. This increases the chance of bugs where the form, preview, and saved state become inconsistent.
-2.  **Mobile Preview Fragility:** The CSS overrides in `UnifiedLivePreview` to force mobile styles are highly dependent on the specific class names and structure of `FoodTruckTemplate`. Changes to the template could easily break the mobile preview styling.
-3.  **Image Blob URL Cleanup:** While `revokeFilePreview` is used, ensure all code paths correctly revoke URLs (e.g., component unmounts, replacing images, canceling edits/generation). The unused `revokeAllPreviews` suggests potential gaps or cleanup opportunities.
-4.  **Error Handling:** Client-side errors use toasts, which is good. Server-side errors in actions might return generic messages; more specific feedback could improve user experience. Error handling within the AI generation flow needs to be robust.
-5.  **Race Conditions:** While `isSaving`/`isSubmitting` flags help, complex state updates triggered by various effects could potentially lead to race conditions, especially if server responses are slow.
-6.  **Default Image URL:** `getDefaultConfig` uses a hardcoded Supabase URL for the default `about.image`. If this object is deleted or permissions change, the default config will break.
-7.  **Backward Compatibility Exports:** Numerous aliased/backward-compatibility exports (`AdminConfigForm`, `LivePreview`, etc.) add noise and suggest incomplete refactoring.
+1.  **Timezone Handling (CRITICAL):** `isScheduledOpenServer` and related functions in `lib/schedule-utils-server.ts` use `new Date()` without explicit timezone handling. This means open/closed status depends on the *server's* timezone, not the food truck's local timezone. This will lead to incorrect status displays and order acceptance times if the server and truck are in different timezones. Schedule times should be stored and compared relative to the food truck's specific timezone.
+2.  **Closing Time Logic Discrepancy:**
+    *   `lib/schedule-utils-server.ts` (`checkIfOpenBasedOnHours`) uses a 15-minute cutoff before closing to determine if the truck is open for orders.
+    *   `app/[subdomain]/order/closed-status.tsx` (`isNearClosingTime`) checks if it's within 30 minutes of closing to display a specific "near closing" message. This inconsistency could be confusing. Define a single cutoff (e.g., 15 minutes) and use it consistently for both order acceptance (`isScheduledOpenServer`) and display logic (`ClosedStatus`).
+3.  **Real-time Status Race Condition:** There might be a brief moment where the initial server-rendered status (`page.tsx`) is stale before the client-side `OpenStatusProvider` successfully subscribes and potentially receives an update. Fetching the latest status upon successful subscription in the provider could mitigate this.
+4.  **Data Fetching Redundancy:** Both `layout.tsx` and `page.tsx` call `getFoodTruckData`. If the layout fetches all necessary data, it should ideally be passed down to the page component to avoid a second fetch.
+5.  **Error Handling:**
+    *   Real-time subscription errors in `OpenStatusProvider` are just logged. Consider adding retry logic or user feedback if the connection fails persistently.
+    *   API errors in `OrderForm` show a generic toast. More specific feedback could be helpful (e.g., "Invalid phone number", "Item out of stock").
+6.  **Real-time Channel Scalability:** Creating a unique channel per user session (`open-status-${foodTruckId}-${Date.now()}`) might strain Supabase resources under heavy load for a popular truck. Investigate if a shared channel per `foodTruckId` with client-side filtering or broadcast is more appropriate.
 
 **Improvements & Optimizations**
 
-1.  **Schema & Server-Side Validation:** Define a strict schema (e.g., using Zod) for `FoodTruckConfig`. Validate the incoming `config` object against this schema in `saveConfiguration`. Add server-side validation for file uploads (type, size) in `uploadImage` and the `/api/generate-truck-model` route.
-2.  **Simplify State Management:** Explore using a dedicated form library (like `react-hook-form` or `formik`) integrated with the context provider. This could simplify validation, submission state, and handling unsaved changes detection.
-3.  **Secure API Endpoint:** Implement robust authentication, authorization, input validation, and rate limiting for `/api/generate-truck-model`.
-4.  **Refine Mobile Preview:** Consider using an `iframe` for the preview, potentially scoping styles more effectively, though this adds complexity. Alternatively, ensure the CSS overrides are well-documented and tested against template changes. Container queries might offer a more modern CSS solution if browser support allows.
-5.  **Image Optimization:** Integrate image optimization (resizing, format conversion like WebP) into the `uploadImage` process or use a dedicated image CDN service.
-6.  **Database Queries:** Explicitly select only required columns in `getFoodTruck` and other database queries instead of `select('*')`.
-7.  **Code Cleanup:** Remove unused backward compatibility exports and utility functions (`revokeAllPreviews` if unused).
-8.  **Error Reporting:** Improve server-side error reporting to provide clearer feedback to the client/user.
-9.  **Testing:** Add comprehensive unit and integration tests covering form logic, state synchronization, API interactions, server actions, and edge cases (like upload failures).
-10. **Accessibility (A11y):** Perform an accessibility audit on the form, modals, and drawer components to ensure proper keyboard navigation, ARIA attributes, and focus management.
+1.  **Refactor Timezone Logic:** Store schedule times (e.g., `openTime`, `closeTime`) along with the food truck's timezone ID (e.g., 'America/New_York'). Use a library like `date-fns-tz` on the server (`schedule-utils-server.ts`) to perform all comparisons correctly in the truck's local time.
+
+By addressing the critical security and timezone issues and considering the potential problems and improvements, you can significantly increase the reliability and robustness of this order page before deploying to production.

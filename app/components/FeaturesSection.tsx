@@ -9,7 +9,7 @@ const features = [
   {
     title: "Launch Your Website",
     description: "Create your online presence in minutes with our easy-to-use website template builder.",
-    imageUrl: "/images/placeholder-hero.jpg", // Replace with actual image path
+    imageUrl: "/images/demoLanding.png", // Replace with actual image path
     icon: (
       <svg className="w-6 h-6 text-[hsl(var(--admin-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
     )
@@ -17,7 +17,7 @@ const features = [
   {
     title: "Streamline Online Orders",
     description: "Manage customer orders seamlessly and send real-time notifications when food is ready.",
-    imageUrl: "/placeholder-orders.png", // Replace with actual image path
+    imageUrl: "/images/orderScreen.png", // Replace with actual image path
     icon: (
        <svg className="w-6 h-6 text-[hsl(var(--admin-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
     )
@@ -25,7 +25,7 @@ const features = [
   {
     title: "Set Schedule & Location",
     description: "Keep customers updated on your weekly schedule, operating hours, and exact locations.",
-    imageUrl: "/placeholder-schedule.png", // Replace with actual image path
+    imageUrl: "/images/scheduleScreen.png", // Replace with actual image path
     icon: (
       <svg className="w-6 h-6 text-[hsl(var(--admin-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
     )
@@ -33,7 +33,7 @@ const features = [
   {
     title: "Dynamic Menu Management",
     description: "Easily update your menu, add new items, and toggle availability based on inventory.",
-    imageUrl: "/placeholder-menu.png", // Replace with actual image path
+    imageUrl: "/images/menuScreen.png", // Replace with actual image path
      icon: (
        <svg className="w-6 h-6 text-[hsl(var(--admin-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
      )
@@ -49,7 +49,7 @@ const features = [
   {
     title: "Publish & Go Live",
     description: "Choose your custom subdomain (e.g., mytruck.foodtruckflow.com) and publish instantly.",
-    imageUrl: "/placeholder-publish.png", // Replace with actual image path
+    imageUrl: "/images/analyticsScreen.png", // Replace with actual image path
     icon: (
       <svg className="w-6 h-6 text-[hsl(var(--admin-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
     )
@@ -142,21 +142,6 @@ export function FeaturesSection() {
                   fill
                 />
               </motion.div>
-
-              {/* Feature title overlay */}
-              <div className="hidden lg:block absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[hsl(var(--admin-background)/0.9)] to-transparent p-4">
-                <motion.div
-                  key={`title-${selectedFeatureIndex}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="text-xl font-bold text-white">{features[selectedFeatureIndex].title}</h3>
-                  <p className="text-sm text-[hsl(var(--admin-foreground)/0.8)]">
-                    {features[selectedFeatureIndex].description}
-                  </p>
-                </motion.div>
-              </div>
             </div>
           </motion.div>
 

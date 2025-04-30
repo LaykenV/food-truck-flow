@@ -201,6 +201,7 @@ export default function OrdersClient() {
       
       // Save the previous orders
       const previousOrders = queryClient.getQueryData(['orders']) as Order[]
+      console.log(previousOrders)
       
       // Optimistically update the order status
       queryClient.setQueryData(['orders'], (old: Order[] | undefined) => {

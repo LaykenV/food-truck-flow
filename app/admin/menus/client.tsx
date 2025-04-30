@@ -945,7 +945,7 @@ export default function MenuClient() {
                       </div>
                     )}
                     <Image
-                      src={item.image_url || "/placeholder-hero.jpg"}
+                      src={item.image_url || ""}
                       alt={item.name}
                       fill
                       className={`object-cover ${!item.active ? 'grayscale' : ''}`}
@@ -953,7 +953,16 @@ export default function MenuClient() {
                       onError={(e) => {
                         // Fallback to placeholder if image fails to load
                         const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder-hero.jpg";
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.style.backgroundColor = 'hsl(var(--muted))'; // Use a theme variable if possible
+                          parent.style.display = 'flex';
+                          parent.style.alignItems = 'center';
+                          parent.style.justifyContent = 'center';
+                          parent.style.textAlign = 'center';
+                          parent.innerHTML = '<span style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); padding: 0.5rem;">Image failed to load</span>';
+                        }
+                        target.style.display = 'none'; // Hide the broken image element
                       }}
                     />
                   </div>

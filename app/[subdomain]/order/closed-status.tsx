@@ -57,9 +57,9 @@ export function ClosedStatus({ todaySchedule, primaryColor, secondaryColor }: Cl
       closeTime.setDate(closeTime.getDate() + 1);
     }
     
-    // Check if we're within 30 minutes of closing
+    // Check if we're within 15 minutes of closing
     const minutesToClose = differenceInMinutes(closeTime, now);
-    return minutesToClose <= 30 && minutesToClose > 0;
+    return minutesToClose <= 15 && minutesToClose > 0;
   };
   
   const nearClosingTime = isNearClosingTime();
@@ -95,7 +95,7 @@ export function ClosedStatus({ todaySchedule, primaryColor, secondaryColor }: Cl
                 <p className="mt-2 font-medium" style={{ color: secondaryColor }}>
                   {(() => {
                     if (nearClosingTime) {
-                      return "We stop taking orders 15-30 minutes before closing to ensure quality service.";
+                      return "We stop taking orders 15 minutes before closing to ensure quality service.";
                     }
                     
                     if (todaySchedule.isClosed) {
