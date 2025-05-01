@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Save, Edit, Trash2, Plus, Calendar, MapPin, Clock, XCircle, X, Settings, PlusCircle } from 'lucide-react';
+import { Save, Edit, Trash2, Plus, Calendar, MapPin, Clock, XCircle, X, Settings, PlusCircle, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +23,14 @@ import { getFoodTruck, getScheduleFromFoodTruck } from '@/app/admin/clientQuerie
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AdminScheduleCard } from '@/components/ui/admin-schedule-card';
 
+// List of common IANA timezones (can be expanded or loaded dynamically)
+const commonTimezones = [
+  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+  'America/Phoenix', 'America/Anchorage', 'Pacific/Honolulu',
+  'Europe/London', 'Europe/Paris', 'Europe/Berlin',
+  'Asia/Tokyo', 'Asia/Dubai', 'Asia/Kolkata', 'Australia/Sydney'
+];
+
 interface ScheduleDay {
   day: string;
   location?: string;
@@ -35,6 +43,7 @@ interface ScheduleDay {
     lat: number;
     lng: number;
   };
+  timezone?: string; // Added timezone field
 }
 
 // Custom Modal component that's compatible with AddressAutofill
@@ -119,24 +128,37 @@ export default function ScheduleClient() {
   // Extract schedule data from food truck
   const scheduleData = getScheduleFromFoodTruck(foodTruck);
   const schedule = scheduleData.days || [];
-  const title = scheduleData.title || 'Weekly Schedule';
-  const description = scheduleData.description || 'Find us at these locations throughout the week';
+  
+  // State for schedule metadata (including primaryTimezone)
+  const [scheduleTitle, setScheduleTitle] = useState(scheduleData.title || 'Weekly Schedule');
+  const [scheduleDescription, setScheduleDescription] = useState(scheduleData.description || 'Find us at these locations throughout the week');
+  const [primaryTimezone, setPrimaryTimezone] = useState((scheduleData as any)?.primaryTimezone || 'America/New_York');
+  
+  // Update local state when fetched data changes
+  useEffect(() => {
+      setScheduleTitle(scheduleData.title || 'Weekly Schedule');
+      setScheduleDescription(scheduleData.description || 'Find us at these locations throughout the week');
+      setPrimaryTimezone((scheduleData as any)?.primaryTimezone || 'America/New_York');
+  }, [scheduleData.title, scheduleData.description, (scheduleData as any)?.primaryTimezone]);
+
   const primaryColor = scheduleData.primaryColor || '#FF6B35';
 
   // Create a map of days that have schedules for quick lookup
   const scheduledDaysMap = new Map(schedule.map((day: ScheduleDay) => [day.day, day]));
 
-  // Update schedule mutation
+  // Update schedule mutation (add primaryTimezone to parameters)
   const updateScheduleMutation = useMutation({
     mutationFn: ({
       scheduleData, 
       scheduleTitle, 
-      scheduleDescription
+      scheduleDescription,
+      primaryTimezone // Add primaryTimezone parameter
     }: {
       scheduleData: ScheduleDay[],
       scheduleTitle?: string,
-      scheduleDescription?: string
-    }) => updateSchedule(scheduleData, scheduleTitle, scheduleDescription),
+      scheduleDescription?: string,
+      primaryTimezone?: string // Add primaryTimezone type
+    }) => updateSchedule(scheduleData, scheduleTitle, scheduleDescription, primaryTimezone), // Pass to action
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
       toast.success('Schedule updated successfully');
@@ -147,14 +169,53 @@ export default function ScheduleClient() {
     }
   });
 
-  // Handle saving the schedule metadata (title and description)
+  // Handle saving the schedule metadata (title, description, primaryTimezone)
   const handleSaveMetadata = async () => {
     updateScheduleMutation.mutate({
       scheduleData: schedule,
-      scheduleTitle: title,
-      scheduleDescription: description
+      scheduleTitle,
+      scheduleDescription,
+      primaryTimezone // Include primaryTimezone
     });
   };
+
+  // Effect to set default timezone when modal opens
+  useEffect(() => {
+    if (isModalOpen && editingDay) {
+      let defaultTimezone = '';
+      
+      // Priority 1: Existing timezone for the day being edited
+      if (editingDay.timezone) {
+        defaultTimezone = editingDay.timezone;
+      } 
+      // Priority 2: For new entries, check other existing schedule days
+      else if (editingIndex === null && schedule && schedule.length > 0) {
+        const firstExistingTimezone = schedule.find((day: ScheduleDay) => day.timezone)?.timezone;
+        if (firstExistingTimezone) {
+          defaultTimezone = firstExistingTimezone;
+        }
+      }
+      
+      // Priority 3: Browser's timezone (if needed and not already set)
+      if (!defaultTimezone) {
+        try {
+          defaultTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          // Ensure the browser timezone is one of the common ones, otherwise fallback
+          if (!commonTimezones.includes(defaultTimezone)) {
+            defaultTimezone = 'America/New_York'; // Fallback or leave empty? Let's fallback for now.
+          }
+        } catch (e) {
+          console.error("Could not detect browser timezone:", e);
+          defaultTimezone = 'America/New_York'; // Fallback on error
+        }
+      }
+      
+      // Set the default timezone in the editing state if it wasn't already set
+      if (!editingDay.timezone) {
+        setEditingDay(prev => prev ? { ...prev, timezone: defaultTimezone } : null);
+      }
+    }
+  }, [isModalOpen, editingDay, editingIndex, schedule]); // Dependencies for default timezone logic
 
   const handleAddDay = () => {
     setEditingDay({
@@ -163,7 +224,8 @@ export default function ScheduleClient() {
       address: '',
       openTime: '11:00',
       closeTime: '14:00',
-      isClosed: false
+      isClosed: false,
+      timezone: undefined // Initialize timezone as undefined
     });
     setEditingIndex(null);
     setIsModalOpen(true);
@@ -182,10 +244,12 @@ export default function ScheduleClient() {
     if (confirm('Are you sure you want to delete this schedule?')) {
       const updatedSchedule = schedule.filter((day: ScheduleDay) => !group.some((groupDay: ScheduleDay) => groupDay.day === day.day));
       
+      // Ensure metadata is passed correctly when deleting
       updateScheduleMutation.mutate({
         scheduleData: updatedSchedule,
-        scheduleTitle: title,
-        scheduleDescription: description
+        scheduleTitle, 
+        scheduleDescription,
+        primaryTimezone
       });
     }
   };
@@ -193,6 +257,12 @@ export default function ScheduleClient() {
   const handleSaveDay = async () => {
     if (!editingDay) return;
     
+    // Basic validation (ensure timezone is selected)
+    if (!editingDay.timezone) {
+      toast.error('Please select a timezone.');
+      return; 
+    }
+
     let updatedSchedule: ScheduleDay[];
     
     if (editingIndex !== null) {
@@ -204,18 +274,25 @@ export default function ScheduleClient() {
       updatedSchedule = [...schedule, editingDay];
     }
     
+    // Ensure metadata is passed correctly when saving a day
     updateScheduleMutation.mutate({
       scheduleData: updatedSchedule,
-      scheduleTitle: title,
-      scheduleDescription: description
+      scheduleTitle, 
+      scheduleDescription,
+      primaryTimezone
     });
 
     setIsModalOpen(false);
   };
 
-  const handleInputChange = (field: keyof ScheduleDay, value: string | boolean) => {
+  const handleInputChange = (field: keyof ScheduleDay, value: string | boolean | undefined) => { // Allow undefined for timezone potentially
     if (!editingDay) return;
     setEditingDay({ ...editingDay, [field]: value });
+  };
+
+  // Handle timezone selection
+  const handleTimezoneChange = (value: string) => {
+    handleInputChange('timezone', value);
   };
 
   // Handle address selection from Mapbox AddressAutofill
@@ -398,12 +475,8 @@ export default function ScheduleClient() {
                 <Label htmlFor="scheduleTitle" className="text-admin-foreground">Schedule Section Title</Label>
                 <Input
                   id="scheduleTitle"
-                  value={title}
-                  onChange={(e) => updateScheduleMutation.mutate({
-                    scheduleData: schedule,
-                    scheduleTitle: e.target.value,
-                    scheduleDescription: description
-                  })}
+                  value={scheduleTitle}
+                  onChange={(e) => setScheduleTitle(e.target.value)}
                   placeholder="Title for your schedule section"
                   className="mt-1 border-admin-input bg-admin-background text-admin-foreground"
                 />
@@ -413,15 +486,33 @@ export default function ScheduleClient() {
                 <Label htmlFor="scheduleDescription" className="text-admin-foreground">Schedule Description</Label>
                 <Textarea
                   id="scheduleDescription"
-                  value={description}
-                  onChange={(e) => updateScheduleMutation.mutate({
-                    scheduleData: schedule,
-                    scheduleTitle: title,
-                    scheduleDescription: e.target.value
-                  })}
+                  value={scheduleDescription}
+                  onChange={(e) => setScheduleDescription(e.target.value)}
                   placeholder="Description for your schedule section"
                   className="mt-1 border-admin-input bg-admin-background text-admin-foreground"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="primaryTimezone" className="text-admin-foreground">Primary Operating Timezone</Label>
+                <Select
+                  value={primaryTimezone}
+                  onValueChange={setPrimaryTimezone}
+                >
+                  <SelectTrigger id="primaryTimezone" className="mt-1 border-admin-input bg-admin-background text-admin-foreground">
+                    <SelectValue placeholder="Select primary timezone..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-admin-popover text-admin-popover-foreground border-admin-border">
+                    {commonTimezones.map(tz => (
+                      <SelectItem key={tz} value={tz} className="text-admin-foreground focus:bg-admin-accent focus:text-admin-accent-foreground">
+                        {tz.replace(/_/g, ' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-admin-muted-foreground mt-1">
+                  Used to determine "Today" for status updates and as a default for new entries.
+                </p>
               </div>
               
               <div className="flex justify-end">
@@ -594,6 +685,25 @@ export default function ScheduleClient() {
                 className="border-admin-input bg-admin-background text-admin-foreground"
               />
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="timezone"><Globe className="inline-block h-4 w-4 mr-1 mb-0.5 text-admin-muted-foreground"/> Timezone</Label>
+            <Select
+              value={editingDay?.timezone || ''}
+              onValueChange={handleTimezoneChange}
+            >
+              <SelectTrigger id="timezone">
+                <SelectValue placeholder="Select timezone..." />
+              </SelectTrigger>
+              <SelectContent>
+                {commonTimezones.map(tz => (
+                  <SelectItem key={tz} value={tz}>
+                    {tz.replace(/_/g, ' ')} 
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

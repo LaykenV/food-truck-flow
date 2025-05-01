@@ -55,7 +55,8 @@ admin
     //order
     //order confirmation
 
-    timezone handling isScheduledOpen, AdminDashboardClient, TimeAvailabilityDisplay
+    //timezone handling isScheduledOpen, AdminDashboardClient, TimeAvailabilityDisplay
+    //order fetch layout shoppingdr schserv clifo closedstatus openstatusprovider orderform orders
 
 
     //screenshots for features

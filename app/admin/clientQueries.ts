@@ -74,14 +74,16 @@ export function getScheduleFromFoodTruck(foodTruck: any) {
   if (!foodTruck || !foodTruck.configuration) return {
     days: [],
     title: 'Weekly Schedule',
-    description: 'Find us at these locations throughout the week'
+    description: 'Find us at these locations throughout the week',
+    timezone: 'America/New_York'
   };
   
   return {
     days: foodTruck.configuration.schedule?.days || [],
     title: foodTruck.configuration.schedule?.title || 'Weekly Schedule',
     description: foodTruck.configuration.schedule?.description || 'Find us at these locations throughout the week',
-    primaryColor: foodTruck.configuration?.primaryColor || '#FF6B35'
+    primaryColor: foodTruck.configuration?.primaryColor || '#FF6B35',
+    primaryTimezone: foodTruck.configuration?.schedule?.primaryTimezone || 'America/New_York'
   };
 }
 

@@ -6,23 +6,27 @@ import { DisplayMode } from '.';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
+// Define ScheduleDay type inline or import from a shared location
+interface ScheduleDay {
+  day: string;
+  location?: string;
+  address?: string;
+  openTime?: string; 
+  closeTime?: string;
+  isClosed?: boolean;
+  timezone?: string; // Added timezone field
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
+
 export interface FoodTruckScheduleProps {
   config: {
     schedule?: {
       title?: string;
       description?: string;
-      days?: {
-        day: string;
-        location?: string;
-        address?: string;
-        openTime?: string; 
-        closeTime?: string;
-        isClosed?: boolean;
-        coordinates?: {
-          lat: number;
-          lng: number;
-        };
-      }[];
+      days?: ScheduleDay[]; // Use the defined interface
     };
     primaryColor?: string;
     secondaryColor?: string;
@@ -68,7 +72,7 @@ export default function FoodTruckSchedule({ config, displayMode, forceViewMode }
   
   // Group consecutive days at the same location
   const groupedScheduleDays = useMemo(() => {
-    const days = [...scheduleDays];
+    const days: ScheduleDay[] = [...scheduleDays]; // Ensure type is applied
     
     // Sort days by day of week
     days.sort((a, b) => {
@@ -94,7 +98,8 @@ export default function FoodTruckSchedule({ config, displayMode, forceViewMode }
                               day.address === prevDay.address &&
                               day.openTime === prevDay.openTime &&
                               day.closeTime === prevDay.closeTime &&
-                              day.isClosed === prevDay.isClosed;
+                              day.isClosed === prevDay.isClosed &&
+                              day.timezone === prevDay.timezone; // Include timezone in comparison for grouping
         
         if (isConsecutive && isSameLocation) {
           currentGroup.push(day);
@@ -208,7 +213,7 @@ export default function FoodTruckSchedule({ config, displayMode, forceViewMode }
                 )}
               >
                 <ScheduleCard
-                  group={group}
+                  group={group} // group.days contains ScheduleDay objects, including timezone
                   primaryColor={primaryColor}
                   secondaryColor={secondaryColor}
                 />

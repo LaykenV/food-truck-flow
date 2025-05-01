@@ -220,14 +220,6 @@ The schedule system integrates with:
 3. Implement automatic cleanup of outdated closures
 4. Optimize map loading to reduce layout shifts
 
-## Future Enhancements
-
-Planned improvements to the schedule system:
-
-1. **Special Events**: Add support for one-time events outside regular schedule
-2. **Holiday Closures**: Special handling for recurring holiday closures
-3. **Historical Schedule Archive**: Keeping record of past locations and performance
-
 ## Troubleshooting
 
 Common issues and their solutions:

@@ -2,6 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { toZonedTime, format } from 'date-fns-tz';
+import { startOfDay, isBefore } from 'date-fns';
 
 interface ScheduleDay {
   day: string;
@@ -11,6 +13,7 @@ interface ScheduleDay {
   openTime?: string; // Format: "HH:MM" in 24h format 
   closeTime?: string; // Format: "HH:MM" in 24h format
   isClosed?: boolean; // Override to mark as closed regardless of time
+  timezone?: string;
   closureTimestamp?: string; // Timestamp when isClosed was set to true
   coordinates?: {
     lat: number;
@@ -92,8 +95,12 @@ export async function toggleTodayClosed(isClosed: boolean) {
     throw new Error('Food truck not found');
   }
   
-  // Get today's day of the week
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  // Determine the primary timezone (use a fallback if not set)
+  const primaryTimezone = foodTruck.configuration?.schedule?.primaryTimezone || 'America/New_York'; // Use your desired fallback
+  
+  // Get today's day name in the truck's primary timezone
+  const nowInPrimaryZone = toZonedTime(new Date(), primaryTimezone);
+  const today = format(nowInPrimaryZone, 'EEEE', { timeZone: primaryTimezone });
   
   // Update the configuration with the toggled closed status
   const updatedConfig = { ...foodTruck.configuration };
@@ -162,16 +169,26 @@ export async function resetOutdatedClosures(foodTruck: any) {
     // Skip days that aren't closed or don't have a timestamp
     if (!day.isClosed || !day.closureTimestamp) continue;
     
-    // Check if the closure is from a previous day
-    const closureDate = new Date(day.closureTimestamp);
-    if (closureDate.getDate() !== now.getDate() || 
-        closureDate.getMonth() !== now.getMonth() ||
-        closureDate.getFullYear() !== now.getFullYear()) {
-      
-      // Reset the closure
-      days[i].isClosed = false;
-      delete days[i].closureTimestamp;
-      needsUpdate = true;
+    // Get the timezone for this specific schedule day (use fallback)
+    const scheduleTimezone = day.timezone || foodTruck.configuration?.primaryTimezone || 'America/New_York'; 
+    
+    try {
+      const closureDateUtc = new Date(day.closureTimestamp);
+      // Get the current time and start of today *in the schedule's specific timezone*
+      const nowInScheduleTimezone = toZonedTime(new Date(), scheduleTimezone);
+      const startOfTodayInScheduleTimezone = startOfDay(nowInScheduleTimezone);
+
+      // Check if the closure timestamp (UTC) is before the start of today in the schedule's timezone
+      if (isBefore(closureDateUtc, startOfTodayInScheduleTimezone)) {
+        // Reset the closure
+        days[i].isClosed = false;
+        delete days[i].closureTimestamp;
+        needsUpdate = true;
+      }
+    } catch (error) {
+       console.error(`Error processing closure reset for day ${day.day} with timezone ${scheduleTimezone}:`, error);
+       // Decide how to handle errors, e.g., skip this day
+       continue; 
     }
   }
   

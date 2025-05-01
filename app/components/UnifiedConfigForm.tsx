@@ -251,7 +251,8 @@ export function UnifiedConfigForm({
       schedule: {
         title: originalConfig.schedule?.title || 'Weekly Schedule',
         description: originalConfig.schedule?.description || 'Find us at these locations throughout the week',
-        days: originalConfig.schedule?.days || []
+        days: originalConfig.schedule?.days || [],
+        primaryTimezone: originalConfig.schedule?.primaryTimezone || 'America/New_York'
       }
     };
   };

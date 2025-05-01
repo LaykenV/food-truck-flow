@@ -10,6 +10,7 @@ interface ScheduleDay {
   openTime?: string;
   closeTime?: string;
   isClosed?: boolean;
+  timezone?: string;
   coordinates?: {
     lat: number;
     lng: number;

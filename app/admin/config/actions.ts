@@ -203,7 +203,8 @@ function mapDatabaseConfigToFoodTruckConfig(dbConfig: any) {
     schedule: {
       title: dbConfig.scheduleTitle || dbConfig.schedule?.title || defaultConfig.schedule?.title,
       description: dbConfig.scheduleDescription || dbConfig.schedule?.description || defaultConfig.schedule?.description,
-      days: dbConfig.scheduleDays || dbConfig.schedule?.days || defaultConfig.schedule?.days
+      days: dbConfig.scheduleDays || dbConfig.schedule?.days || defaultConfig.schedule?.days,
+      primaryTimezone: dbConfig.scheduleTimezone || dbConfig.schedule?.primaryTimezone || defaultConfig.schedule?.primaryTimezone
     }
   };
 }

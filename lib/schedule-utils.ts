@@ -1,14 +1,30 @@
 'use client';
 
+import { 
+  toZonedTime, 
+  format 
+} from 'date-fns-tz';
+import { 
+  startOfDay, 
+  parse, 
+  setHours, 
+  setMinutes, 
+  addDays, 
+  isBefore, 
+  isAfter, 
+  isEqual 
+} from 'date-fns';
+
 interface ScheduleDay {
   day: string;
   location?: string;
   address?: string;
-  hours?: string;
-  openTime?: string; 
-  closeTime?: string;
+  hours?: string; // Legacy format
+  openTime?: string; // Format: "HH:MM"
+  closeTime?: string; // Format: "HH:MM"
   isClosed?: boolean;
-  closureTimestamp?: string; // Timestamp when isClosed was set to true
+  timezone?: string; // IANA timezone name
+  closureTimestamp?: string; // ISO string (UTC)
   coordinates?: {
     lat: number;
     lng: number;
@@ -16,114 +32,95 @@ interface ScheduleDay {
 }
 
 /**
- * Determines if a food truck is currently open based on schedule data
- * @param scheduleDay The schedule day object to check
- * @returns boolean indicating if the food truck is currently open
+ * Determines if a food truck is currently open based on schedule data.
+ * Client-side, timezone-aware implementation.
+ * @param scheduleDay The schedule day object to check.
+ * @returns boolean indicating if the food truck is currently open.
  */
 export function isScheduledOpen(scheduleDay: ScheduleDay | undefined): boolean {
   if (!scheduleDay) return false;
-  
-  // Check if we need to automatically reset the isClosed flag
-  if (scheduleDay.isClosed && scheduleDay.closureTimestamp) {
-    const closureDate = new Date(scheduleDay.closureTimestamp);
-    const now = new Date();
-    
-    // Reset isClosed if it's a new day compared to when it was closed
-    if (closureDate.getDate() !== now.getDate() || 
-        closureDate.getMonth() !== now.getMonth() ||
-        closureDate.getFullYear() !== now.getFullYear()) {
-      // This is a different day than when it was closed, so it should auto-reset
-      return checkIfOpenBasedOnHours(scheduleDay);
+
+  const scheduleTimezone = scheduleDay.timezone || 'America/New_York'; // Fallback timezone
+  const now = new Date(); // User's local time
+  const startOfTodayInScheduleTimezone = startOfDay(toZonedTime(now, scheduleTimezone));
+
+  // Check manual closure status first
+  if (scheduleDay.isClosed) {
+    // Check if the closure is outdated (from a previous day in the schedule's timezone)
+    if (scheduleDay.closureTimestamp) {
+      const closureDateUtc = new Date(scheduleDay.closureTimestamp);
+      // If closure time is before the start of *today* in the schedule's timezone, it's outdated.
+      if (isBefore(closureDateUtc, startOfTodayInScheduleTimezone)) {
+        // Outdated closure, treat as potentially open based on hours
+        return checkIfOpenBasedOnHours(scheduleDay, scheduleTimezone);
+      } else {
+        // Valid closure for today, truck is closed.
+        return false;
+      }
+    } else {
+      // isClosed is true but no timestamp, assume it's a current manual closure.
+      return false;
     }
   }
-  
-  // If manually marked as closed and closure is still valid for today, return false
-  if (scheduleDay.isClosed) return false;
-  
-  return checkIfOpenBasedOnHours(scheduleDay);
+
+  // If not manually closed (or closure was outdated), check based on hours.
+  return checkIfOpenBasedOnHours(scheduleDay, scheduleTimezone);
 }
 
 /**
- * Helper function to check if truck is open based on hours
- * @param scheduleDay The schedule day to check
- * @returns boolean indicating if truck is open based on hours
+ * Helper function to check if truck is open based on hours within a specific timezone.
+ * Client-side version (no 15-min buffer).
+ * @param scheduleDay The schedule day to check.
+ * @param timezone The IANA timezone string for this schedule entry.
+ * @returns boolean indicating if truck is open based on hours.
  */
-function checkIfOpenBasedOnHours(scheduleDay: ScheduleDay): boolean {
-  const now = new Date();
-  
-  // First check structured time fields if available
-  if (scheduleDay.openTime && scheduleDay.closeTime) {
-    try {
-      // Parse openTime and closeTime (HH:MM format)
-      const [openHour, openMinute] = scheduleDay.openTime.split(':').map(Number);
-      const [closeHour, closeMinute] = scheduleDay.closeTime.split(':').map(Number);
-      
-      // Create date objects for comparison
-      const openTime = new Date();
-      openTime.setHours(openHour, openMinute, 0, 0);
-      
-      const closeTime = new Date();
-      closeTime.setHours(closeHour, closeMinute, 0, 0);
-      
-      // Handle overnight hours (when close time is earlier than open time)
-      if (closeHour < openHour || (closeHour === openHour && closeMinute < openMinute)) {
-        closeTime.setDate(closeTime.getDate() + 1);
-      }
-      
-      return now >= openTime && now <= closeTime;
-    } catch (error) {
-      console.error('Error parsing structured hours:', error);
-      // Fall back to string parsing if structured time fails
-    }
+function checkIfOpenBasedOnHours(scheduleDay: ScheduleDay, timezone: string): boolean {
+  if (!scheduleDay.openTime || !scheduleDay.closeTime) {
+    // Handle legacy 'hours' field if needed
+    console.warn(`Missing openTime or closeTime for schedule day ${scheduleDay.day}, cannot determine status.`);
+    return false;
   }
-  
-  // Fall back to string parsing for legacy data
-  if (scheduleDay.hours) {
-    try {
-      // Parse hours like "11:00 AM - 2:00 PM"
-      const hoursMatch = scheduleDay.hours.match(/(\d+):(\d+)\s+(AM|PM)\s+-\s+(\d+):(\d+)\s+(AM|PM)/i);
-      
-      if (!hoursMatch) return false;
-      
-      let [_, startHour, startMinute, startAmPm, endHour, endMinute, endAmPm] = hoursMatch;
-      
-      // Convert to 24-hour format
-      let startHour24 = parseInt(startHour);
-      if (startAmPm.toUpperCase() === 'PM' && startHour24 < 12) startHour24 += 12;
-      if (startAmPm.toUpperCase() === 'AM' && startHour24 === 12) startHour24 = 0;
-      
-      let endHour24 = parseInt(endHour);
-      if (endAmPm.toUpperCase() === 'PM' && endHour24 < 12) endHour24 += 12;
-      if (endAmPm.toUpperCase() === 'AM' && endHour24 === 12) endHour24 = 0;
-      
-      // Create date objects for comparison
-      const startTime = new Date();
-      startTime.setHours(startHour24, parseInt(startMinute), 0, 0);
-      
-      const endTime = new Date();
-      endTime.setHours(endHour24, parseInt(endMinute), 0, 0);
-      
-      // Handle overnight hours
-      if (endHour24 < startHour24 || (endHour24 === startHour24 && parseInt(endMinute) < parseInt(startMinute))) {
-        endTime.setDate(endTime.getDate() + 1);
+
+  try {
+    const now = new Date(); // User's local time
+    const nowInScheduleTimezone = toZonedTime(now, timezone);
+    const startOfTodayInScheduleTimezone = startOfDay(nowInScheduleTimezone);
+
+    // Parse openTime and closeTime ("HH:MM") relative to the start of the day in the specified timezone
+    const [openHour, openMinute] = scheduleDay.openTime.split(':').map(Number);
+    const [closeHour, closeMinute] = scheduleDay.closeTime.split(':').map(Number);
+
+    let openDateTime = setMinutes(setHours(startOfTodayInScheduleTimezone, openHour), openMinute);
+    let closeDateTime = setMinutes(setHours(startOfTodayInScheduleTimezone, closeHour), closeMinute);
+
+    // Handle overnight schedules
+    if (isBefore(closeDateTime, openDateTime) || isEqual(closeDateTime, openDateTime)) {
+      closeDateTime = addDays(closeDateTime, 1);
+       // Adjust check for current time potentially belonging to previous day's schedule
+      if (isBefore(nowInScheduleTimezone, openDateTime)) {
+         openDateTime = addDays(openDateTime, -1);
+         closeDateTime = addDays(closeDateTime, -1); 
       }
-      
-      return now >= startTime && now <= endTime;
-    } catch (error) {
-      console.error('Error parsing hours:', error);
     }
+
+    // Check if current time is within the open/close range
+    return (isAfter(nowInScheduleTimezone, openDateTime) || isEqual(nowInScheduleTimezone, openDateTime)) &&
+           isBefore(nowInScheduleTimezone, closeDateTime);
+
+  } catch (error) {
+    console.error(`Error parsing structured hours for timezone ${timezone}:`, error);
+    return false;
   }
-  
-  return false;
 }
 
 /**
- * Formats a time range from 24h format to 12h display format
- * @param openTime Opening time in 24h format (HH:MM)
- * @param closeTime Closing time in 24h format (HH:MM)
- * @returns Formatted time range string (e.g., "11:00 AM - 2:00 PM")
+ * Formats a time range from 24h format to 12h display format, including timezone.
+ * @param openTime Opening time in 24h format (HH:MM).
+ * @param closeTime Closing time in 24h format (HH:MM).
+ * @param timezone IANA timezone name (e.g., "America/New_York").
+ * @returns Formatted time range string (e.g., "11:00 AM - 2:00 PM PDT").
  */
-export function formatTimeRange(openTime?: string, closeTime?: string): string {
+export function formatTimeRange(openTime?: string, closeTime?: string, timezone?: string): string {
   if (!openTime || !closeTime) return '';
   
   try {
@@ -132,28 +129,44 @@ export function formatTimeRange(openTime?: string, closeTime?: string): string {
     const [closeHour, closeMinute] = closeTime.split(':').map(Number);
     
     // Format to 12h time
-    const formatTime = (hour: number, minute: number) => {
+    const formatTime12h = (hour: number, minute: number) => {
       const period = hour >= 12 ? 'PM' : 'AM';
-      const hour12 = hour % 12 || 12;
+      const hour12 = hour % 12 || 12; // Convert hour 0 to 12 for 12 AM
       return `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
     };
     
-    const formattedOpenTime = formatTime(openHour, openMinute);
-    const formattedCloseTime = formatTime(closeHour, closeMinute);
+    const formattedOpenTime = formatTime12h(openHour, openMinute);
+    const formattedCloseTime = formatTime12h(closeHour, closeMinute);
     
-    return `${formattedOpenTime} - ${formattedCloseTime}`;
+    let tzAbbreviation = '';
+    if (timezone) {
+      try {
+         // Use a current date just to get the correct abbreviation (handles DST)
+        tzAbbreviation = format(new Date(), 'zzz', { timeZone: timezone });
+      } catch (tzError) {
+        console.error(`Error formatting timezone abbreviation for ${timezone}:`, tzError);
+        tzAbbreviation = timezone; // Fallback to full name on error
+      }
+    }
+
+    return `${formattedOpenTime} - ${formattedCloseTime}${tzAbbreviation ? ` ${tzAbbreviation}` : ''}`;
   } catch (error) {
     console.error('Error formatting time range:', error);
-    return '';
+    return ''; // Return empty string on error
   }
 }
 
 /**
- * Gets the current day's schedule
- * @param schedule Array of schedule days
- * @returns The schedule for today, or undefined if not found
+ * Gets the current day's schedule based on the *viewer's* local time.
+ * This remains unchanged as it's for finding the day entry relevant to the viewer.
+ * @param schedule Array of schedule days.
+ * @returns The schedule for today (viewer's local), or undefined if not found.
  */
 export function getTodaySchedule(schedule: ScheduleDay[]): ScheduleDay | undefined {
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  // Get day name based on viewer's local timezone
+  const today = format(new Date(), 'EEEE'); 
   return schedule.find(day => day.day === today);
 } 
+
+// Note: Legacy 'hours' parsing logic is omitted here as well for consistency 
+// and reliability with timezones. 

@@ -1,6 +1,8 @@
 'use client';
 
 import { format, parse, addDays, differenceInMinutes } from 'date-fns'
+import { toZonedTime, format as formatTz } from 'date-fns-tz'
+import { startOfDay, setHours, setMinutes, isBefore, isEqual } from 'date-fns'
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { LucideClock } from "lucide-react"
@@ -13,6 +15,7 @@ interface ScheduleDay {
   openTime?: string;
   closeTime?: string;
   isClosed?: boolean;
+  timezone?: string;
   coordinates?: {
     lat: number;
     lng: number;
@@ -33,51 +36,45 @@ export function TimeAvailabilityDisplay({
     return null;
   }
   
-  const { openTime, closeTime } = todaySchedule;
+  const { openTime, closeTime, timezone } = todaySchedule;
   
   if (!openTime || !closeTime) {
     return null;
   }
   
-  // Parse time strings to Date objects
-  const now = new Date();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // --- TIMEZONE CHANGES START ---
+  const scheduleTimezone = timezone || 'America/New_York'; // Fallback timezone
   
-  // Parse times - handle 24-hour format like "14:30"
-  const parseTimeString = (timeStr: string) => {
-    if (!timeStr) return null;
-    
-    try {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      const date = new Date(today);
-      date.setHours(hours, minutes, 0, 0);
-      return date;
-    } catch (e) {
-      console.error('Error parsing time:', e);
-      return null;
+  try {
+    const nowUtc = new Date();
+    const nowInScheduleTimezone = toZonedTime(nowUtc, scheduleTimezone);
+    const startOfTodayInScheduleTimezone = startOfDay(nowInScheduleTimezone);
+
+    // Parse openTime and closeTime ("HH:MM") relative to the start of the day in the specified timezone
+    const [openHour, openMinute] = openTime.split(':').map(Number);
+    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+
+    let openDateTime = setMinutes(setHours(startOfTodayInScheduleTimezone, openHour), openMinute);
+    let closeDateTime = setMinutes(setHours(startOfTodayInScheduleTimezone, closeHour), closeMinute);
+
+    // Handle overnight schedules
+    if (isBefore(closeDateTime, openDateTime) || isEqual(closeDateTime, openDateTime)) {
+      closeDateTime = addDays(closeDateTime, 1);
+      // Adjust check for current time potentially belonging to previous day's schedule
+      if (isBefore(nowInScheduleTimezone, openDateTime)) {
+         openDateTime = addDays(openDateTime, -1);
+         closeDateTime = addDays(closeDateTime, -1); 
+      }
     }
-  };
-  
-  const openDate = parseTimeString(openTime);
-  const closeDate = parseTimeString(closeTime);
-  
-  // Handle case where closing time is after midnight
-  if (closeDate && openDate && closeDate < openDate) {
-    closeDate.setDate(closeDate.getDate() + 1);
-  }
-  
-  if (!openDate || !closeDate) {
-    return null;
-  }
+  // --- TIMEZONE CHANGES END ---
   
   // Calculate time until opening or closing
   let timeUntil = 0;
   let message = '';
   
   if (isCurrentlyOpen) {
-    // Calculate minutes until closing
-    timeUntil = differenceInMinutes(closeDate, now);
+    // Calculate minutes until closing using timezone-aware dates
+    timeUntil = differenceInMinutes(closeDateTime, nowInScheduleTimezone);
     
     if (timeUntil <= 60) {
       return (
@@ -106,9 +103,9 @@ export function TimeAvailabilityDisplay({
       ? `${hours}h ${minutes}m until closing`
       : `${minutes}m until closing`;
   } else {
-    // If current time is before opening time
-    if (now < openDate) {
-      timeUntil = differenceInMinutes(openDate, now);
+    // If current time is before opening time (using timezone-aware dates)
+    if (isBefore(nowInScheduleTimezone, openDateTime)) {
+      timeUntil = differenceInMinutes(openDateTime, nowInScheduleTimezone);
       
       if (timeUntil <= 60) {
         return (
@@ -137,8 +134,11 @@ export function TimeAvailabilityDisplay({
         ? `${hours}h ${minutes}m until opening`
         : `${minutes}m until opening`;
     } else {
-      // If current time is after closing time, show next opening
-      message = `Opens tomorrow at ${format(openDate, 'h:mm a')}`;
+      // If current time is after closing time, show next opening (formatted in schedule timezone)
+      // Note: This doesn't account for the *next* scheduled day, just formats today's open time.
+      // A more complex implementation would look ahead in the schedule.
+      const formattedOpenTime = formatTz(openDateTime, 'h:mm a', { timeZone: scheduleTimezone });
+      message = `Opens at ${formattedOpenTime}`; // Simplified message
     }
   }
   
@@ -148,4 +148,8 @@ export function TimeAvailabilityDisplay({
       {message}
     </p>
   );
+} catch (error) {
+    console.error(`Error calculating time availability for timezone ${scheduleTimezone}:`, error);
+    return null; // Don't render anything on error
+  }
 } 

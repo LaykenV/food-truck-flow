@@ -6,19 +6,23 @@ import { MapPin, Calendar, ExternalLink } from 'lucide-react';
 import { formatTimeRange } from '@/lib/schedule-utils';
 import { cn } from '@/lib/utils';
 
+// Define ScheduleDay type inline or ensure it's imported/consistent
+interface ScheduleDay {
+  day: string;
+  location?: string;
+  address?: string;
+  openTime?: string;
+  closeTime?: string;
+  isClosed?: boolean;
+  timezone?: string; // Added timezone field
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
+
 export interface ScheduleDayGroup {
-  days: {
-    day: string;
-    location?: string;
-    address?: string;
-    openTime?: string;
-    closeTime?: string;
-    isClosed?: boolean;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
-  }[];
+  days: ScheduleDay[]; // Use the defined interface
   dayRange: string;
 }
 
@@ -95,7 +99,8 @@ export function ScheduleCard({
                 }}
               >
                 {(firstDay.openTime && firstDay.closeTime) ? 
-                  formatTimeRange(firstDay.openTime, firstDay.closeTime) : 
+                  // Pass timezone to formatTimeRange
+                  formatTimeRange(firstDay.openTime, firstDay.closeTime, firstDay.timezone) : 
                   'Hours vary'}
               </Badge>
             )}

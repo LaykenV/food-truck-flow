@@ -36,7 +36,8 @@ export function getDefaultConfig(): FoodTruckConfig {
     schedule: {
       title: 'Weekly Schedule',
       description: 'Find us at these locations throughout the week',
-      days: []
+      days: [],
+      primaryTimezone: 'America/New_York'
     }
   };
 }

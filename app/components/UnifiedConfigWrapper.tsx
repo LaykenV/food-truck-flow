@@ -76,7 +76,8 @@ export function ConfigWrapper({
           ...newConfig.schedule,
           title: newConfig.schedule?.title || 'Weekly Schedule',
           description: newConfig.schedule?.description || 'Find us at these locations throughout the week',
-          days: newConfig.schedule?.days || []
+          days: newConfig.schedule?.days || [],
+          primaryTimezone: newConfig.schedule?.primaryTimezone || 'America/New_York'
         }
       };
       

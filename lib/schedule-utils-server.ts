@@ -1,12 +1,26 @@
+import { toZonedTime, format } from 'date-fns-tz';
+import { 
+  startOfDay, 
+  parse, 
+  setHours, 
+  setMinutes, 
+  addDays, 
+  isBefore, 
+  isAfter, 
+  isEqual,
+  subMinutes 
+} from 'date-fns';
+
 interface ScheduleDay {
   day: string;
   location?: string;
   address?: string;
-  hours?: string;
-  openTime?: string; 
-  closeTime?: string;
+  hours?: string; // Legacy format
+  openTime?: string; // Format: "HH:MM"
+  closeTime?: string; // Format: "HH:MM"
   isClosed?: boolean;
-  closureTimestamp?: string; // Timestamp when isClosed was set to true
+  timezone?: string; // IANA timezone name (e.g., "America/New_York")
+  closureTimestamp?: string; // ISO string (UTC)
   coordinates?: {
     lat: number;
     lng: number;
@@ -14,132 +28,122 @@ interface ScheduleDay {
 }
 
 /**
- * Determines if a food truck is currently open based on schedule data
- * Server-compatible version
- * @param scheduleDay The schedule day object to check
- * @returns boolean indicating if the food truck is currently open
+ * Determines if a food truck is currently open based on schedule data.
+ * Server-side, timezone-aware implementation.
+ * @param scheduleDay The schedule day object to check.
+ * @returns boolean indicating if the food truck is currently open.
  */
 export function isScheduledOpenServer(scheduleDay: ScheduleDay | undefined): boolean {
   if (!scheduleDay) return false;
-  
-  // Check if we need to automatically reset the isClosed flag
-  if (scheduleDay.isClosed && scheduleDay.closureTimestamp) {
-    const closureDate = new Date(scheduleDay.closureTimestamp);
-    const now = new Date();
+
+  const scheduleTimezone = scheduleDay.timezone || 'America/New_York'; // Fallback timezone
+  const nowUtc = new Date();
+  const nowInScheduleTimezone = toZonedTime(nowUtc, scheduleTimezone);
+  const startOfTodayInScheduleTimezone = startOfDay(nowInScheduleTimezone);
+
+  // Check manual closure status first
+  if (scheduleDay.isClosed) {
+    // Check if the closure is outdated (from a previous day in the schedule's timezone)
+    if (scheduleDay.closureTimestamp) {
+      const closureDateUtc = new Date(scheduleDay.closureTimestamp);
+      // If closure time is before the start of *today* in the schedule's timezone, it's outdated.
+      if (isBefore(closureDateUtc, startOfTodayInScheduleTimezone)) {
+        // Outdated closure, treat as potentially open based on hours
+        return checkIfOpenBasedOnHours(scheduleDay, scheduleTimezone);
+      } else {
+        // Valid closure for today, truck is closed.
+        return false;
+      }
+    } else {
+      // isClosed is true but no timestamp, assume it's a current manual closure.
+      return false;
+    }
+  }
+
+  // If not manually closed (or closure was outdated), check based on hours.
+  return checkIfOpenBasedOnHours(scheduleDay, scheduleTimezone);
+}
+
+/**
+ * Helper function to check if truck is open based on hours within a specific timezone.
+ * Handles HH:MM format and 15-minute buffer.
+ * @param scheduleDay The schedule day to check.
+ * @param timezone The IANA timezone string for this schedule entry.
+ * @returns boolean indicating if truck is open based on hours.
+ */
+function checkIfOpenBasedOnHours(scheduleDay: ScheduleDay, timezone: string): boolean {
+  if (!scheduleDay.openTime || !scheduleDay.closeTime) {
+     // Consider handling legacy 'hours' string here if necessary, 
+     // potentially by converting it first or using a separate parsing logic.
+     // For now, require openTime and closeTime for timezone logic.
+    console.warn(`Missing openTime or closeTime for schedule day ${scheduleDay.day}, cannot determine status.`);
+    return false;
+  }
+
+  try {
+    const nowUtc = new Date();
+    const nowInScheduleTimezone = toZonedTime(nowUtc, timezone);
+    const startOfTodayInScheduleTimezone = startOfDay(nowInScheduleTimezone);
+
+    // Parse openTime and closeTime ("HH:MM") relative to the start of the day in the specified timezone
+    const [openHour, openMinute] = scheduleDay.openTime.split(':').map(Number);
+    const [closeHour, closeMinute] = scheduleDay.closeTime.split(':').map(Number);
+
+    let openDateTime = setMinutes(setHours(startOfTodayInScheduleTimezone, openHour), openMinute);
+    let closeDateTime = setMinutes(setHours(startOfTodayInScheduleTimezone, closeHour), closeMinute);
+
+    // Handle overnight schedules: if close time is on or before open time, add a day to close time
+    if (isBefore(closeDateTime, openDateTime) || isEqual(closeDateTime, openDateTime)) {
+      closeDateTime = addDays(closeDateTime, 1);
+      // If the current time is before the open time, it might belong to the *previous* day's overnight schedule
+      if (isBefore(nowInScheduleTimezone, openDateTime)) {
+         // Adjust both open and close times back by one day to check against yesterday's closing time
+         openDateTime = addDays(openDateTime, -1);
+         closeDateTime = addDays(closeDateTime, -1); 
+      }
+    }
     
-    // Reset isClosed if it's a new day compared to when it was closed
-    if (closureDate.getDate() !== now.getDate() || 
-        closureDate.getMonth() !== now.getMonth() ||
-        closureDate.getFullYear() !== now.getFullYear()) {
-      // This is a different day than when it was closed, so it should auto-reset
-      // Note: We can't actually modify the data here as this is a read-only function,
-      // but we can treat it as if it's not closed
-      return checkIfOpenBasedOnHours(scheduleDay);
+    // Check if current time is within the open/close range
+    const isOpen = (isAfter(nowInScheduleTimezone, openDateTime) || isEqual(nowInScheduleTimezone, openDateTime)) &&
+                   isBefore(nowInScheduleTimezone, closeDateTime);
+
+    if (!isOpen) return false;
+
+    // Check 15-minute buffer before closing time
+    const fifteenMinutesBeforeClose = subMinutes(closeDateTime, 15);
+    if (isAfter(nowInScheduleTimezone, fifteenMinutesBeforeClose) || isEqual(nowInScheduleTimezone, fifteenMinutesBeforeClose)) {
+      // Within 15 mins of closing or exactly at the 15-min mark
+      return false; 
     }
+
+    return true; // Open and outside the 15-min buffer
+
+  } catch (error) {
+    console.error(`Error parsing structured hours for timezone ${timezone}:`, error);
+    return false; 
   }
-  
-  // If manually marked as closed and closure is still valid for today, return false
-  if (scheduleDay.isClosed) return false;
-  
-  return checkIfOpenBasedOnHours(scheduleDay);
 }
 
 /**
- * Helper function to check if truck is open based on hours
- * @param scheduleDay The schedule day to check
- * @returns boolean indicating if truck is open based on hours
+ * Gets the schedule entry for the current day, based on the primary timezone.
+ * Server-side, timezone-aware implementation.
+ * @param schedule Array of schedule days.
+ * @param primaryTimezone The primary IANA timezone for the truck (optional, defaults).
+ * @returns The schedule for "today" based on the primary timezone, or undefined.
  */
-function checkIfOpenBasedOnHours(scheduleDay: ScheduleDay): boolean {
-  const now = new Date();
-  
-  // First check structured time fields if available
-  if (scheduleDay.openTime && scheduleDay.closeTime) {
-    try {
-      // Parse openTime and closeTime (HH:MM format)
-      const [openHour, openMinute] = scheduleDay.openTime.split(':').map(Number);
-      const [closeHour, closeMinute] = scheduleDay.closeTime.split(':').map(Number);
-      
-      // Create date objects for comparison
-      const openTime = new Date();
-      openTime.setHours(openHour, openMinute, 0, 0);
-      
-      const closeTime = new Date();
-      closeTime.setHours(closeHour, closeMinute, 0, 0);
-      
-      // Handle overnight hours (when close time is earlier than open time)
-      if (closeHour < openHour || (closeHour === openHour && closeMinute < openMinute)) {
-        closeTime.setDate(closeTime.getDate() + 1);
-      }
-      
-      // Check if we're within 15 minutes of closing - if so, don't allow new orders
-      const fifteenMinutesBeforeClose = new Date(closeTime);
-      fifteenMinutesBeforeClose.setMinutes(fifteenMinutesBeforeClose.getMinutes() - 15);
-      
-      if (now >= fifteenMinutesBeforeClose) {
-        return false;
-      }
-      
-      return now >= openTime && now < closeTime;
-    } catch (error) {
-      console.error('Error parsing structured hours:', error);
-      // Fall back to string parsing if structured time fails
-    }
+export function getTodayScheduleServer(
+  schedule: ScheduleDay[], 
+  primaryTimezone: string = 'America/New_York' // Default/Fallback primary timezone
+): ScheduleDay | undefined {
+  try {
+    const nowInPrimaryZone = toZonedTime(new Date(), primaryTimezone);
+    // 'EEEE' gives the full day name, e.g., "Monday"
+    const todayName = format(nowInPrimaryZone, 'EEEE', { timeZone: primaryTimezone }); 
+    return schedule.find(day => day.day === todayName);
+  } catch (error) {
+     console.error(`Error determining today's schedule for timezone ${primaryTimezone}:`, error);
+     // Fallback to simple local day name if timezone calculation fails? Or return undefined?
+     // Let's return undefined on error to avoid potentially wrong data.
+     return undefined;
   }
-  
-  // Fall back to string parsing for legacy data
-  if (scheduleDay.hours) {
-    try {
-      // Parse hours like "11:00 AM - 2:00 PM"
-      const hoursMatch = scheduleDay.hours.match(/(\d+):(\d+)\s+(AM|PM)\s+-\s+(\d+):(\d+)\s+(AM|PM)/i);
-      
-      if (!hoursMatch) return false;
-      
-      let [_, startHour, startMinute, startAmPm, endHour, endMinute, endAmPm] = hoursMatch;
-      
-      // Convert to 24-hour format
-      let startHour24 = parseInt(startHour);
-      if (startAmPm.toUpperCase() === 'PM' && startHour24 < 12) startHour24 += 12;
-      if (startAmPm.toUpperCase() === 'AM' && startHour24 === 12) startHour24 = 0;
-      
-      let endHour24 = parseInt(endHour);
-      if (endAmPm.toUpperCase() === 'PM' && endHour24 < 12) endHour24 += 12;
-      if (endAmPm.toUpperCase() === 'AM' && endHour24 === 12) endHour24 = 0;
-      
-      // Create date objects for comparison
-      const startTime = new Date();
-      startTime.setHours(startHour24, parseInt(startMinute), 0, 0);
-      
-      const endTime = new Date();
-      endTime.setHours(endHour24, parseInt(endMinute), 0, 0);
-      
-      // Handle overnight hours
-      if (endHour24 < startHour24 || (endHour24 === startHour24 && parseInt(endMinute) < parseInt(startMinute))) {
-        endTime.setDate(endTime.getDate() + 1);
-      }
-      
-      // Check if we're within 15 minutes of closing
-      const fifteenMinutesBeforeClose = new Date(endTime);
-      fifteenMinutesBeforeClose.setMinutes(fifteenMinutesBeforeClose.getMinutes() - 15);
-      
-      if (now >= fifteenMinutesBeforeClose) {
-        return false;
-      }
-      
-      return now >= startTime && now < endTime;
-    } catch (error) {
-      console.error('Error parsing hours:', error);
-    }
-  }
-  
-  return false;
 }
-
-/**
- * Gets the current day's schedule
- * @param schedule Array of schedule days
- * @returns The schedule for today, or undefined if not found
- */
-export function getTodayScheduleServer(schedule: ScheduleDay[]): ScheduleDay | undefined {
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  return schedule.find(day => day.day === today);
-} 

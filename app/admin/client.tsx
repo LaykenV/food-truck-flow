@@ -36,6 +36,7 @@ interface ScheduleDay {
   openTime?: string;
   closeTime?: string;
   isClosed?: boolean;
+  timezone?: string;
   coordinates?: {
     lat: number;
     lng: number;
@@ -550,6 +551,7 @@ export default function AdminDashboardClient() {
                         <FormattedTimeDisplay 
                           openTime={todaySchedule.openTime} 
                           closeTime={todaySchedule.closeTime}
+                          timezone={todaySchedule.timezone}
                         />
                       </p>
                     </div>

@@ -35,6 +35,7 @@ export type FoodTruckConfig = {
   schedule?: {
     title?: string;
     description?: string;
+    primaryTimezone?: string;
     days?: {
       day: string;
       location?: string;
@@ -42,6 +43,7 @@ export type FoodTruckConfig = {
       openTime?: string;
       closeTime?: string;
       isClosed?: boolean;
+      timezone?: string;
       coordinates?: {
         lat: number;
         lng: number;
