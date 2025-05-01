@@ -26,7 +26,7 @@ type Props = {
 
 // Generate page-specific metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { subdomain } = await params;
+  const { subdomain } = params;
   let foodTruck = await getFoodTruckData(subdomain);
   
   if (!foodTruck) {
@@ -144,7 +144,7 @@ export default async function FoodTruckMenuPage({
   params: { subdomain: string }
 }) {
   // Get the subdomain from the params
-  const { subdomain } = await params;
+  const { subdomain } = params;
   
   // Fetch the food truck data using the cached function
   let foodTruck = await getFoodTruckData(subdomain);
