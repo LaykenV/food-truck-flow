@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 export default async function SubscribeSuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams: Promise<{ session_id?: string }>;
 }) {
   const params = await searchParams;
   const sessionId = params.session_id;
