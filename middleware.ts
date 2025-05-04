@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     // Production environment with real subdomains
     const host = hostname.split(':')[0];
     const parts = host.split('.');
+    console.log("parts", parts);
     
     // Check if we have a subdomain (e.g., mikes-pizza.foodtruckflow.com)
     if (parts.length > 2) {

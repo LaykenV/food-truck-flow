@@ -9,6 +9,7 @@ import { getDefaultConfig } from "@/utils/config-utils";
 export const signInWithOAuthAction = async (provider: "google" | "facebook") => {
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
+  console.log("origin", origin);
 
   // Note: Food truck creation happens in the auth callback route
   // after the OAuth flow completes and the user is redirected back to our app
