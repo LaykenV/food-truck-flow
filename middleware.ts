@@ -41,13 +41,13 @@ export async function middleware(request: NextRequest) {
     console.log("parts", parts);
     
     // Check if we have a subdomain (e.g., mikes-pizza.foodtruckflow.com)
-    if (parts.length > 2) {
+    if (parts.length > 2 && parts[0] !== 'www') {
       const subdomain = parts[0];
       console.log("subdomain", subdomain);
       console.log("url", url.pathname);
       
       // Skip rewriting for admin routes even with subdomain
-      if (url.pathname.startsWith('/admin') || 
+      /*if (url.pathname.startsWith('/admin') || 
           url.pathname.startsWith('/api') || 
           url.pathname.startsWith('/_next') ||
           url.pathname.startsWith('/sign-in') ||
@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
           url.pathname === '/') {
         console.log("skipping rewrite");
         return await updateSession(request);
-      }
+      }*/
       
       // Rewrite the URL to the [subdomain] folder
       url.pathname = `/${subdomain}${url.pathname}`;
