@@ -42,12 +42,14 @@ export async function middleware(request: NextRequest) {
     // Check if we have a subdomain (e.g., mikes-pizza.foodtruckflow.com)
     if (parts.length > 2) {
       const subdomain = parts[0];
+      console.log("subdomain", subdomain);
       
       // Skip rewriting for admin routes even with subdomain
       if (url.pathname.startsWith('/admin') || 
           url.pathname.startsWith('/api') || 
           url.pathname.startsWith('/_next') ||
           url.pathname.startsWith('/sign-in') ||
+          url.pathname.startsWith('/auth/callback') ||
           url.pathname === '/') {
         return await updateSession(request);
       }
