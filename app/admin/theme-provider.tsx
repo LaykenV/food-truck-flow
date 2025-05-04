@@ -9,7 +9,6 @@ interface AdminThemeProviderProps {
 
 export function AdminThemeProvider({ children }: AdminThemeProviderProps) {
   const pathname = usePathname()
-  console.log(window.location.hostname)
   const forced = typeof window !== 'undefined' && window.location.hostname === 'www.foodtruckflow.com' && pathname === '/'
     ? 'dark'        // landing page (foodtruckflow.com/) locked dark
     : pathname.startsWith('/admin')
