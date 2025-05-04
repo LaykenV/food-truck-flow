@@ -71,6 +71,7 @@ admin
 
     //subdomain setup 
     stripe webhooks, disable cash app pay, limit one subscription
+    logo on browser tab
     
     marketing tool
 
@@ -79,8 +80,6 @@ admin
     stripe for ordering - coming soon
 
     after shipping:
-
-    timezone handling isScheduledOpen, AdminDashboardClient, TimeAvailabilityDisplay
 
     export schedule
     add testimonial tab
