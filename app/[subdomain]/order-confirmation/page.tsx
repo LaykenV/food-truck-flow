@@ -9,8 +9,8 @@ export default async function OrderConfirmationPage({
   params,
   searchParams,
 }: {
-  params: { subdomain: string },
-  searchParams: { id?: string }
+  params: Promise<{ subdomain: string }>,
+  searchParams: Promise<{ id?: string }>
 }) {
   // Get the subdomain from the params
   const { subdomain } = await params;

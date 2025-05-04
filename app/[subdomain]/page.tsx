@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 export default async function FoodTruckHomePage({
   params
 }: {
-  params: { subdomain: string }
+  params: Promise<{ subdomain: string }>
 }) {
   // Get the subdomain from the params
   const { subdomain } = await params;

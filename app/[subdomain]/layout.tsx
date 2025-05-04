@@ -22,7 +22,7 @@ function JsonLdScript({ data }: { data: object }) {
 export async function generateMetadata({
   params
 }: {
-  params: { subdomain: string }
+  params: Promise<{ subdomain: string }>
 }): Promise<Metadata> {
   // Get the subdomain from the params
   const { subdomain } = await params;
@@ -74,7 +74,7 @@ export default async function FoodTruckLayout({
   params
 }: {
   children: React.ReactNode,
-  params: { subdomain: string }
+  params: Promise<{ subdomain: string }>
 }) {
   // Get the subdomain from the params
   const { subdomain } = await params;

@@ -24,7 +24,7 @@ function JsonLdScript({ data }: { data: object }) {
 
 // Type definitions for generating metadata
 type Props = {
-  params: { subdomain: string }
+  params: Promise<{ subdomain: string }>
 };
 
 // Generate page-specific metadata
@@ -113,7 +113,7 @@ function ContactSkeleton() {
 export default async function FoodTruckOrderPage({
   params
 }: {
-  params: { subdomain: string }
+  params: Promise<{ subdomain: string }>
 }) {
   // Get the subdomain from the params
   const { subdomain } = await params;
