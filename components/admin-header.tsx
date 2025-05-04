@@ -82,7 +82,7 @@ export function AdminHeader() {
               asChild
               className="bg-gradient-to-r from-admin-primary to-[hsl(var(--admin-gradient-end))] hover:opacity-90 text-admin-primary-foreground border-none shadow-sm transition-all duration-200 hover:shadow-md"
             >
-              <Link href={`/${foodTruck.subdomain}`} target="_blank" className="flex items-center gap-1">
+              <Link href={`www.${foodTruck.subdomain}.foodtruckflow.com`} target="_blank" className="flex items-center gap-1">
                 <span className="hidden md:inline">Visit My Website</span>
                 <span className="inline md:hidden">Preview</span>
                 <ExternalLink className="h-3 w-3 ml-0.5" />

@@ -658,7 +658,7 @@ export function OrderStatusTracker({
               <div>
                 <p className="text-sm font-medium">{getStatusText()}</p>
                 <Link 
-                  href={`/${subdomain}/order-confirmation?id=${currentOrderId}`}
+                  href={`/order-confirmation?id=${currentOrderId}`}
                   className="text-xs hover:underline"
                   style={linkStyle}
                 >

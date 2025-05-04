@@ -143,7 +143,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain, forceVie
                   fontSize: "1.2rem",
                 }}
               >
-                <Link href={`/${subdomain}/menu`} prefetch={true}>
+                <Link href={`/menu`} prefetch={true}>
                   View Menu
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
@@ -248,7 +248,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain, forceVie
                         fontSize: "1.2rem",
                       }}
                     >
-                      <Link href={`/${subdomain}/menu`} prefetch={true}>
+                      <Link href={`/menu`} prefetch={true}>
                         View Menu
                         <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                       </Link>

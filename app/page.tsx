@@ -81,7 +81,7 @@ export default function Home() {
                     }
                   />
                   <div className="text-center mt-4">
-                    <Link href="/demo" target="_blank" rel="noopener noreferrer" className="text-white underline underline-offset-4 hover:text-[hsl(var(--admin-primary-foreground)/0.8)] flex items-center justify-center gap-1.5">
+                    <Link href="https://demo.foodtruckflow.com" target="_blank" rel="noopener noreferrer" className="text-white underline underline-offset-4 hover:text-[hsl(var(--admin-primary-foreground)/0.8)] flex items-center justify-center gap-1.5">
                       <span>See a demo website first</span>
                       <ExternalLink className="h-4 w-4" />
                     </Link>

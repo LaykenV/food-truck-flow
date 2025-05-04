@@ -231,7 +231,7 @@ export default function FoodTruckNavbar({
               <div className="flex justify-end">
                 {displayMode === 'live' ? (
                   <Link 
-                    href={`/${subdomain}/order`}
+                    href={`/order`}
                     className={cn(
                       "flex items-center justify-center p-2 rounded-full transition-colors relative",
                       scrolled || isNonHeroPage 

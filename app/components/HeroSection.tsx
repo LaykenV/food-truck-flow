@@ -76,7 +76,7 @@ export function HeroSection() {
                     </Button>
                   }
                 />
-                <Link href="/demo" target="_blank" rel="noopener noreferrer" className="hidden md:block">
+                <Link href="https://demo.foodtruckflow.com" target="_blank" rel="noopener noreferrer" className="hidden md:block">
                   <Button className="px-5 py-3 md:py-3.5 bg-[hsl(var(--admin-primary))] text-[hsl(var(--admin-primary-foreground))] rounded-md font-medium shadow-lg hover:bg-[hsl(var(--admin-primary)/0.9)] transition-all hover:scale-105 flex flex-col items-center justify-center gap-0 h-auto">
                     <div className="flex items-center">
                       <span className="text-base md:text-lg">Visit Demo Website</span>

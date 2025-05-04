@@ -188,7 +188,7 @@ export default async function FoodTruckOrderPage({
         
         <div className="w-full lg:w-[90%] mx-auto px-4 py-8">
             <Link 
-              href={`/${subdomain}/menu`} 
+              href={`/menu`} 
               className="inline-flex items-center hover:underline transition-colors"
               style={linkStyle}
             >

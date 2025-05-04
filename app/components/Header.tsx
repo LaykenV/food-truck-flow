@@ -62,7 +62,7 @@ export function Header() {
               Pricing Section
             </Link>
             <Link 
-              href="/demo"
+              href="https://demo.foodtruckflow.com"
               target="_blank"
               rel="noopener noreferrer"
               className={`text-sm font-medium ${
@@ -101,7 +101,7 @@ export function Header() {
 
           {/* Mobile Demo Button */}
           <div className="md:hidden">
-             <Link href="/demo" passHref target="_blank" rel="noopener noreferrer">
+             <Link href="https://demo.foodtruckflow.com" passHref target="_blank" rel="noopener noreferrer">
                  <Button
                      variant="default"
                      className="bg-[hsl(var(--admin-primary))] text-[hsl(var(--admin-primary-foreground))] hover:bg-[hsl(var(--admin-primary)/0.9)] flex items-center space-x-1.5"

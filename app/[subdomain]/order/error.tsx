@@ -31,7 +31,7 @@ export default function OrderError({
         <div className="mb-6">
           {subdomain && (
             <Link 
-              href={`/${subdomain}/menu`} 
+              href={`/menu`} 
               className="inline-flex items-center text-primary hover:underline transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
@@ -66,7 +66,7 @@ export default function OrderError({
                   size="lg"
                   asChild
                 >
-                  <Link href={`/${subdomain}/menu`}>
+                  <Link href={`/menu`}>
                     Return to menu
                   </Link>
                 </Button>
