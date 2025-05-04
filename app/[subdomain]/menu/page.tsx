@@ -21,12 +21,12 @@ function JsonLdScript({ data }: { data: object }) {
 
 // Type definitions for generating metadata
 type Props = {
-  params: { subdomain: string }
+  params: Promise<{ subdomain: string }>
 };
 
 // Generate page-specific metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { subdomain } = params;
+  const { subdomain } = await params;
   let foodTruck = await getFoodTruckData(subdomain);
   
   if (!foodTruck) {
@@ -141,10 +141,10 @@ function CartSkeleton() {
 export default async function FoodTruckMenuPage({
   params
 }: {
-  params: { subdomain: string }
+  params: Promise<{ subdomain: string }>
 }) {
   // Get the subdomain from the params
-  const { subdomain } = params;
+  const { subdomain } = await params;
   
   // Fetch the food truck data using the cached function
   let foodTruck = await getFoodTruckData(subdomain);
