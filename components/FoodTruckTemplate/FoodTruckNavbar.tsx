@@ -186,7 +186,7 @@ export default function FoodTruckNavbar({
           <div className="flex items-center justify-between">
             {/* Logo and Name */}
             <div className={isMobileView ? "flex-1 flex justify-center" : ""}>
-              {renderLink(`/${subdomain}`, (
+              {renderLink(`/`, (
                 <div className="flex items-center gap-2">
                   {logo ? (
                     <div className="h-10 w-10 relative">

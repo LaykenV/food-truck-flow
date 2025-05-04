@@ -36,7 +36,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
       // Navigate to the order page
       const currentPath = window.location.pathname;
       const subdomain = currentPath.split('/')[1]; // Extract the subdomain from URL
-      router.push(`/${subdomain}/order`);
+      router.push(`/order`);
     }
   };
 
