@@ -44,6 +44,7 @@ export async function middleware(request: NextRequest) {
     if (parts.length > 2) {
       const subdomain = parts[0];
       console.log("subdomain", subdomain);
+      console.log("url", url.pathname);
       
       // Skip rewriting for admin routes even with subdomain
       if (url.pathname.startsWith('/admin') || 
@@ -52,12 +53,13 @@ export async function middleware(request: NextRequest) {
           url.pathname.startsWith('/sign-in') ||
           url.pathname.startsWith('/auth/callback') ||
           url.pathname === '/') {
+        console.log("skipping rewrite");
         return await updateSession(request);
       }
       
       // Rewrite the URL to the [subdomain] folder
       url.pathname = `/${subdomain}${url.pathname}`;
-      
+      console.log("rewritten url", url.pathname);
       // Create a response with the rewritten URL
       const response = NextResponse.rewrite(url);
       

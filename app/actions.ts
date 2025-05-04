@@ -25,7 +25,7 @@ export const signInWithOAuthAction = async (provider: "google" | "facebook") => 
     return encodedRedirect("error", "/", error.message);
   }
 
-  console.log("data", data);
+  console.log("data", data.url);
 
   return redirect(data.url);
 };
