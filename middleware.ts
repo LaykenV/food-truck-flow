@@ -47,7 +47,8 @@ export async function middleware(request: NextRequest) {
       if (url.pathname.startsWith('/admin') || 
           url.pathname.startsWith('/api') || 
           url.pathname.startsWith('/_next') ||
-          url.pathname.startsWith('/sign-in')) {
+          url.pathname.startsWith('/sign-in') ||
+          url.pathname === '/') {
         return await updateSession(request);
       }
       
