@@ -61,9 +61,13 @@ admin
 
     //screenshots for features
 
-    deploy and domain name setup
+    //deploy and domain name setup
 
-    params failing deployment?
+    //params failing deployment?
+
+    template navigation
+    template color scheme
+    localhost sign in redirect
 
     //subdomain setup 
     stripe webhooks, disable cash app pay, limit one subscription
@@ -87,3 +91,5 @@ admin
 
 
     
+changes for local 
+adming theme provider landing page
