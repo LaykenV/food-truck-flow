@@ -30,7 +30,7 @@ export function AdminHeader() {
     queryFn: getFoodTruck
   })
 
-  const isPublished = foodTruck?.isPublished || false;
+  const isPublished = foodTruck?.published || false;
 
   // Get today's schedule and check if we're currently open
   const { todaySchedule, isCurrentlyOpen } = useMemo(() => {
