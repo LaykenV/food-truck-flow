@@ -162,6 +162,7 @@ export default function ScheduleClient() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['foodTruck'] });
       toast.success('Schedule updated successfully');
+      setIsModalOpen(false);
     },
     onError: (error: any) => {
       toast.error(`Error updating schedule: ${error.message || 'Unknown error'}`);
@@ -281,8 +282,6 @@ export default function ScheduleClient() {
       scheduleDescription,
       primaryTimezone
     });
-
-    setIsModalOpen(false);
   };
 
   const handleInputChange = (field: keyof ScheduleDay, value: string | boolean | undefined) => { // Allow undefined for timezone potentially

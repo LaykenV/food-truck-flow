@@ -9,6 +9,10 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'FoodTruckFlow',
   description: 'B2B SaaS platform for food truck owners',
+  icons: {
+    icon: '/images/truckIcon.svg',
+    shortcut: '/images/truckIcon.svg'
+  }
 }
 
 export default function RootLayout({

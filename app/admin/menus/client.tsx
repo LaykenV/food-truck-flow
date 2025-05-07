@@ -66,7 +66,6 @@ export default function MenuClient() {
   // Filter state
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<boolean | null>(null)
-  const [error, setError] = useState<string | null>(null)
   
   // Delete confirmation
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -138,7 +137,6 @@ export default function MenuClient() {
     },
     onError: (error: any) => {
       toast.error(`Error adding menu item: ${error.message || 'Unknown error'}`)
-      setError(error.message || 'An unknown error occurred')
     }
   })
 
@@ -162,7 +160,6 @@ export default function MenuClient() {
     },
     onError: (error: any) => {
       toast.error(`Error updating menu item: ${error.message || 'Unknown error'}`)
-      setError(error.message || 'An unknown error occurred')
     }
   })
 
@@ -177,7 +174,6 @@ export default function MenuClient() {
     },
     onError: (error: any) => {
       toast.error(`Error deleting menu item: ${error.message || 'Unknown error'}`)
-      setError(error.message || 'An unknown error occurred')
     }
   })
 
@@ -192,7 +188,6 @@ export default function MenuClient() {
     },
     onError: (error: any) => {
       toast.error(`Error updating menu item visibility: ${error.message || 'Unknown error'}`)
-      setError(error.message || 'An unknown error occurred')
     }
   })
 
@@ -301,7 +296,7 @@ export default function MenuClient() {
     try {
       // Validate form
       if (!menuForm.name || !menuForm.price || !menuForm.category) {
-        setError('Name, price, and category are required')
+        toast.error('Name, price, and category are required')
         return
       }
       
@@ -322,7 +317,7 @@ export default function MenuClient() {
       })
     } catch (err: any) {
       console.error('Error adding menu item:', err)
-      setError(err.message || 'An unknown error occurred')
+      toast.error(err.message || 'An unknown error occurred')
     }
   }
 
@@ -335,7 +330,7 @@ export default function MenuClient() {
     try {
       // Validate form
       if (!menuForm.name || !menuForm.price || !menuForm.category) {
-        setError('Name, price, and category are required')
+        toast.error('Name, price, and category are required')
         return
       }
       
@@ -359,7 +354,7 @@ export default function MenuClient() {
       })
     } catch (err: any) {
       console.error('Error updating menu item:', err)
-      setError(err.message || 'Failed to update menu item')
+      toast.error(err.message || 'Failed to update menu item')
     }
   }
 
@@ -446,20 +441,6 @@ export default function MenuClient() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive rounded-md px-4 py-3 relative flex items-center justify-between">
-          <span className="block">{error}</span>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setError(null)}
-            className="h-8 w-8 text-destructive hover:text-destructive"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-      
       {/* Category Filter */}
       <Card className="border border-admin-border bg-admin-card shadow-sm hover:shadow-md transition-all duration-200">
         <CardHeader className="pb-2">
