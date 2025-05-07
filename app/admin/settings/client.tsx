@@ -14,6 +14,30 @@ import { toast } from "sonner";
 import { getFoodTruck, getSubscriptionData } from "@/app/admin/clientQueries";
 import { publishWebsite, updateDomainSettings, updateStripeApiKey } from "./actions";
 
+// Helper function for client-side subdomain validation
+function validateSubdomainClientSide(subdomain: string): string | null {
+  if (!subdomain) {
+    // Presence Check (already partially handled by disabling save, but explicit check is good)
+    // This case might be redundant if button is disabled, but included for completeness
+    // as per plan.
+    return "Subdomain cannot be empty."; 
+  }
+
+  if (subdomain.length < 3 || subdomain.length > 63) {
+    return "Subdomain must be between 3 and 63 characters long.";
+  }
+
+  if (!/^[a-zA-Z0-9-]+$/.test(subdomain)) {
+    return "Subdomain can only contain letters, numbers, and hyphens.";
+  }
+
+  if (/^-|-$|--/.test(subdomain)) {
+    return "Subdomain cannot start or end with a hyphen, or contain consecutive hyphens.";
+  }
+
+  return null; // Validation passed
+}
+
 // FoodTruck type definition
 interface FoodTruck {
   id: string;
@@ -102,6 +126,12 @@ export default function SettingsClient() {
   
   const handleUpdateDomainSettings = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validationError = validateSubdomainClientSide(subdomain);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
     
     domainMutation.mutate({
       subdomain,
