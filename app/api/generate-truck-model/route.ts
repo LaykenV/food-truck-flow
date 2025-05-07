@@ -37,10 +37,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  console.log('user', user);
+
   const { data: foodTruckData, error: foodTruckError } = await supabase
     .from('FoodTrucks')
     .select('*')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (foodTruckError) {
