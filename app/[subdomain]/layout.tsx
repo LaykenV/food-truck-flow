@@ -7,6 +7,7 @@ import FoodTruckNavbar from '@/components/FoodTruckTemplate/FoodTruckNavbar';
 import { trackPageView } from '@/lib/track-page-view';
 import { OrderStatusTrackerWrapper } from '@/components/OrderStatusTrackerWrapper';
 import { createClient } from '@/utils/supabase/server';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 
 // Helper function to generate JSON-LD script tag
 function JsonLdScript({ data }: { data: object }) {
@@ -34,7 +35,7 @@ export async function generateMetadata({
     notFound();
   }
   
-  const config = foodTruck?.configuration || {};
+  const config: FoodTruckConfig = foodTruck?.configuration || {};
   console.log('Config:', config);
   const name = config.name || 'Food Truck';
   const tagline = config.tagline || 'Delicious food on wheels';
@@ -47,13 +48,13 @@ export async function generateMetadata({
       description: tagline,
       type: 'website',
       url: `https://${subdomain}.foodtruckflow.com`,
-      images: config.logoUrl ? [{ url: config.logoUrl }] : [],
+      images: config.hero?.image ? [{ url: config.hero.image }] : [],
     },
     twitter: {
       card: 'summary_large_image',
       title: name,
       description: tagline,
-      images: config.logoUrl ? [config.logoUrl] : [],
+      images: config.hero?.image ? [config.hero.image] : [],
     },
   };
 }

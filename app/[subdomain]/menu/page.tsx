@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Metadata } from 'next';
 import { createClient } from '@/utils/supabase/server';
+import { FoodTruckConfig } from '@/components/FoodTruckTemplate';
 
 // Helper function to generate JSON-LD script tag
 function JsonLdScript({ data }: { data: object }) {
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     notFound();
   }
   
-  const config = foodTruck.configuration || {};
+  const config: FoodTruckConfig = foodTruck.configuration || {};
   const truckName = config.name || 'Food Truck';
   
   return {
@@ -44,13 +45,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `Explore our delicious menu and place your order online from ${truckName}.`,
       type: 'website',
       url: `https://${subdomain}.foodtruckflow.com/menu`,
-      images: config.logoUrl ? [{ url: config.logoUrl }] : [],
+      images: config.hero?.image ? [{ url: config.hero.image }] : [],
     },
     twitter: {
       card: 'summary_large_image',
       title: `Menu | ${truckName}`,
       description: `Explore our delicious menu and place your order online from ${truckName}.`,
-      images: config.logoUrl ? [config.logoUrl] : [],
+      images: config.hero?.image ? [config.hero.image] : [],
     },
   };
 }

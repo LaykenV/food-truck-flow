@@ -97,6 +97,7 @@ admin
     checklist subscription check and style
     clean up orders table
     failed sign in handling
+    restrict model generation to one subscription
 
 
 

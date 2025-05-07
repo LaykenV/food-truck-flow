@@ -109,7 +109,7 @@ export function GenerateModelModal({ isOpen, onClose, onGenerateComplete }: Gene
     // Simulate progress increase
     const progressInterval = setInterval(() => {
       setProgress((prev) => Math.min(prev + 5, 90)); // Cap at 90% until response
-    }, 3000);
+    }, 2500);
 
     try {
       const response = await fetch('/api/generate-truck-model', {

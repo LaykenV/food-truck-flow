@@ -87,14 +87,23 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`Generating 3D model for: ${file.name}, type: ${file.type}, size: ${file.size}`);
-
-    const systemPrompt = `Generate a high-resolution 3D cartoon-style render of the food-truck shown in the reference image.
-
-        • Match the trucks proportions, paint colors, logos, and other distinctive markings so the render clearly represents the same vehicle.  
-        • Retain ONLY the truck itself—remove all background and surrounding objects (coolers, signs, people, trees, etc.).  
-        • Keep just the large, important lettering that is easy to read; omit or simplify small text. Spell any retained words exactly as they appear.  
-        • Composition: show the entire truck inside the frame with no edges cropped. Camera angle is a right-facing, driver-side profile with a slight front-quarter turn (≈15°).  
-        • Output on a 100% transparent background`;
+    const systemPrompt = `
+    Generate a high-resolution 3D cartoon-style render of the food truck shown in the reference image.
+    
+    • Match the trucks proportions, paint colors, logos, and distinctive markings so the render unmistakably depicts the same vehicle.
+    • Remove every background or surrounding object (coolers, signs, people, trees, shadows, reflections, ground planes, etc.).
+    • Keep only large, easy-to-read lettering; omit or simplify small text. Spell any retained words exactly as on the truck.
+    
+    • **Absolute framing rules (do NOT override)**
+      - The front bumper, rear bumper, roof line, wheels, and any roof accessories must be **fully inside** the canvas with **at least 10 % transparent padding** on all four sides.  
+        ▸ If the truck would overflow, **zoom out until this padding exists**.  
+      - Aim for the truck to occupy **80 %-85 %** of the canvas height/width *after* the padding is applied—large but never touching the edges.  
+      - Camera angle: driver-side profile, right-facing, with a slight (~15°) front-quarter turn.
+    
+    • Output on a **100 % transparent background** (alpha-only); do not add scenery.
+    
+    ⚠️ Padding requirement is mandatory. If uncertain, render the truck smaller rather than risk clipping any edge.
+    `;
 
     
     const result = await openai.images.edit({
