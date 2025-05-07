@@ -65,13 +65,15 @@ export interface FoodTruckTemplateProps {
   displayMode: DisplayMode;
   subdomain?: string;
   forceViewMode?: 'mobile' | 'desktop';
+  isPublished?: boolean;
 }
 
 export default function FoodTruckTemplate({ 
   config, 
   displayMode, 
   subdomain = 'preview',
-  forceViewMode
+  forceViewMode,
+  isPublished = false
 }: FoodTruckTemplateProps) {
   // Client-side state to prevent hydration mismatch
   const [isClient, setIsClient] = useState(false);
@@ -148,6 +150,7 @@ export default function FoodTruckTemplate({
           displayMode={displayMode} 
           subdomain={subdomain}
           forceViewMode={forceViewMode}
+          isPublished={isPublished}
         />
         
         {/* Schedule Section */}
@@ -179,6 +182,7 @@ export default function FoodTruckTemplate({
         primaryColor={config.primaryColor}
         secondaryColor={config.secondaryColor}
         hasOrderTracker={hasOrderTracker}
+        isPublished={isPublished}
       />
       
       {/* Footer */}

@@ -27,31 +27,10 @@ type Props = {
 // Generate page-specific metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { subdomain } = await params;
-  let foodTruck = await getFoodTruckData(subdomain);
+  const foodTruck = await getFoodTruckData(subdomain);
   
   if (!foodTruck) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
-      if (foodTruckByUserId) {
-        foodTruck = foodTruckByUserId;
-      } else {
-        return {
-          title: 'Menu Not Found',
-        };
-      }
-    } else {
-      return {
-        title: 'Menu Not Found',
-      };
-    }
-  }
-
-  if (!foodTruck) {
-    return {
-      title: 'Menu Not Found',
-    };
+    notFound();
   }
   
   const config = foodTruck.configuration || {};
@@ -147,25 +126,8 @@ export default async function FoodTruckMenuPage({
   const { subdomain } = await params;
   
   // Fetch the food truck data using the cached function
-  let foodTruck = await getFoodTruckData(subdomain);
+  const foodTruck = await getFoodTruckData(subdomain);
   
-  // If no food truck is found, try to get it by user id
-  if (!foodTruck) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
-      if (foodTruckByUserId) {
-        foodTruck = foodTruckByUserId;
-      } else {
-        notFound();
-      }
-    } else {
-      notFound();
-    }
-  }
-  
-  // If no food truck is found after fallback, return 404
   if (!foodTruck) {
     notFound();
   }
@@ -244,6 +206,8 @@ export default async function FoodTruckMenuPage({
                 foodTruckId={foodTruck.id} 
                 primaryColor={primaryColor} 
                 secondaryColor={secondaryColor} 
+                isPublished={foodTruck?.published}
+                subdomain={subdomain}
               />
             </div>
             
@@ -278,7 +242,7 @@ export default async function FoodTruckMenuPage({
                   <div className="p-4 border-b" style={{ backgroundColor: `${primaryColor}10` }}>
                     <h2 className="text-xl font-bold" style={{ color: '#000000', opacity: '0.8' }}>Your Order</h2>
                   </div>
-                  <Cart foodTruckId={foodTruck.id} primaryColor={primaryColor} secondaryColor={secondaryColor} />
+                  <Cart foodTruckId={foodTruck.id} primaryColor={primaryColor} secondaryColor={secondaryColor} isPublished={foodTruck?.published} subdomain={subdomain}/>
                 </div>
               </Suspense>
             </div>

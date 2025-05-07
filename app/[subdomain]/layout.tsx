@@ -28,21 +28,10 @@ export async function generateMetadata({
   const { subdomain } = await params;
   
   // Fetch the food truck data
-  let foodTruck = await getFoodTruckData(subdomain);
+  const foodTruck = await getFoodTruckData(subdomain);
   
   if (!foodTruck) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
-      if (foodTruckByUserId) {
-        foodTruck = foodTruckByUserId;
-      } else {
-        notFound();
-      }
-    } else {
-      notFound();
-    }
+    notFound();
   }
   
   const config = foodTruck?.configuration || {};
@@ -80,21 +69,16 @@ export default async function FoodTruckLayout({
   const { subdomain } = await params;
   
   // Fetch the food truck data
-  let foodTruck = await getFoodTruckData(subdomain);
+  const foodTruck = await getFoodTruckData(subdomain);
   
   // If no food truck is found, try to get it by user id
-  if (!foodTruck) {
+  if (!foodTruck?.published) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
-      if (foodTruckByUserId) {
-        console.log('Food truck found by user id');
-        foodTruck = foodTruckByUserId;
-      } else {
-        notFound();
-      }
+    if (user && user.id === foodTruck?.user_id) {
+      console.log('Food truck not published but current user');
     } else {
+      console.log('Food truck not published and not current user');
       notFound();
     }
   }
@@ -151,7 +135,7 @@ export default async function FoodTruckLayout({
   return (
     <CartProvider>
       <div className="min-h-screen flex flex-col bg-[#f0f0f0]">
-        <FoodTruckNavbar config={config} subdomain={subdomain} displayMode="live" />
+        <FoodTruckNavbar config={config} subdomain={subdomain} displayMode="live" isPublished={foodTruck?.published} />
         <main className="flex-grow">
           {children}
         </main>

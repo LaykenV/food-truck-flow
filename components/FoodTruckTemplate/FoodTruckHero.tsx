@@ -25,9 +25,10 @@ export interface FoodTruckHeroProps {
   displayMode: DisplayMode
   subdomain: string
   forceViewMode?: "mobile" | "desktop"
+  isPublished?: boolean
 }
 
-export default function FoodTruckHero({ config, displayMode, subdomain, forceViewMode }: FoodTruckHeroProps) {
+export default function FoodTruckHero({ config, displayMode, subdomain, forceViewMode, isPublished }: FoodTruckHeroProps) {
   // Extract configuration data with defaults
   const {
     hero,
@@ -143,7 +144,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain, forceVie
                   fontSize: "1.2rem",
                 }}
               >
-                <Link href={`/menu`} prefetch={true}>
+                <Link href={isPublished ? `/menu` : `/${subdomain}/menu`} prefetch={true}>
                   View Menu
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
@@ -248,7 +249,7 @@ export default function FoodTruckHero({ config, displayMode, subdomain, forceVie
                         fontSize: "1.2rem",
                       }}
                     >
-                      <Link href={`/menu`} prefetch={true}>
+                      <Link href={isPublished ? `/menu` : `/${subdomain}/menu`} prefetch={true}>
                         View Menu
                         <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                       </Link>

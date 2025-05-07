@@ -18,12 +18,16 @@ interface ShoppingCartDrawerProps {
   foodTruckId: string;
   primaryColor?: string;
   secondaryColor?: string;
+  isPublished?: boolean;
+  subdomain?: string;
 }
 
 export function ShoppingCartDrawer({ 
   foodTruckId, 
   primaryColor = '#FF6B35', 
-  secondaryColor = '#2EC4B6' 
+  secondaryColor = '#2EC4B6',
+  isPublished,
+  subdomain
 }: ShoppingCartDrawerProps) {
   const [open, setOpen] = useState(false);
   const [buttonAnimation, setButtonAnimation] = useState<'idle' | 'bounce'>('idle');
@@ -120,6 +124,8 @@ export function ShoppingCartDrawer({
             primaryColor={primaryColor} 
             secondaryColor={secondaryColor} 
             hideCheckoutButton={isOrderPage}
+            isPublished={isPublished}
+            subdomain={subdomain}
           />
         </div>
       </DrawerContent>

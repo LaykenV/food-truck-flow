@@ -71,11 +71,13 @@ admin
 
     //subdomain setup 
     stripe webhooks, disable cash app pay, limit one subscription
+    subscription check to generate 3d model
     logo on browser tab
     sub success 404
     schedule save lag 
     menu tab err behind modal?
     subdomain unique and validations
+    navigation when not published
     
     marketing tool
 

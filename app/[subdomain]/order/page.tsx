@@ -30,31 +30,10 @@ type Props = {
 // Generate page-specific metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { subdomain } = await params;
-  let foodTruck = await getFoodTruckData(subdomain);
+  const foodTruck = await getFoodTruckData(subdomain);
   
   if (!foodTruck) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
-      if (foodTruckByUserId) {
-        foodTruck = foodTruckByUserId;
-      } else {
-        return {
-          title: 'Order Page Not Found',
-        };
-      }
-    } else {
-      return {
-        title: 'Order Page Not Found',
-      };
-    }
-  }
-
-  if (!foodTruck) {
-    return {
-      title: 'Order Page Not Found',
-    };
+    notFound();
   }
   
   const config = foodTruck.configuration || {};
@@ -119,23 +98,7 @@ export default async function FoodTruckOrderPage({
   const { subdomain } = await params;
   
   // Fetch the food truck data using the cached function
-  let foodTruck = await getFoodTruckData(subdomain);
-  
-  // If no food truck is found, try to get it by user id
-  if (!foodTruck) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
-      if (foodTruckByUserId) {
-        foodTruck = foodTruckByUserId;
-      } else {
-        notFound();
-      }
-    } else {
-      notFound();
-    }
-  }
+  const foodTruck = await getFoodTruckData(subdomain);
   
   // If no food truck is found after fallback, return 404
   if (!foodTruck) {
@@ -146,6 +109,7 @@ export default async function FoodTruckOrderPage({
   const scheduleData = foodTruck.configuration?.schedule?.days || [];
   const todaySchedule = getTodayScheduleServer(scheduleData);
   const isCurrentlyOpen = isScheduledOpenServer(todaySchedule);
+  const isPublished = foodTruck.published;
   
   // Extract configuration data
   const config = foodTruck.configuration || {};
@@ -188,7 +152,7 @@ export default async function FoodTruckOrderPage({
         
         <div className="w-full lg:w-[90%] mx-auto px-4 py-8">
             <Link 
-              href={`/menu`} 
+              href={isPublished ? `/menu` : `/${subdomain}/menu`} 
               className="inline-flex items-center hover:underline transition-colors"
               style={linkStyle}
             >
@@ -204,6 +168,8 @@ export default async function FoodTruckOrderPage({
               foodTruckId={foodTruck.id} 
               primaryColor={primaryColor} 
               secondaryColor={secondaryColor} 
+              isPublished={isPublished}
+              subdomain={subdomain}
             />
           </div>
         )}
@@ -246,6 +212,8 @@ export default async function FoodTruckOrderPage({
                         primaryColor={primaryColor} 
                         secondaryColor={secondaryColor}
                         hideCheckoutButton={true}
+                        isPublished={isPublished}
+                        subdomain={subdomain}
                       />
                     </Suspense>
                   </div>

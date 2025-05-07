@@ -21,13 +21,15 @@ export interface FoodTruckNavbarProps {
   subdomain: string;
   displayMode?: DisplayMode;
   forceViewMode?: 'mobile' | 'desktop';
+  isPublished?: boolean;
 }
 
 export default function FoodTruckNavbar({ 
   config, 
   subdomain,
   displayMode = 'live',
-  forceViewMode
+  forceViewMode,
+  isPublished
 }: FoodTruckNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -137,13 +139,6 @@ export default function FoodTruckNavbar({
     }
   }, [displayMode]);
 
-  // Navigation links
-  const navLinks = [
-    { href: `/${subdomain}/menu`, label: 'Menu' },
-    { href: `#schedule-section`, label: 'Locations' },
-    { href: `#contact-section`, label: 'Contact' },
-  ];
-
   // Handle link click in preview mode
   const handleLinkClick = (e: React.MouseEvent) => {
     if (displayMode === 'preview') {
@@ -186,7 +181,7 @@ export default function FoodTruckNavbar({
           <div className="flex items-center justify-between">
             {/* Logo and Name */}
             <div className={isMobileView ? "flex-1 flex justify-center" : ""}>
-              {renderLink(`/`, (
+              {renderLink(isPublished ? `/` : `/${subdomain}`, (
                 <div className="flex items-center gap-2">
                   {logo ? (
                     <div className="h-10 w-10 relative">
@@ -231,7 +226,7 @@ export default function FoodTruckNavbar({
               <div className="flex justify-end">
                 {displayMode === 'live' ? (
                   <Link 
-                    href={`/order`}
+                    href={isPublished ? `/order` : `/${subdomain}/order`}
                     className={cn(
                       "flex items-center justify-center p-2 rounded-full transition-colors relative",
                       scrolled || isNonHeroPage 

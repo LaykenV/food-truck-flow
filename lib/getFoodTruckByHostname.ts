@@ -19,7 +19,7 @@ export async function getFoodTruckByHostname(hostname: string, isAdmin = false) 
   // Query the FoodTrucks table for the matching subdomain
   let query = supabase
     .from('FoodTrucks')
-    .select('id, configuration, subdomain, custom_domain, published')
+    .select('id, user_id, configuration, subdomain, custom_domain, published')
     .or(`subdomain.eq."${subdomain}",custom_domain.eq."${hostname}"`)
   
   const { data, error } = await query.single();
@@ -28,12 +28,7 @@ export async function getFoodTruckByHostname(hostname: string, isAdmin = false) 
 
   //if published is false, check if food truck id is the current user's id
   if (data && !data.published) {
-    const user = await supabase.auth.getUser();
-    console.log('User data:', user.data);
-    if (user.data.user?.id !== data.id) {
-      console.log('Food truck not published and not current user', data.id, user.data.user?.id);
-      return null;
-    }
+      console.log('Food truck not published', data.id);
   }
   
   if (error) {

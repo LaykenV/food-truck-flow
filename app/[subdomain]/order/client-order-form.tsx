@@ -85,6 +85,7 @@ export function ClientOrderForm({ foodTruck, subdomain }: ClientOrderFormProps) 
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
             closingTime={closingTimeISO}
+            isPublished={foodTruck.published}
           />
         ) : (
           <ClosedStatus 

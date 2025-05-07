@@ -18,23 +18,7 @@ export default async function OrderConfirmationPage({
   const orderId = id || null;
   
   // Fetch the food truck data using the cached function
-  let foodTruck = await getFoodTruckData(subdomain);
-
-  // If no food truck is found, try to get it by user id
-  if (!foodTruck) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const foodTruckByUserId = await getFoodTruckDataByUserId(user.id);
-      if (foodTruckByUserId) {
-        foodTruck = foodTruckByUserId;
-      } else {
-        notFound();
-      }
-    } else {
-      notFound();
-    }
-  }
+  const foodTruck = await getFoodTruckData(subdomain);
   
   // If no food truck is found after fallback, return 404
   if (!foodTruck) {

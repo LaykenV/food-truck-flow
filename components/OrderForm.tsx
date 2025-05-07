@@ -40,6 +40,7 @@ interface OrderFormProps {
   primaryColor?: string;
   secondaryColor?: string;
   closingTime?: string | null;
+  isPublished?: boolean;
 }
 
 interface ActiveOrder {
@@ -60,7 +61,8 @@ export function OrderForm({
   onSuccess, 
   primaryColor = '#FF6B35', 
   secondaryColor = '#2EC4B6',
-  closingTime
+  closingTime,
+  isPublished
 }: OrderFormProps) {
   const { items, totalPrice, clearCart } = useCart();
   const router = useRouter();
@@ -107,6 +109,13 @@ export function OrderForm({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isPublished) {
+      toast("This food truck is not published", {
+        description: "Please publish the food truck to place an order.",
+      });
+      return;
+    }
     
     if (foodTruckItems.length === 0) {
       toast("Cart is empty", {

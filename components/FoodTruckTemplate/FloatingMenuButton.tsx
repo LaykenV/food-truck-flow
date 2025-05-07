@@ -13,6 +13,7 @@ interface FloatingMenuButtonProps {
   primaryColor?: string;
   secondaryColor?: string;
   hasOrderTracker?: boolean;
+  isPublished?: boolean;
 }
 
 export default function FloatingMenuButton({
@@ -20,7 +21,8 @@ export default function FloatingMenuButton({
   displayMode,
   primaryColor = '#FF6B35',
   secondaryColor = '#2EC4B6',
-  hasOrderTracker = false
+  hasOrderTracker = false,
+  isPublished
 }: FloatingMenuButtonProps) {
   // Early return for preview mode - don't render the component at all
   if (displayMode === 'preview') {
@@ -92,7 +94,7 @@ export default function FloatingMenuButton({
         animationState === 'visible' && "opacity-100 translate-y-0 scale-100",
       )}
     >
-      <Link href={`/menu`} prefetch={true}>
+      <Link href={isPublished ? `/menu` : `/${subdomain}/menu`} prefetch={true}>
         <Button
           size="lg"
           className="group rounded-full h-14 shadow-lg flex items-center justify-center gap-2 px-6 transition-transform"

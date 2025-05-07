@@ -18,9 +18,11 @@ interface CartProps {
   primaryColor?: string;
   secondaryColor?: string;
   hideCheckoutButton?: boolean;
+  isPublished?: boolean;
+  subdomain?: string;
 }
 
-export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', secondaryColor = '#2EC4B6', hideCheckoutButton = false }: CartProps) {
+export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', secondaryColor = '#2EC4B6', hideCheckoutButton = false, isPublished, subdomain }: CartProps) {
   const { items, removeItem, updateQuantity, updateItemNotes, totalItems, totalPrice, isUpdating, error } = useCart();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -33,10 +35,7 @@ export function Cart({ onCheckout, foodTruckId, primaryColor = '#FF6B35', second
     if (onCheckout) {
       onCheckout();
     } else {
-      // Navigate to the order page
-      const currentPath = window.location.pathname;
-      const subdomain = currentPath.split('/')[1]; // Extract the subdomain from URL
-      router.push(`/order`);
+      isPublished ? router.push(`/order`) : router.push(`/${subdomain}/order`);
     }
   };
 

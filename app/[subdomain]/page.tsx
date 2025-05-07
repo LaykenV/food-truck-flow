@@ -13,21 +13,8 @@ export default async function FoodTruckHomePage({
   // Fetch the food truck data using the cached function
   let foodTruck = await getFoodTruckData(subdomain);
   
-  // If no food truck is found, return 404
   if (!foodTruck) {
-    console.log('No food truck found, trying to get food truck by user id');
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('User:', user);
-    if (user) {
-      console.log('User found, getting food truck by user id');
-      foodTruck = await getFoodTruckDataByUserId(user.id);
-      console.log('Food truck:', foodTruck);
-    }
-    if (!foodTruck) {
-      console.log('No food truck found, returning 404');
-      notFound();
-    }
+    notFound();
   }
   
   // Extract configuration data
@@ -38,6 +25,7 @@ export default async function FoodTruckHomePage({
       config={config} 
       displayMode="live" 
       subdomain={subdomain} 
+      isPublished={foodTruck?.published}
     />
   );
 } 
