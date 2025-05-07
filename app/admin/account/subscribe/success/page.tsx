@@ -28,7 +28,7 @@ export default async function SubscribeSuccessPage({
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-          <h1 className="text-2xl font-bold text-center mb-6">Subscription Successful!</h1>
+          <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Subscription Successful!</h1>
           <div className="mb-6">
             <p className="text-gray-700 mb-4">
               Thank you for subscribing. Your account has been updated with your new subscription.

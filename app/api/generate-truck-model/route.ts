@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: subscriptionData, error: subscriptionError } = await supabase
-    .from('subscriptions')
+    .from('Subscriptions')
     .select('*')
     .eq('user_id', user.id)
     .single();

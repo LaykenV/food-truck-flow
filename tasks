@@ -70,11 +70,11 @@ admin
     localhost sign in redirect
 
     //subdomain setup 
-    stripe webhooks, disable cash app pay, limit one subscription
-    subscription check to generate 3d model
+    //stripe webhooks, disable cash app pay, limit one subscription
+    //subscription check to generate 3d model
     admin speed
-    oauth password
-    sign in redirect
+    //oauth password
+    //sign in redirect
     //logo on browser tab
     //sub success 404
     //schedule save lag 
@@ -96,6 +96,7 @@ admin
     add QR code tab
     checklist subscription check and style
     clean up orders table
+    failed sign in handling
 
 
 
