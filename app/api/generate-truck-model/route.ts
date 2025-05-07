@@ -37,10 +37,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { data: foodTruckData, error: foodTruckError } = await supabase
+    .from('FoodTrucks')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (foodTruckError) {
+    console.error('Error fetching food truck data:', foodTruckError);
+    return NextResponse.json({ error: 'Error fetching food truck data.' }, { status: 500 });
+  }
+
   const { data: subscriptionData, error: subscriptionError } = await supabase
     .from('Subscriptions')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('stripe_customer_id', foodTruckData?.stripe_customer_id)
     .single();
 
   if (subscriptionError) {
