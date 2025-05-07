@@ -72,8 +72,11 @@ admin
     //subdomain setup 
     stripe webhooks, disable cash app pay, limit one subscription
     subscription check to generate 3d model
+    admin speed
+    oauth password
+    sign in redirect
     //logo on browser tab
-    sub success 404
+    //sub success 404
     //schedule save lag 
     //menu tab err behind modal?
     //subdomain unique and validations

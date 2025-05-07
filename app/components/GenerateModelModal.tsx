@@ -10,6 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CheckCircle, UploadCloud, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { createFilePreview, revokeFilePreview, base64ToBlob } from '@/utils/file-utils';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { getSubscriptionData } from '../admin/clientQueries';
 
 interface GenerateModelModalProps {
   isOpen: boolean;
@@ -33,6 +35,15 @@ export function GenerateModelModal({ isOpen, onClose, onGenerateComplete }: Gene
   const [progress, setProgress] = useState<number>(0); // Progress for loading state
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    data: subscriptionData,
+    isLoading: isSubscriptionLoading,
+    error: subscriptionError
+  } = useQuery({
+    queryKey: ['subscriptionData'],
+    queryFn: getSubscriptionData
+  });
 
   // Reset state when modal opens or closes
   useEffect(() => {
@@ -79,6 +90,11 @@ export function GenerateModelModal({ isOpen, onClose, onGenerateComplete }: Gene
   // Handle generation call
   const handleGenerate = useCallback(async () => {
     if (!uploadedFile) return;
+
+    if (subscriptionData?.status !== 'active') {
+      toast.error('Please subscribe to generate a model.');
+      return;
+    }
 
     setIsLoading(true);
     setErrorMessage(null);
