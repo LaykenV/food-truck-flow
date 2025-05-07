@@ -56,6 +56,11 @@ export async function middleware(request: NextRequest) {
         console.log("skipping rewrite");
         return await updateSession(request);
       }*/
+
+      if (url.pathname.startsWith('/api')) {
+        console.log("skipping subdomain rewrite for api");
+        return await updateSession(request);
+      }
       
       // Rewrite the URL to the [subdomain] folder
       url.pathname = `/${subdomain}${url.pathname}`;
