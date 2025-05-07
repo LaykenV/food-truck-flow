@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       prompt: systemPrompt,
       n: 1,
       size: "1024x1024",
-      quality: "high", // High quality recommended for transparency
+      quality: "medium", // High quality recommended for transparency
     });
 
     const image_base64 = result.data?.[0]?.b64_json;
