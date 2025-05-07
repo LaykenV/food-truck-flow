@@ -196,10 +196,7 @@ export function OrderForm({
       if (onSuccess) {
         onSuccess();
       } else {
-        const redirectPath = subdomain 
-          ? `/${subdomain}/order-confirmation?id=${result.orderId}`
-          : `/order-confirmation?id=${result.orderId}`;
-        router.push(redirectPath);
+        router.push(`/order-confirmation?id=${result.orderId}`);
       }
     } catch (error) {
       console.error('Error placing order:', error);
