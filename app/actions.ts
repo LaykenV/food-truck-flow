@@ -6,6 +6,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDefaultConfig } from "@/utils/config-utils";
 
+export type FormState = {
+  status: "error" | "success" | "";
+  message: string;
+  redirectTo?: string;
+};
+
 export const signInWithOAuthAction = async (provider: "google" | "facebook") => {
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
@@ -30,18 +36,17 @@ export const signInWithOAuthAction = async (provider: "google" | "facebook") => 
   return redirect(data.url);
 };
 
-export const signUpAction = async (formData: FormData) => {
+export const signUpAction = async (prevState: FormState, formData: FormData): Promise<FormState> => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
   if (!email || !password) {
-    return encodedRedirect(
-      "error",
-      "/",
-      "Email and password are required",
-    );
+    return {
+      status: "error",
+      message: "Email and password are required",
+    };
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -54,22 +59,25 @@ export const signUpAction = async (formData: FormData) => {
 
   if (error) {
     console.error(error.code + " " + error.message);
-    return encodedRedirect("error", "/", error.message);
+    return {
+      status: "error",
+      message: error.message,
+    };
   } 
   
-  // If sign-up is successful and we have a user, create a food truck for them
-  if (data && data.user) {
-    await createFoodTruckForUser(data.user.id);
-  }
+  // RLS Issue: createFoodTruckForUser will be called in app/auth/callback/route.ts
+  // after email verification and session establishment.
+  // if (data && data.user) {
+  //   await createFoodTruckForUser(data.user.id);
+  // }
   
-  return encodedRedirect(
-    "success",
-    "/",
-    "Thanks for signing up! Please check your email for a verification link.",
-  );
+  return {
+    status: "success",
+    message: "Thanks for signing up! Please check your email for a verification link.",
+  };
 };
 
-export const signInAction = async (formData: FormData) => {
+export const signInAction = async (prevState: FormState, formData: FormData): Promise<FormState> => {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const supabase = await createClient();
@@ -80,10 +88,18 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/", error.message);
+    console.error(error.message);
+    return {
+      status: "error",
+      message: error.message,
+    };
   }
 
-  return redirect("/admin");
+  // Successful sign-in redirects, so we don't return a FormState here directly,
+  // but we need to satisfy the Promise<FormState> return type for useFormState.
+  // The redirect will prevent this from being returned to the client component.
+  redirect("/admin");
+  return { status: "success", message: "Redirecting..." };
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {

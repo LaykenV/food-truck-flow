@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signInAction, signUpAction } from "@/app/actions";
+import { useState, useActionState } from "react";
+import { signInAction, signUpAction, FormState } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +21,9 @@ import Link from "next/link";
 interface AuthModalProps {
   initialView?: "sign-in" | "sign-up";
   trigger?: React.ReactNode;
-  message?: Message;
 }
 
-export function AuthModals({ initialView = "sign-in", trigger, message }: AuthModalProps) {
+export function AuthModals({ initialView = "sign-in", trigger }: AuthModalProps) {
   const [view, setView] = useState<"sign-in" | "sign-up">(initialView);
   const [open, setOpen] = useState(false);
 
@@ -54,9 +53,9 @@ export function AuthModals({ initialView = "sign-in", trigger, message }: AuthMo
         
         <div className="px-1 py-4">
           {view === "sign-in" ? (
-            <SignInForm message={message} onClose={() => setOpen(false)} />
+            <SignInForm onClose={() => setOpen(false)} />
           ) : (
-            <SignUpForm message={message} onClose={() => setOpen(false)} />
+            <SignUpForm onClose={() => setOpen(false)} />
           )}
           
           <div className="mt-6 text-center text-sm">
@@ -91,14 +90,27 @@ export function AuthModals({ initialView = "sign-in", trigger, message }: AuthMo
 }
 
 interface AuthFormProps {
-  message?: Message;
   onClose: () => void;
 }
 
-function SignInForm({ message, onClose }: AuthFormProps) {
+const initialFormState: FormState = {
+  status: "",
+  message: "",
+};
+
+function SignInForm({ onClose }: AuthFormProps) {
+  const [state, formAction] = useActionState(signInAction, initialFormState);
+
+  let formMessageContent: Message | null = null;
+  if (state?.status === "success" && state.message) {
+    formMessageContent = { success: state.message };
+  } else if (state?.status === "error" && state.message) {
+    formMessageContent = { error: state.message };
+  }
+
   return (
     <>
-      <form className="space-y-4" action={signInAction}>
+      <form className="space-y-4" action={formAction}>
         <div>
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
@@ -141,7 +153,7 @@ function SignInForm({ message, onClose }: AuthFormProps) {
           </SubmitButton>
         </div>
         
-        {message && <FormMessage message={message} />}
+        {formMessageContent && <FormMessage message={formMessageContent} />}
       </form>
       
       <OAuthButtons mode="sign-in" />
@@ -149,10 +161,19 @@ function SignInForm({ message, onClose }: AuthFormProps) {
   );
 }
 
-function SignUpForm({ message, onClose }: AuthFormProps) {
+function SignUpForm({ onClose }: AuthFormProps) {
+  const [state, formAction] = useActionState(signUpAction, initialFormState);
+
+  let formMessageContent: Message | null = null;
+  if (state?.status === "success" && state.message) {
+    formMessageContent = { success: state.message };
+  } else if (state?.status === "error" && state.message) {
+    formMessageContent = { error: state.message };
+  }
+
   return (
     <>
-      <form className="space-y-4" action={signUpAction}>
+      <form className="space-y-4" action={formAction}>
         <div>
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
@@ -187,7 +208,7 @@ function SignUpForm({ message, onClose }: AuthFormProps) {
           </SubmitButton>
         </div>
         
-        {message && <FormMessage message={message} />}
+        {formMessageContent && <FormMessage message={formMessageContent} />}
       </form>
       
       <OAuthButtons mode="sign-up" />
