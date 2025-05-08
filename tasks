@@ -83,10 +83,10 @@ admin
     //navigation when not published
     //cant place orders?
 
-    post tweet
+    //post tweet
     call local trucks
     post to facebook
-    
+
     
     marketing tool
 
@@ -103,6 +103,7 @@ admin
     clean up orders table
     failed sign in handling
     restrict model generation to one subscription
+    auto save config when accept generated model
 
 
 

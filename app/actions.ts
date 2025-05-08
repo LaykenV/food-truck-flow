@@ -54,7 +54,7 @@ export const signUpAction = async (formData: FormData) => {
 
   if (error) {
     console.error(error.code + " " + error.message);
-    return encodedRedirect("error", "/sign-up", error.message);
+    return encodedRedirect("error", "/", error.message);
   } 
   
   // If sign-up is successful and we have a user, create a food truck for them
@@ -64,7 +64,7 @@ export const signUpAction = async (formData: FormData) => {
   
   return encodedRedirect(
     "success",
-    "/sign-up",
+    "/",
     "Thanks for signing up! Please check your email for a verification link.",
   );
 };
