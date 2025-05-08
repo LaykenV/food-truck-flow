@@ -87,23 +87,17 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`Generating 3D model for: ${file.name}, type: ${file.type}, size: ${file.size}`);
+    
     const systemPrompt = `
     Generate a high-resolution 3D cartoon-style render of the food truck shown in the reference image.
-    
-    • Match the trucks proportions, paint colors, logos, and distinctive markings so the render unmistakably depicts the same vehicle.
-    • Remove every background or surrounding object (coolers, signs, people, trees, shadows, reflections, ground planes, etc.).
-    • Keep only large, easy-to-read lettering; omit or simplify small text. Spell any retained words exactly as on the truck.
-    
-    • **Absolute framing rules (do NOT override)**
-      - The front bumper, rear bumper, roof line, wheels, and any roof accessories must be **fully inside** the canvas with **at least 10 % transparent padding** on all four sides.  
-        ▸ If the truck would overflow, **zoom out until this padding exists**.  
-      - Aim for the truck to occupy **80 %-85 %** of the canvas height/width *after* the padding is applied—large but never touching the edges.  
-      - Camera angle: driver-side profile, right-facing, with a slight (~15°) front-quarter turn.
-    
-    • Output on a **100 % transparent background** (alpha-only); do not add scenery.
-    
-    ⚠️ Padding requirement is mandatory. If uncertain, render the truck smaller rather than risk clipping any edge.
-    `;
+
+    • Match proportions, paint colors, logos, distinctive markings.
+    • Truck ONLY. Remove all background/surrounding objects.
+    • Text: Large, important, readable ONLY. Spell EXACTLY. Omit small/detailed text.
+    • Composition (CRITICAL): Entire truck visible, NO cropping. Center with padding. If needed, zoom out to fit all parts.
+    • Camera: Right-facing, driver-side profile, slight front turn (≈15°).
+    • Output on a 100% transparent background.
+`;
 
     
     const result = await openai.images.edit({
