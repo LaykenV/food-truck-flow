@@ -12,6 +12,17 @@ export const metadata: Metadata = {
   icons: {
     icon: '/images/truckIcon.svg',
     shortcut: '/images/truckIcon.svg'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FoodTruckFlow',
+    description: 'B2B SaaS platform for food truck owners',
+    images: '/images/truckIcon.svg'
+  },
+  openGraph: {
+    title: 'FoodTruckFlow',
+    description: 'B2B SaaS platform for food truck owners',
+    images: '/images/truckIcon.svg'
   }
 }
 
