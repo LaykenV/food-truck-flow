@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 // Define price IDs for different plans
 const PRICE_IDS = {
-  basic: process.env.STRIPE_BASIC_PRICE_ID as string,
+  basic: process.env.STRIPE_BASIC_PRICE_ID_LIVE as string,
   pro: process.env.STRIPE_PRO_PRICE_ID as string,
 };
 
@@ -131,7 +131,7 @@ export async function getSubscriptionDataWithPlan() {
 
   // Determine plan name based on server environment variables
   let planName = 'none';
-  const basicPriceId = process.env.STRIPE_BASIC_PRICE_ID;
+  const basicPriceId = process.env.STRIPE_BASIC_PRICE_ID_LIVE;
   const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
 
   if (subscription.price_id === basicPriceId) {

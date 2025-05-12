@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { createClient, getServiceRoleClient } from '@/utils/supabase/server';
 
 // Initialize Stripe with latest version
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_LIVE as string);
 
 /**
  * Syncs Stripe subscription data to Supabase for a given customer
@@ -13,8 +13,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
  */
 export async function syncStripeDataToSupabase(stripeCustomerId: string) {
   // Ensure environment variables are set
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+  if (!process.env.STRIPE_SECRET_KEY_LIVE) {
+    throw new Error('Missing STRIPE_SECRET_KEY_LIVE environment variable');
   }
 
   const supabase = await getServiceRoleClient();
