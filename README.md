@@ -188,8 +188,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Layken Varholdt**
-- LinkedIn: [your-linkedin-profile](https://www.linkedin.com/in/layken-varholdt-a78687230/)
-- Portfolio: [your-portfolio-website](https://laykenvarholdt.com)
+- LinkedIn: [Layken Varholdt](https://www.linkedin.com/in/layken-varholdt-a78687230/)
+- Portfolio: [Layken Varholdt Portfolio](https://laykenvarholdt.com)
 - Email: laykenv@gmail.com
 
 ---
